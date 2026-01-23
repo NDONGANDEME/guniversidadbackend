@@ -1,0 +1,6 @@
+# Redirige todas las solicitudes a index.php
+# En public/.htaccess
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ httdoc/gestionDepartamento/index.php [QSA,L]
