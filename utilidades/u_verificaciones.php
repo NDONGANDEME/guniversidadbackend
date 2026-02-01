@@ -104,4 +104,9 @@ class VerificacionesUtil
     {
         return self::validarAccion($accion) && self::validarParametros($parametros);
     }
+
+
+    
+
+
 }

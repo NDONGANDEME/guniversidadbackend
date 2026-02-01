@@ -5,7 +5,7 @@ require_once __DIR__ . "/../utilidades/u_conexion.php";
 class NoticiasDao
 {
     // FUNCIÓN PARA OBTENER EL NÚMERO DE PÁGINAS
-    public static function contarNoticias(): int
+    public static function contarNoticias()
     {
         try {
             $instanciaConexion = ConexionUtil::conectar();
@@ -23,7 +23,7 @@ class NoticiasDao
     }
 
     // FUNCIÓN PARA OBTENER NOTICIAS A PAGINAR
-    public static function obtenerNoticiasAPaginar(int $pagina)
+    public static function obtenerNoticiasAPaginar($pagina)
     {
         try {
             $instanciaConexion = ConexionUtil::conectar();

@@ -52,6 +52,6 @@ class NoticiasController
         NoticiasDao::obtenerNoticiasAPaginar($pagina);
     }
     private static function getCantidadPaginacion(){
-    NoticiasDao::contarNoticias();
+        NoticiasDao::contarNoticias();
     }
 }

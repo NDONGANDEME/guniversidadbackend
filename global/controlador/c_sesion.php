@@ -2,6 +2,7 @@
 
 require_once __DIR__ . "../dao/d_sesion.php";
 require_once __DIR__ . "../entidades/e_sesion.php";
+require_once __DIR__ . "../../utilidades/u_verificaciones.php";
 
 class SesionController
 {
@@ -18,12 +19,12 @@ class SesionController
 
     public static function getUsuarioByCorreo($accion, $parametros)
     {
-        if (U_Verificaciones::validarSesion($accion, $parametros['correo'])) {
+        if (VerificacionesUtil::validarSesion($accion, $parametros['correo'])) {
             $usuario = D_Sesion::obtenerUsuarioByCorreo($parametros['correo']);
             if ($usuario == null) {
                 return null;
             } else {
-                if (U_Verificaciones::verificarContrasenas($parametros['contrasena'], $usuario['contrasena']));
+                if (VerificacionesUtil::verificarContrasenas($parametros['contrasena'], $usuario['contrasena']));
                 return $usuario;
             }
         }
