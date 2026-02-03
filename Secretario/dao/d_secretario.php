@@ -1,25 +1,27 @@
 <?php
-class SecretarioDao {
-    
+class SecretarioDao
+{
+
     // FUNCIONES PARA LA GESTIÓN DE PROFESORES
-    public static function insertarProfesor($datosProfesor) {
+    public static function insertarProfesor($datosProfesor)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "INSERT INTO Profesor (idUsuario, nombre, apellidos, correo, telefono, nacionalidad, departamento, estado, genero, responsabilidad) 
-                    VALUES (:idUsuario, :nombre, :apellidos, :correo, :telefono, :nacionalidad, :departamento, :estado, :genero, :responsabilidad)";
+            $sql = "INSERT INTO profesor (NombreProfesor, ApellidosProfesor, dipProfesor, Especialidad, GradoEstudio, Telefono, CorreoProfesor, idFacultad, idDepartamento, Foto) 
+                    VALUES (:NombreProfesor, :ApellidosProfesor, :dipProfesor, :Especialidad, :GradoEstudio, :Telefono, :CorreoProfesor, :idFacultad, :idDepartamento, :Foto)";
             $stmt = $instanciaConexion->prepare($sql);
-            
-            $stmt->bindParam(':idUsuario', $datosProfesor['idUsuario'], PDO::PARAM_INT);
-            $stmt->bindParam(':nombre', $datosProfesor['nombre'], PDO::PARAM_STR);
-            $stmt->bindParam(':apellidos', $datosProfesor['apellidos'], PDO::PARAM_STR);
-            $stmt->bindParam(':correo', $datosProfesor['correo'], PDO::PARAM_STR);
-            $stmt->bindParam(':telefono', $datosProfesor['telefono'], PDO::PARAM_STR);
-            $stmt->bindParam(':nacionalidad', $datosProfesor['nacionalidad'], PDO::PARAM_STR);
-            $stmt->bindParam(':departamento', $datosProfesor['departamento'], PDO::PARAM_STR);
-            $stmt->bindParam(':estado', $datosProfesor['estado'], PDO::PARAM_STR);
-            $stmt->bindParam(':genero', $datosProfesor['genero'], PDO::PARAM_STR);
-            $stmt->bindParam(':responsabilidad', $datosProfesor['responsabilidad'], PDO::PARAM_STR);
-            
+
+            $stmt->bindParam(':NombreProfesor', $datosProfesor['NombreProfesor'], PDO::PARAM_STR);
+            $stmt->bindParam(':ApellidosProfesor', $datosProfesor['ApellidosProfesor'], PDO::PARAM_STR);
+            $stmt->bindParam(':dipProfesor', $datosProfesor['dipProfesor'], PDO::PARAM_INT);
+            $stmt->bindParam(':Especialidad', $datosProfesor['Especialidad'], PDO::PARAM_STR);
+            $stmt->bindParam(':GradoEstudio', $datosProfesor['GradoEstudio'], PDO::PARAM_STR);
+            $stmt->bindParam(':Telefono', $datosProfesor['Telefono'], PDO::PARAM_STR);
+            $stmt->bindParam(':CorreoProfesor', $datosProfesor['CorreoProfesor'], PDO::PARAM_STR);
+            $stmt->bindParam(':idFacultad', $datosProfesor['idFacultad'], PDO::PARAM_INT);
+            $stmt->bindParam(':idDepartamento', $datosProfesor['idDepartamento'], PDO::PARAM_INT);
+            $stmt->bindParam(':Foto', $datosProfesor['Foto'], PDO::PARAM_STR);
+
             $stmt->execute();
             return $instanciaConexion->lastInsertId();
         } catch (PDOException $th) {
@@ -27,50 +29,67 @@ class SecretarioDao {
         }
     }
 
-    public static function actualizarProfesor($idProfesor, $datosProfesor) {
-        try {
-            $instanciaConexion = ConexionUtil::conectar();
-            $sql = "UPDATE Profesor SET nombre=:nombre, apellidos=:apellidos, correo=:correo, telefono=:telefono, 
-                    nacionalidad=:nacionalidad, departamento=:departamento, estado=:estado, genero=:genero, responsabilidad=:responsabilidad 
-                    WHERE idProfesor=:idProfesor";
-            $stmt = $instanciaConexion->prepare($sql);
-            
-            $stmt->bindParam(':nombre', $datosProfesor['nombre'], PDO::PARAM_STR);
-            $stmt->bindParam(':apellidos', $datosProfesor['apellidos'], PDO::PARAM_STR);
-            $stmt->bindParam(':correo', $datosProfesor['correo'], PDO::PARAM_STR);
-            $stmt->bindParam(':telefono', $datosProfesor['telefono'], PDO::PARAM_STR);
-            $stmt->bindParam(':nacionalidad', $datosProfesor['nacionalidad'], PDO::PARAM_STR);
-            $stmt->bindParam(':departamento', $datosProfesor['departamento'], PDO::PARAM_STR);
-            $stmt->bindParam(':estado', $datosProfesor['estado'], PDO::PARAM_STR);
-            $stmt->bindParam(':genero', $datosProfesor['genero'], PDO::PARAM_STR);
-            $stmt->bindParam(':responsabilidad', $datosProfesor['responsabilidad'], PDO::PARAM_STR);
-            $stmt->bindParam(':idProfesor', $idProfesor, PDO::PARAM_INT);
-            
-            return $stmt->execute();
-        } catch (PDOException $th) {
-            return $th->getMessage();
-        }
-    }
-
-    public static function eliminarProfesor($idProfesor) {
-        try {
-            $instanciaConexion = ConexionUtil::conectar();
-            $sql = "UPDATE Profesor SET estado='baja' WHERE idProfesor=:idProfesor";
-            $stmt = $instanciaConexion->prepare($sql);
-            $stmt->bindParam(':idProfesor', $idProfesor, PDO::PARAM_INT);
-            return $stmt->execute();
-        } catch (PDOException $th) {
-            return $th->getMessage();
-        }
-    }
-
-    public function obtenerProfesores()
+    public static function actualizarProfesor($datosProfesor)
     {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT p.*, u.login, u.rol FROM Profesor p 
-                    JOIN Usuario u ON p.idUsuario = u.idUsuario 
-                    WHERE p.estado='alta'";
+            $sql = "UPDATE profesor SET NombreProfesor=:NombreProfesor, ApellidosProfesor=:ApellidosProfesor, 
+                    dipProfesor=:dipProfesor, Especialidad=:Especialidad, GradoEstudio=:GradoEstudio, 
+                    Telefono=:Telefono, CorreoProfesor=:CorreoProfesor, idFacultad=:idFacultad, 
+                    idDepartamento=:idDepartamento, Foto=:Foto 
+                    WHERE idProfesor=:idProfesor";
+            $stmt = $instanciaConexion->prepare($sql);
+
+            $stmt->bindParam(':NombreProfesor', $datosProfesor['NombreProfesor'], PDO::PARAM_STR);
+            $stmt->bindParam(':ApellidosProfesor', $datosProfesor['ApellidosProfesor'], PDO::PARAM_STR);
+            $stmt->bindParam(':dipProfesor', $datosProfesor['dipProfesor'], PDO::PARAM_INT);
+            $stmt->bindParam(':Especialidad', $datosProfesor['Especialidad'], PDO::PARAM_STR);
+            $stmt->bindParam(':GradoEstudio', $datosProfesor['GradoEstudio'], PDO::PARAM_STR);
+            $stmt->bindParam(':Telefono', $datosProfesor['Telefono'], PDO::PARAM_STR);
+            $stmt->bindParam(':CorreoProfesor', $datosProfesor['CorreoProfesor'], PDO::PARAM_STR);
+            $stmt->bindParam(':idFacultad', $datosProfesor['idFacultad'], PDO::PARAM_INT);
+            $stmt->bindParam(':idDepartamento', $datosProfesor['idDepartamento'], PDO::PARAM_INT);
+            $stmt->bindParam(':Foto', $datosProfesor['Foto'], PDO::PARAM_STR);
+            $stmt->bindParam(':idProfesor', $datosProfesor['idProfesor'], PDO::PARAM_INT);
+
+            return $stmt->execute();
+        } catch (PDOException $th) {
+            return $th->getMessage();
+        }
+    }
+
+    public static function eliminarProfesor($idProfesor)
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+            $sql = "DELETE FROM profesor WHERE idProfesor=:idProfesor";
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->bindParam(':idProfesor', $idProfesor, PDO::PARAM_INT);
+            return $stmt->execute();
+        } catch (PDOException $th) {
+            return $th->getMessage();
+        }
+    }
+
+    public static function obtenerProfesores()
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+            $sql = "SELECT 
+                        p.*,
+                        d.NombreDepartamento,
+                        f.NombreFacultad,
+                        GROUP_CONCAT(DISTINCT fo.titulo SEPARATOR '; ') AS formaciones,
+                        GROUP_CONCAT(DISTINCT a.NombreAsignatura SEPARATOR '; ') AS asignaturas,
+                        GROUP_CONCAT(DISTINCT c.diaSemanal SEPARATOR '; ') AS dias_clase
+                    FROM profesor p
+                    LEFT JOIN departamento d ON p.idDepartamento = d.idDepartamento
+                    LEFT JOIN facultad f ON p.idFacultad = f.idfacultad
+                    LEFT JOIN formacion fo ON p.idProfesor = fo.idProfesor
+                    LEFT JOIN clase c ON p.idProfesor = c.idProfesor
+                    LEFT JOIN asignatura a ON c.idAsignatura = a.idAsignatura
+                    GROUP BY p.idProfesor
+                    ORDER BY p.ApellidosProfesor, p.NombreProfesor";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -79,12 +98,25 @@ class SecretarioDao {
         }
     }
 
-    public function obtenerProfesorPorId($idProfesor) {
+    public static function obtenerProfesorPorId($idProfesor)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT p.*, u.login, u.rol FROM Profesor p 
-                    JOIN Usuario u ON p.idUsuario = u.idUsuario 
-                    WHERE p.idProfesor=:idProfesor";
+            $sql = "SELECT 
+                        p.*,
+                        d.NombreDepartamento,
+                        f.NombreFacultad,
+                        GROUP_CONCAT(DISTINCT fo.titulo SEPARATOR '; ') AS formaciones,
+                        GROUP_CONCAT(DISTINCT a.NombreAsignatura SEPARATOR '; ') AS asignaturas,
+                        GROUP_CONCAT(DISTINCT c.diaSemanal SEPARATOR '; ') AS dias_clase
+                    FROM profesor p
+                    LEFT JOIN departamento d ON p.idDepartamento = d.idDepartamento
+                    LEFT JOIN facultad f ON p.idFacultad = f.idfacultad
+                    LEFT JOIN formacion fo ON p.idProfesor = fo.idProfesor
+                    LEFT JOIN clase c ON p.idProfesor = c.idProfesor
+                    LEFT JOIN asignatura a ON c.idAsignatura = a.idAsignatura
+                    WHERE p.idProfesor = :idProfesor
+                    GROUP BY p.idProfesor";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->bindParam(':idProfesor', $idProfesor, PDO::PARAM_INT);
             $stmt->execute();
@@ -94,14 +126,31 @@ class SecretarioDao {
         }
     }
 
-    public function buscarProfesores($criterio) {
+    public static function buscarProfesores($criterio)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT p.*, u.login FROM Profesor p 
-                    JOIN Usuario u ON p.idUsuario = u.idUsuario 
-                    WHERE p.nombre LIKE :criterio OR p.apellidos LIKE :criterio OR p.correo LIKE :criterio 
-                    OR u.login LIKE :criterio
-                    ORDER BY p.apellidos, p.nombre";
+            $sql = "SELECT 
+                        p.*,
+                        d.NombreDepartamento,
+                        f.NombreFacultad,
+                        GROUP_CONCAT(DISTINCT fo.titulo SEPARATOR '; ') AS formaciones,
+                        GROUP_CONCAT(DISTINCT a.NombreAsignatura SEPARATOR '; ') AS asignaturas,
+                        GROUP_CONCAT(DISTINCT c.diaSemanal SEPARATOR '; ') AS dias_clase
+                    FROM profesor p
+                    LEFT JOIN departamento d ON p.idDepartamento = d.idDepartamento
+                    LEFT JOIN facultad f ON p.idFacultad = f.idfacultad
+                    LEFT JOIN formacion fo ON p.idProfesor = fo.idProfesor
+                    LEFT JOIN clase c ON p.idProfesor = c.idProfesor
+                    LEFT JOIN asignatura a ON c.idAsignatura = a.idAsignatura
+                    WHERE p.NombreProfesor LIKE :criterio 
+                    OR p.ApellidosProfesor LIKE :criterio
+                    OR p.CorreoProfesor LIKE :criterio
+                    OR d.NombreDepartamento LIKE :criterio
+                    OR f.NombreFacultad LIKE :criterio
+                    OR a.NombreAsignatura LIKE :criterio
+                    GROUP BY p.idProfesor
+                    ORDER BY p.ApellidosProfesor, p.NombreProfesor";
             $stmt = $instanciaConexion->prepare($sql);
             $likeCriterio = "%" . $criterio . "%";
             $stmt->bindParam(':criterio', $likeCriterio, PDO::PARAM_STR);
@@ -112,34 +161,21 @@ class SecretarioDao {
         }
     }
 
-    public function cargarNombresProfesores() {
-        try {
-            $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT idProfesor as value, CONCAT(nombre, ' ', apellidos) as label 
-                    FROM Profesor 
-                    WHERE estado='alta' 
-                    ORDER BY apellidos, nombre";
-            $stmt = $instanciaConexion->prepare($sql);
-            $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $th) {
-            return $th->getMessage();
-        }
-    }
 
-    public function insertarFormacion($datosFormacion) {
+    public static function insertarFormacion($datosFormacion)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "INSERT INTO Formacion (institucion, tipo, titulo, nivel, idProfesor) 
-                    VALUES (:institucion, :tipo, :titulo, :nivel, :idProfesor)";
+            $sql = "INSERT INTO formación (institution, tipo, titulo, nivel, idProfesor) 
+                    VALUES (:institution, :tipo, :titulo, :nivel, :idProfesor)";
             $stmt = $instanciaConexion->prepare($sql);
-            
-            $stmt->bindParam(':institucion', $datosFormacion['institucion'], PDO::PARAM_STR);
+
+            $stmt->bindParam(':institution', $datosFormacion['institution'], PDO::PARAM_STR);
             $stmt->bindParam(':tipo', $datosFormacion['tipo'], PDO::PARAM_STR);
             $stmt->bindParam(':titulo', $datosFormacion['titulo'], PDO::PARAM_STR);
             $stmt->bindParam(':nivel', $datosFormacion['nivel'], PDO::PARAM_INT);
             $stmt->bindParam(':idProfesor', $datosFormacion['idProfesor'], PDO::PARAM_INT);
-            
+
             $stmt->execute();
             return $instanciaConexion->lastInsertId();
         } catch (PDOException $th) {
@@ -147,10 +183,46 @@ class SecretarioDao {
         }
     }
 
-    public function obtenerFormacionesPorProfesor($idProfesor) {
+    public static function actualizarFormacion($datosFormacion)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT * FROM Formacion WHERE idProfesor=:idProfesor ORDER BY nivel DESC";
+            $sql = "UPDATE formación SET institution=:institution , tipo=:tipo, titulo=:titulo, nivel=:nivel 
+                    WHERE idFormacion=:idFormacion";
+
+            $stmt = $instanciaConexion->prepare($sql);
+
+            $stmt->bindParam(':institution', $datosFormacion['institution'], PDO::PARAM_STR);
+            $stmt->bindParam(':tipo', $datosFormacion['tipo'], PDO::PARAM_STR);
+            $stmt->bindParam(':titulo', $datosFormacion['titulo'], PDO::PARAM_STR);
+            $stmt->bindParam(':nivel', $datosFormacion['nivel'], PDO::PARAM_INT);
+            $stmt->bindParam(':idFormacion', $datosFormacion['idFormacion'], PDO::PARAM_INT);
+
+            $stmt->execute();
+            return $instanciaConexion->lastInsertId();
+        } catch (PDOException $th) {
+            return $th->getMessage();
+        }
+    }
+
+    public static function eliminarFormacion($idFormacion)
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+            $sql = "DELETE FROM formacion WHERE idFormacion=:idFormacion";
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->bindParam(':idFormacion', $idFormacion, PDO::PARAM_INT);
+            return $stmt->execute();
+        } catch (PDOException $th) {
+            return $th->getMessage();
+        }
+    }
+
+    public static function obtenerFormacionesPorProfesor($idProfesor)
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+            $sql = "SELECT * FROM formación WHERE idProfesor=:idProfesor ORDER BY nivel DESC";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->bindParam(':idProfesor', $idProfesor, PDO::PARAM_INT);
             $stmt->execute();
@@ -162,23 +234,28 @@ class SecretarioDao {
 
 
     // FUNCIONES PARA LA GESTIÓN DE ESTUDIANTES
-    public function insertarEstudiante($datosEstudiante) {
+    public static function insertarEstudiante($datosEstudiante)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "INSERT INTO Estudiante (codigo, idUsuario, Nombre, Apellidos, fechaNacimiento, Nacionalidad, centroProcedencia, genero, idFamiliar) 
-                    VALUES (:codigo, :idUsuario, :Nombre, :Apellidos, :fechaNacimiento, :Nacionalidad, :centroProcedencia, :genero, :idFamiliar)";
+            $sql = "INSERT INTO estudiante (CodigoEstudiante, NombreEstudiante, ApellidosEstudiante, dipEstudiante, 
+                    CorreoEstudiante, idCarrera, idCurso, FechadeNacimiento, Sexo, Nacionalidad, Foto) 
+                    VALUES (:CodigoEstudiante, :NombreEstudiante, :ApellidosEstudiante, :dipEstudiante, 
+                    :CorreoEstudiante, :idCarrera, :idCurso, :FechadeNacimiento, :Sexo, :Nacionalidad, :Foto)";
             $stmt = $instanciaConexion->prepare($sql);
-            
-            $stmt->bindParam(':codigo', $datosEstudiante['codigo'], PDO::PARAM_STR);
-            $stmt->bindParam(':idUsuario', $datosEstudiante['idUsuario'], PDO::PARAM_INT);
-            $stmt->bindParam(':Nombre', $datosEstudiante['Nombre'], PDO::PARAM_STR);
-            $stmt->bindParam(':Apellidos', $datosEstudiante['Apellidos'], PDO::PARAM_STR);
-            $stmt->bindParam(':fechaNacimiento', $datosEstudiante['fechaNacimiento'], PDO::PARAM_STR);
+
+            $stmt->bindParam(':CodigoEstudiante', $datosEstudiante['CodigoEstudiante'], PDO::PARAM_STR);
+            $stmt->bindParam(':NombreEstudiante', $datosEstudiante['NombreEstudiante'], PDO::PARAM_STR);
+            $stmt->bindParam(':ApellidosEstudiante', $datosEstudiante['ApellidosEstudiante'], PDO::PARAM_STR);
+            $stmt->bindParam(':dipEstudiante', $datosEstudiante['dipEstudiante'], PDO::PARAM_INT);
+            $stmt->bindParam(':CorreoEstudiante', $datosEstudiante['CorreoEstudiante'], PDO::PARAM_STR);
+            $stmt->bindParam(':idCarrera', $datosEstudiante['idCarrera'], PDO::PARAM_INT);
+            $stmt->bindParam(':idCurso', $datosEstudiante['idCurso'], PDO::PARAM_INT);
+            $stmt->bindParam(':FechadeNacimiento', $datosEstudiante['FechadeNacimiento'], PDO::PARAM_STR);
+            $stmt->bindParam(':Sexo', $datosEstudiante['Sexo'], PDO::PARAM_STR);
             $stmt->bindParam(':Nacionalidad', $datosEstudiante['Nacionalidad'], PDO::PARAM_STR);
-            $stmt->bindParam(':centroProcedencia', $datosEstudiante['centroProcedencia'], PDO::PARAM_STR);
-            $stmt->bindParam(':genero', $datosEstudiante['genero'], PDO::PARAM_STR);
-            $stmt->bindParam(':idFamiliar', $datosEstudiante['idFamiliar'], PDO::PARAM_INT);
-            
+            $stmt->bindParam(':Foto', $datosEstudiante['Foto'], PDO::PARAM_STR);
+
             $stmt->execute();
             return $instanciaConexion->lastInsertId();
         } catch (PDOException $th) {
@@ -186,47 +263,75 @@ class SecretarioDao {
         }
     }
 
-    public function actualizarEstudiante($codigo, $datosEstudiante) {
+    public static function actualizarEstudiante($datosEstudiante)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "UPDATE Estudiante SET Nombre=:Nombre, Apellidos=:Apellidos, fechaNacimiento=:fechaNacimiento, 
-                    Nacionalidad=:Nacionalidad, centroProcedencia=:centroProcedencia, genero=:genero, idFamiliar=:idFamiliar 
-                    WHERE codigo=:codigo";
+            $sql = "UPDATE estudiante SET CodigoEstudiante=:CodigoEstudiante, NombreEstudiante=:NombreEstudiante, 
+                    ApellidosEstudiante=:ApellidosEstudiante, dipEstudiante=:dipEstudiante, 
+                    CorreoEstudiante=:CorreoEstudiante, idCarrera=:idCarrera, idCurso=:idCurso, 
+                    FechadeNacimiento=:FechadeNacimiento, Sexo=:Sexo, Nacionalidad=:Nacionalidad, Foto=:Foto 
+                    WHERE idEstudiante=:idEstudiante";
             $stmt = $instanciaConexion->prepare($sql);
-            
-            $stmt->bindParam(':Nombre', $datosEstudiante['Nombre'], PDO::PARAM_STR);
-            $stmt->bindParam(':Apellidos', $datosEstudiante['Apellidos'], PDO::PARAM_STR);
-            $stmt->bindParam(':fechaNacimiento', $datosEstudiante['fechaNacimiento'], PDO::PARAM_STR);
+
+            $stmt->bindParam(':CodigoEstudiante', $datosEstudiante['CodigoEstudiante'], PDO::PARAM_STR);
+            $stmt->bindParam(':NombreEstudiante', $datosEstudiante['NombreEstudiante'], PDO::PARAM_STR);
+            $stmt->bindParam(':ApellidosEstudiante', $datosEstudiante['ApellidosEstudiante'], PDO::PARAM_STR);
+            $stmt->bindParam(':dipEstudiante', $datosEstudiante['dipEstudiante'], PDO::PARAM_INT);
+            $stmt->bindParam(':CorreoEstudiante', $datosEstudiante['CorreoEstudiante'], PDO::PARAM_STR);
+            $stmt->bindParam(':idCarrera', $datosEstudiante['idCarrera'], PDO::PARAM_INT);
+            $stmt->bindParam(':idCurso', $datosEstudiante['idCurso'], PDO::PARAM_INT);
+            $stmt->bindParam(':FechadeNacimiento', $datosEstudiante['FechadeNacimiento'], PDO::PARAM_STR);
+            $stmt->bindParam(':Sexo', $datosEstudiante['Sexo'], PDO::PARAM_STR);
             $stmt->bindParam(':Nacionalidad', $datosEstudiante['Nacionalidad'], PDO::PARAM_STR);
-            $stmt->bindParam(':centroProcedencia', $datosEstudiante['centroProcedencia'], PDO::PARAM_STR);
-            $stmt->bindParam(':genero', $datosEstudiante['genero'], PDO::PARAM_STR);
-            $stmt->bindParam(':idFamiliar', $datosEstudiante['idFamiliar'], PDO::PARAM_INT);
-            $stmt->bindParam(':codigo', $codigo, PDO::PARAM_STR);
-            
+            $stmt->bindParam(':Foto', $datosEstudiante['Foto'], PDO::PARAM_STR);
+            $stmt->bindParam(':idEstudiante', $datosEstudiante['idEstudiante'], PDO::PARAM_INT);
+
             return $stmt->execute();
         } catch (PDOException $th) {
             return $th->getMessage();
         }
     }
 
-    public function eliminarEstudiante($codigo) {
+    public static function eliminarEstudiante($idEstudiante)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "DELETE FROM Estudiante WHERE codigo=:codigo";
+            $sql = "DELETE FROM estudiante WHERE idEstudiante=:idEstudiante";
             $stmt = $instanciaConexion->prepare($sql);
-            $stmt->bindParam(':codigo', $codigo, PDO::PARAM_STR);
+            $stmt->bindParam(':idEstudiante', $idEstudiante, PDO::PARAM_INT);
             return $stmt->execute();
         } catch (PDOException $th) {
             return $th->getMessage();
         }
     }
-
-    public function obtenerEstudiantes() {
+    public static function obtenerEstudiantes()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT e.*, u.login FROM Estudiante e 
-                    JOIN Usuario u ON e.idUsuario = u.idUsuario 
-                    ORDER BY e.Apellidos, e.Nombre";
+            $sql = "SELECT 
+                        e.*,
+                        c.NombreCarrera,
+                        d.NombreDepartamento,
+                        f.NombreFacultad,
+                        cu.NombreCurso,
+                        GROUP_CONCAT(DISTINCT a.NombreAsignatura SEPARATOR '; ') AS asignaturas,
+                        GROUP_CONCAT(DISTINCT CONCAT(fam.NombreTutor, ' (', fam.ResponsabledePago, ')') SEPARATOR '; ') AS familiares,
+                        GROUP_CONCAT(DISTINCT CONCAT(eb.fechalnicio, ' - ', eb.fechaFinal, ': ', eb.estado) SEPARATOR '; ') AS becas,
+                        m.EstadoMatricula,
+                        m.AñoAcademico
+                    FROM estudiante e
+                    LEFT JOIN carrera c ON e.idCarrera = c.idCarrera
+                    LEFT JOIN departamento d ON c.idDepartamento = d.idDepartamento
+                    LEFT JOIN facultad f ON d.idFacultad = f.idfacultad
+                    LEFT JOIN curso cu ON e.idCurso = cu.idCurso
+                    LEFT JOIN estudiante_asignatura ea ON e.idEstudiante = ea.idEstudiante
+                    LEFT JOIN asignatura a ON ea.idAsignatura = a.idAsignatura
+                    LEFT JOIN familiar fam ON e.idEstudiante = fam.idEstudiante
+                    LEFT JOIN estudiante_beca eb ON e.idEstudiante = eb.idEstudiante
+                    LEFT JOIN matricula m ON e.idEstudiante = m.idEstudiante
+                    GROUP BY e.idEstudiante
+                    ORDER BY e.ApellidosEstudiante, e.NombreEstudiante";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -235,14 +340,35 @@ class SecretarioDao {
         }
     }
 
-    public function obtenerEstudiantePorCodigo($codigo) {
+    public static function obtenerEstudiantePorCodigo($CodigoEstudiante)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT e.*, u.login FROM Estudiante e 
-                    JOIN Usuario u ON e.idUsuario = u.idUsuario 
-                    WHERE e.codigo=:codigo";
+            $sql = "SELECT 
+                        e.*,
+                        c.NombreCarrera,
+                        d.NombreDepartamento,
+                        f.NombreFacultad,
+                        cu.NombreCurso,
+                        GROUP_CONCAT(DISTINCT a.NombreAsignatura SEPARATOR '; ') AS asignaturas,
+                        GROUP_CONCAT(DISTINCT CONCAT(fam.NombreTutor, ' (', fam.ResponsabledePago, ')') SEPARATOR '; ') AS familiares,
+                        GROUP_CONCAT(DISTINCT CONCAT(eb.fechalnicio, ' - ', eb.fechaFinal, ': ', eb.estado) SEPARATOR '; ') AS becas,
+                        m.EstadoMatricula,
+                        m.AñoAcademico
+                    FROM estudiante e
+                    LEFT JOIN carrera c ON e.idCarrera = c.idCarrera
+                    LEFT JOIN departamento d ON c.idDepartamento = d.idDepartamento
+                    LEFT JOIN facultad f ON d.idFacultad = f.idfacultad
+                    LEFT JOIN curso cu ON e.idCurso = cu.idCurso
+                    LEFT JOIN estudiante_asignatura ea ON e.idEstudiante = ea.idEstudiante
+                    LEFT JOIN asignatura a ON ea.idAsignatura = a.idAsignatura
+                    LEFT JOIN familiar fam ON e.idEstudiante = fam.idEstudiante
+                    LEFT JOIN estudiante_beca eb ON e.idEstudiante = eb.idEstudiante
+                    LEFT JOIN matricula m ON e.idEstudiante = m.idEstudiante
+                    WHERE e.CodigoEstudiante = :CodigoEstudiante
+                    GROUP BY e.idEstudiante";
             $stmt = $instanciaConexion->prepare($sql);
-            $stmt->bindParam(':codigo', $codigo, PDO::PARAM_STR);
+            $stmt->bindParam(':CodigoEstudiante', $CodigoEstudiante, PDO::PARAM_STR);
             $stmt->execute();
             return $stmt->fetch(PDO::FETCH_ASSOC);
         } catch (PDOException $th) {
@@ -250,14 +376,44 @@ class SecretarioDao {
         }
     }
 
-    public function buscarEstudiantes($criterio) {
+    public static function buscarEstudiantes($criterio)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT e.*, u.login FROM Estudiante e 
-                    JOIN Usuario u ON e.idUsuario = u.idUsuario 
-                    WHERE e.codigo LIKE :criterio OR e.Nombre LIKE :criterio OR e.Apellidos LIKE :criterio 
-                    OR u.login LIKE :criterio OR e.centroProcedencia LIKE :criterio
-                    ORDER BY e.Apellidos, e.Nombre";
+            $sql = "SELECT 
+                        e.*,
+                        c.NombreCarrera,
+                        d.NombreDepartamento,
+                        f.NombreFacultad,
+                        cu.NombreCurso,
+                        GROUP_CONCAT(DISTINCT a.NombreAsignatura SEPARATOR '; ') AS asignaturas,
+                        GROUP_CONCAT(DISTINCT CONCAT(fam.NombreTutor, ' (', fam.ResponsabledePago, ')') SEPARATOR '; ') AS familiares,
+                        GROUP_CONCAT(DISTINCT CONCAT(eb.fechalnicio, ' - ', eb.fechaFinal, ': ', eb.estado) SEPARATOR '; ') AS becas,
+                        m.EstadoMatricula,
+                        m.AñoAcademico
+                    FROM estudiante e
+                    LEFT JOIN carrera c ON e.idCarrera = c.idCarrera
+                    LEFT JOIN departamento d ON c.idDepartamento = d.idDepartamento
+                    LEFT JOIN facultad f ON d.idFacultad = f.idfacultad
+                    LEFT JOIN curso cu ON e.idCurso = cu.idCurso
+                    LEFT JOIN estudiante_asignatura ea ON e.idEstudiante = ea.idEstudiante
+                    LEFT JOIN asignatura a ON ea.idAsignatura = a.idAsignatura
+                    LEFT JOIN familiar fam ON e.idEstudiante = fam.idEstudiante
+                    LEFT JOIN estudiante_beca eb ON e.idEstudiante = eb.idEstudiante
+                    LEFT JOIN matricula m ON e.idEstudiante = m.idEstudiante
+                    WHERE e.CodigoEstudiante LIKE :criterio 
+                    OR e.NombreEstudiante LIKE :criterio 
+                    OR e.ApellidosEstudiante LIKE :criterio 
+                    OR e.CorreoEstudiante LIKE :criterio
+                    OR c.NombreCarrera LIKE :criterio
+                    OR f.NombreFacultad LIKE :criterio
+                    OR cu.NombreCurso LIKE :criterio
+                    OR a.NombreAsignatura LIKE :criterio
+                    OR fam.NombreTutor LIKE :criterio
+                    OR eb.estado LIKE :criterio
+                    OR m.EstadoMatricula LIKE :criterio
+                    GROUP BY e.idEstudiante
+                    ORDER BY e.ApellidosEstudiante, e.NombreEstudiante";
             $stmt = $instanciaConexion->prepare($sql);
             $likeCriterio = "%" . $criterio . "%";
             $stmt->bindParam(':criterio', $likeCriterio, PDO::PARAM_STR);
@@ -268,13 +424,27 @@ class SecretarioDao {
         }
     }
 
-    public static function cargarNombresEstudiantes() {
+
+    public static function obtenerEstudiantesPorFacultad($idFacultad)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT codigo as value, CONCAT(Nombre, ' ', Apellidos, ' (', codigo, ')') as label 
-                    FROM Estudiante 
-                    ORDER BY Apellidos, Nombre";
+            $sql = "SELECT 
+                        e.*,
+                        c.NombreCarrera,
+                        d.NombreDepartamento,
+                        f.NombreFacultad,
+                        cu.NombreCurso
+                    FROM estudiante e
+                    LEFT JOIN carrera c ON e.idCarrera = c.idCarrera
+                    LEFT JOIN departamento d ON c.idDepartamento = d.idDepartamento
+                    LEFT JOIN facultad f ON d.idFacultad = f.idfacultad
+                    LEFT JOIN curso cu ON e.idCurso = cu.idCurso
+                    WHERE f.idfacultad = :idFacultad
+                    GROUP BY e.idEstudiante
+                    ORDER BY e.ApellidosEstudiante, e.NombreEstudiante";
             $stmt = $instanciaConexion->prepare($sql);
+            $stmt->bindParam(':idFacultad', $idFacultad, PDO::PARAM_INT);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $th) {
@@ -282,13 +452,26 @@ class SecretarioDao {
         }
     }
 
-    public static function cargarSoloNombresEstudiantes() {
+    public static function obtenerEstudiantesPorCarrera($idCarrera)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT codigo as value, CONCAT(Nombre, ' ', Apellidos) as label 
-                    FROM Estudiante 
-                    ORDER BY Apellidos, Nombre";
+            $sql = "SELECT 
+                        e.*,
+                        c.NombreCarrera,
+                        d.NombreDepartamento,
+                        f.NombreFacultad,
+                        cu.NombreCurso
+                    FROM estudiante e
+                    LEFT JOIN carrera c ON e.idCarrera = c.idCarrera
+                    LEFT JOIN departamento d ON c.idDepartamento = d.idDepartamento
+                    LEFT JOIN facultad f ON d.idFacultad = f.idfacultad
+                    LEFT JOIN curso cu ON e.idCurso = cu.idCurso
+                    WHERE e.idCarrera = :idCarrera
+                    GROUP BY e.idEstudiante
+                    ORDER BY e.ApellidosEstudiante, e.NombreEstudiante";
             $stmt = $instanciaConexion->prepare($sql);
+            $stmt->bindParam(':idCarrera', $idCarrera, PDO::PARAM_INT);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $th) {
@@ -296,19 +479,79 @@ class SecretarioDao {
         }
     }
 
-    public static function insertarFamiliar($datosFamiliar) {
+    public static function obtenerEstudiantesPorCurso($idCurso)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "INSERT INTO Familiares (nombre, apellidos, relacion, contacto, correo) 
-                    VALUES (:nombre, :apellidos, :relacion, :contacto, :correo)";
+            $sql = "SELECT 
+                        e.*,
+                        c.NombreCarrera,
+                        d.NombreDepartamento,
+                        f.NombreFacultad,
+                        cu.NombreCurso
+                    FROM estudiante e
+                    LEFT JOIN carrera c ON e.idCarrera = c.idCarrera
+                    LEFT JOIN departamento d ON c.idDepartamento = d.idDepartamento
+                    LEFT JOIN facultad f ON d.idFacultad = f.idfacultad
+                    LEFT JOIN curso cu ON e.idCurso = cu.idCurso
+                    WHERE e.idCurso = :idCurso
+                    GROUP BY e.idEstudiante
+                    ORDER BY e.ApellidosEstudiante, e.NombreEstudiante";
             $stmt = $instanciaConexion->prepare($sql);
-            
-            $stmt->bindParam(':nombre', $datosFamiliar['nombre'], PDO::PARAM_STR);
-            $stmt->bindParam(':apellidos', $datosFamiliar['apellidos'], PDO::PARAM_STR);
-            $stmt->bindParam(':relacion', $datosFamiliar['relacion'], PDO::PARAM_STR);
-            $stmt->bindParam(':contacto', $datosFamiliar['contacto'], PDO::PARAM_STR);
-            $stmt->bindParam(':correo', $datosFamiliar['correo'], PDO::PARAM_STR);
-            
+            $stmt->bindParam(':idCurso', $idCurso, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $th) {
+            return $th->getMessage();
+        }
+    }
+
+    public static function obtenerEstudiantesPorAsignatura($idAsignatura)
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+            $sql = "SELECT 
+                        e.*,
+                        c.NombreCarrera,
+                        d.NombreDepartamento,
+                        f.NombreFacultad,
+                        cu.NombreCurso,
+                        a.NombreAsignatura,
+                        ea.convocatoria
+                    FROM estudiante e
+                    LEFT JOIN carrera c ON e.idCarrera = c.idCarrera
+                    LEFT JOIN departamento d ON c.idDepartamento = d.idDepartamento
+                    LEFT JOIN facultad f ON d.idFacultad = f.idfacultad
+                    LEFT JOIN curso cu ON e.idCurso = cu.idCurso
+                    INNER JOIN estudiante_asignatura ea ON e.idEstudiante = ea.idEstudiante
+                    INNER JOIN asignatura a ON ea.idAsignatura = a.idAsignatura
+                    WHERE ea.idAsignatura = :idAsignatura
+                    GROUP BY e.idEstudiante
+                    ORDER BY e.ApellidosEstudiante, e.NombreEstudiante";
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->bindParam(':idAsignatura', $idAsignatura, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $th) {
+            return $th->getMessage();
+        }
+    }
+
+
+    public static function insertarFamiliar($datosFamiliar)
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+            $sql = "INSERT INTO familiar (idEstudiante, NombreTutor, ResponsabledePago, Telefono, Correo) 
+                    VALUES (:idEstudiante, :NombreTutor, :ResponsabledePago, :Telefono, :Correo)";
+            $stmt = $instanciaConexion->prepare($sql);
+
+            $stmt->bindParam(':idEstudiante', $datosFamiliar['idEstudiante'], PDO::PARAM_INT);
+            $stmt->bindParam(':NombreTutor', $datosFamiliar['NombreTutor'], PDO::PARAM_STR);
+            $stmt->bindParam(':ResponsabledePago', $datosFamiliar['ResponsabledePago'], PDO::PARAM_STR);
+            $stmt->bindParam(':Telefono', $datosFamiliar['Telefono'], PDO::PARAM_INT);
+            $stmt->bindParam(':Correo', $datosFamiliar['Correo'], PDO::PARAM_STR);
+
             $stmt->execute();
             return $instanciaConexion->lastInsertId();
         } catch (PDOException $th) {
@@ -316,43 +559,54 @@ class SecretarioDao {
         }
     }
 
-    public static function obtenerFamiliares() {
+    public static function actualizarFamiliar($datos)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT * FROM Familiares ORDER BY apellidos, nombre";
+            $sql = "UPDATE familiar SET 
+                        idEstudiante = :idEstudiante,
+                        NombreTutor = :NombreTutor,
+                        ResponsabledePago = :ResponsabledePago,
+                        Telefono = :Telefono,
+                        Correo = :Correo
+                    WHERE idFamiliar = :idFamiliar";
+
             $stmt = $instanciaConexion->prepare($sql);
-            $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $stmt->bindParam(':idFamiliar', $datos['idFamiliar'], PDO::PARAM_INT);
+            $stmt->bindParam(':idEstudiante', $datos['idEstudiante'], PDO::PARAM_INT);
+            $stmt->bindParam(':NombreTutor', $datos['NombreTutor'], PDO::PARAM_STR);
+            $stmt->bindParam(':ResponsabledePago', $datos['ResponsabledePago'], PDO::PARAM_STR);
+            $stmt->bindParam(':Telefono', $datos['Telefono'], PDO::PARAM_STR);
+            $stmt->bindParam(':Correo', $datos['Correo'], PDO::PARAM_STR);
+
+            return $stmt->execute();
         } catch (PDOException $th) {
             return $th->getMessage();
         }
     }
 
-    public static function buscarFamiliares($criterio) {
+    public static function eliminarFamiliar($idFamiliar)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT * FROM Familiares 
-                    WHERE nombre LIKE :criterio OR apellidos LIKE :criterio OR relacion LIKE :criterio
-                    ORDER BY apellidos, nombre";
+            $sql = "DELETE FROM familiar WHERE idFamiliar = :idFamiliar";
             $stmt = $instanciaConexion->prepare($sql);
-            $likeCriterio = "%" . $criterio . "%";
-            $stmt->bindParam(':criterio', $likeCriterio, PDO::PARAM_STR);
-            $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $stmt->bindParam(':idFamiliar', $idFamiliar, PDO::PARAM_INT);
+            return $stmt->execute();
         } catch (PDOException $th) {
             return $th->getMessage();
         }
     }
 
-    public static function obtenerFamiliaresPorEstudiante($codigoEstudiante) {
+    public static function obtenerFamiliaresPorEstudiante($idEstudiante)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT f.* FROM Familiares f
-                    JOIN Estudiante e ON e.idFamiliar = f.idFamiliar
-                    WHERE e.codigo = :codigoEstudiante
-                    ORDER BY f.apellidos, f.nombre";
+            $sql = "SELECT f.* FROM familiar f
+                    WHERE f.idEstudiante = :idEstudiante
+                    ORDER BY f.NombreTutor";
             $stmt = $instanciaConexion->prepare($sql);
-            $stmt->bindParam(':codigoEstudiante', $codigoEstudiante, PDO::PARAM_STR);
+            $stmt->bindParam(':idEstudiante', $idEstudiante, PDO::PARAM_INT);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $th) {
@@ -362,19 +616,20 @@ class SecretarioDao {
 
 
     // FUNCIONES PARA LA INSCRIPCIÓN EN CARRERAS
-    public static function insertarInscripcion($datosInscripcion) {
+    public static function insertarMatricula($datosMatricula)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "INSERT INTO Inscripcion (codigo, fecha, idCarrera, anoAcademico, periodo) 
-                    VALUES (:codigo, :fecha, :idCarrera, :anoAcademico, :periodo)";
+            $sql = "INSERT INTO matricula (idEstudiante, idCurso, FechaMatricula, AñoAcademico, EstadoMatricula) 
+                    VALUES (:idEstudiante, :idCurso, :FechaMatricula, :AñoAcademico, :EstadoMatricula)";
             $stmt = $instanciaConexion->prepare($sql);
-            
-            $stmt->bindParam(':codigo', $datosInscripcion['codigo'], PDO::PARAM_STR);
-            $stmt->bindParam(':fecha', $datosInscripcion['fecha'], PDO::PARAM_STR);
-            $stmt->bindParam(':idCarrera', $datosInscripcion['idCarrera'], PDO::PARAM_INT);
-            $stmt->bindParam(':anoAcademico', $datosInscripcion['anoAcademico'], PDO::PARAM_INT);
-            $stmt->bindParam(':periodo', $datosInscripcion['periodo'], PDO::PARAM_STR);
-            
+
+            $stmt->bindParam(':idEstudiante', $datosMatricula['idEstudiante'], PDO::PARAM_INT);
+            $stmt->bindParam(':idCurso', $datosMatricula['idCurso'], PDO::PARAM_INT);
+            $stmt->bindParam(':FechaMatricula', $datosMatricula['FechaMatricula'], PDO::PARAM_INT);
+            $stmt->bindParam(':AñoAcademico', $datosMatricula['AñoAcademico'], PDO::PARAM_STR);
+            $stmt->bindParam(':EstadoMatricula', $datosMatricula['EstadoMatricula'], PDO::PARAM_STR);
+
             $stmt->execute();
             return $instanciaConexion->lastInsertId();
         } catch (PDOException $th) {
@@ -382,17 +637,18 @@ class SecretarioDao {
         }
     }
 
-    public static function obtenerInscripcionesPorEstudiante($codigo) {
+    public static function obtenerMatriculasPorEstudiante($idEstudiante)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT i.*, c.Nombre as carrera_nombre, f.Nombre as facultad_nombre 
-                    FROM Inscripcion i 
-                    JOIN Carrera c ON i.idCarrera = c.idCarrera
-                    JOIN Facultad f ON c.idFacultad = f.idFacultad
-                    WHERE i.codigo=:codigo
-                    ORDER BY i.anoAcademico DESC, i.periodo DESC";
+            $sql = "SELECT m.*, e.NombreEstudiante, e.ApellidosEstudiante, c.NombreCurso 
+                    FROM matricula m 
+                    JOIN estudiante e ON m.idEstudiante = e.idEstudiante
+                    JOIN curso c ON m.idCurso = c.idCurso
+                    WHERE m.idEstudiante=:idEstudiante
+                    ORDER BY m.AñoAcademico DESC";
             $stmt = $instanciaConexion->prepare($sql);
-            $stmt->bindParam(':codigo', $codigo, PDO::PARAM_STR);
+            $stmt->bindParam(':idEstudiante', $idEstudiante, PDO::PARAM_INT);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $th) {
@@ -400,17 +656,18 @@ class SecretarioDao {
         }
     }
 
-    public static function buscarInscripciones($criterio) {
+    public static function buscarMatriculas($criterio)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT i.*, e.Nombre as estudiante_nombre, e.Apellidos as estudiante_apellidos, 
-                    c.Nombre as carrera_nombre
-                    FROM Inscripcion i 
-                    JOIN Estudiante e ON i.codigo = e.codigo
-                    JOIN Carrera c ON i.idCarrera = c.idCarrera
-                    WHERE e.codigo LIKE :criterio OR e.Nombre LIKE :criterio OR e.Apellidos LIKE :criterio
-                    OR c.Nombre LIKE :criterio
-                    ORDER BY i.fecha DESC";
+            $sql = "SELECT m.*, e.NombreEstudiante, e.ApellidosEstudiante, e.CodigoEstudiante,
+                    c.NombreCurso
+                    FROM matricula m 
+                    JOIN estudiante e ON m.idEstudiante = e.idEstudiante
+                    JOIN curso c ON m.idCurso = c.idCurso
+                    WHERE e.CodigoEstudiante LIKE :criterio OR e.NombreEstudiante LIKE :criterio OR e.ApellidosEstudiante LIKE :criterio
+                    OR c.NombreCurso LIKE :criterio
+                    ORDER BY m.FechaMatricula DESC";
             $stmt = $instanciaConexion->prepare($sql);
             $likeCriterio = "%" . $criterio . "%";
             $stmt->bindParam(':criterio', $likeCriterio, PDO::PARAM_STR);
@@ -422,19 +679,20 @@ class SecretarioDao {
     }
 
     // FUNCIONES PARA LA GESTIÓN DE BECAS
-    public static function asignarBeca($datosBeca) {
+    public static function asignarBeca($datosBeca)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "INSERT INTO Estudiante_Beca (Codigo, idBecario, fechaInicio, fechaFinal, estado) 
+            $sql = "INSERT INTO estudiante_beca (Codigo, idBecario, fechaInicio, fechaFinal, estado) 
                     VALUES (:Codigo, :idBecario, :fechaInicio, :fechaFinal, :estado)";
             $stmt = $instanciaConexion->prepare($sql);
-            
+
             $stmt->bindParam(':Codigo', $datosBeca['Codigo'], PDO::PARAM_STR);
             $stmt->bindParam(':idBecario', $datosBeca['idBecario'], PDO::PARAM_INT);
             $stmt->bindParam(':fechaInicio', $datosBeca['fechaInicio'], PDO::PARAM_STR);
             $stmt->bindParam(':fechaFinal', $datosBeca['fechaFinal'], PDO::PARAM_STR);
             $stmt->bindParam(':estado', $datosBeca['estado'], PDO::PARAM_STR);
-            
+
             $stmt->execute();
             return $instanciaConexion->lastInsertId();
         } catch (PDOException $th) {
@@ -442,42 +700,45 @@ class SecretarioDao {
         }
     }
 
-    public static function actualizarBeca($idBeca, $datosBeca) {
+    public static function actualizarBeca($idEstudianteBecario, $datosBeca)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "UPDATE Estudiante_Beca SET fechaFinal=:fechaFinal, estado=:estado 
-                    WHERE id=:id";
+            $sql = "UPDATE estudiante_beca SET fechaFinal=:fechaFinal, estado=:estado 
+                    WHERE idEstudianteBecario=:idEstudianteBecario";
             $stmt = $instanciaConexion->prepare($sql);
-            
+
             $stmt->bindParam(':fechaFinal', $datosBeca['fechaFinal'], PDO::PARAM_STR);
             $stmt->bindParam(':estado', $datosBeca['estado'], PDO::PARAM_STR);
-            $stmt->bindParam(':id', $idBeca, PDO::PARAM_INT);
-            
+            $stmt->bindParam(':idEstudianteBecario', $idEstudianteBecario, PDO::PARAM_INT);
+
             return $stmt->execute();
         } catch (PDOException $th) {
             return $th->getMessage();
         }
     }
 
-    public static function eliminarBeca($idBeca) {
+    public static function eliminarBeca($idEstudianteBecario)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "DELETE FROM Estudiante_Beca WHERE id=:id";
+            $sql = "DELETE FROM estudiante_beca WHERE idEstudianteBecario=:idEstudianteBecario";
             $stmt = $instanciaConexion->prepare($sql);
-            $stmt->bindParam(':id', $idBeca, PDO::PARAM_INT);
+            $stmt->bindParam(':idEstudianteBecario', $idEstudianteBecario, PDO::PARAM_INT);
             return $stmt->execute();
         } catch (PDOException $th) {
             return $th->getMessage();
         }
     }
 
-    public static function obtenerBecas() {
+    public static function obtenerBecas()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT eb.*, e.Nombre, e.Apellidos, b.institucionBeca 
-                    FROM Estudiante_Beca eb
-                    JOIN Estudiante e ON eb.Codigo = e.codigo
-                    JOIN Becario b ON eb.idBecario = b.idBecario
+            $sql = "SELECT eb.*, e.NombreEstudiante, e.ApellidosEstudiante, b.institucionBeca 
+                    FROM estudiante_beca eb
+                    JOIN estudiante e ON eb.Codigo = e.idEstudiante
+                    JOIN becario b ON eb.idBecario = b.idBecario
                     ORDER BY eb.fechaInicio DESC";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
@@ -487,14 +748,15 @@ class SecretarioDao {
         }
     }
 
-    public static function buscarBecas($criterio) {
+    public static function buscarBecas($criterio)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT eb.*, e.Nombre, e.Apellidos, b.institucionBeca 
-                    FROM Estudiante_Beca eb
-                    JOIN Estudiante e ON eb.Codigo = e.codigo
-                    JOIN Becario b ON eb.idBecario = b.idBecario
-                    WHERE e.codigo LIKE :criterio OR e.Nombre LIKE :criterio OR e.Apellidos LIKE :criterio
+            $sql = "SELECT eb.*, e.NombreEstudiante, e.ApellidosEstudiante, b.institucionBeca 
+                    FROM estudiante_beca eb
+                    JOIN estudiante e ON eb.Codigo = e.idEstudiante
+                    JOIN becario b ON eb.idBecario = b.idBecario
+                    WHERE e.CodigoEstudiante LIKE :criterio OR e.NombreEstudiante LIKE :criterio OR e.ApellidosEstudiante LIKE :criterio
                     OR b.institucionBeca LIKE :criterio
                     ORDER BY eb.fechaInicio DESC";
             $stmt = $instanciaConexion->prepare($sql);
@@ -507,10 +769,11 @@ class SecretarioDao {
         }
     }
 
-    public static function insertarBecario($datosBecario) {
+    public static function insertarBecario($datosBecario)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "INSERT INTO Becario (institucionBeca) VALUES (:institucionBeca)";
+            $sql = "INSERT INTO becario (institucionBeca) VALUES (:institucionBeca)";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->bindParam(':institucionBeca', $datosBecario['institucionBeca'], PDO::PARAM_STR);
             $stmt->execute();
@@ -520,10 +783,11 @@ class SecretarioDao {
         }
     }
 
-    public static function obtenerBecarios() {
+    public static function obtenerBecarios()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT * FROM Becario ORDER BY institucionBeca";
+            $sql = "SELECT * FROM becario ORDER BY institucionBeca";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -532,10 +796,11 @@ class SecretarioDao {
         }
     }
 
-    public static function cargarNombresBecarios() {
+    public static function cargarNombresBecarios()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT idBecario as value, institucionBeca as label FROM Becario ORDER BY institucionBeca";
+            $sql = "SELECT idBecario as value, institucionBeca as label FROM becario ORDER BY institucionBeca";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -545,34 +810,37 @@ class SecretarioDao {
     }
 
     //  FUNCIONES PARA LA MATRÍCULA EN ASIGNATURAS
-    public static function matricularEstudianteAsignatura($codigo, $idAsignatura, $convocatoria) {
+    public static function matricularEstudianteAsignatura($idEstudianteConvocatoria, $idAsignatura, $convocatoria)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "INSERT INTO Estudiante_Asignatura (Codigo, idAsignatura, convocatoria) 
-                    VALUES (:Codigo, :idAsignatura, :convocatoria)";
+            $sql = "INSERT INTO estudiante_asignatura (idEstudianteConvocatoria, idAsignatura, convocatoria) 
+                    VALUES (:idEstudianteConvocatoria, :idAsignatura, :convocatoria)";
             $stmt = $instanciaConexion->prepare($sql);
-            
-            $stmt->bindParam(':Codigo', $codigo, PDO::PARAM_STR);
+
+            $stmt->bindParam(':idEstudianteConvocatoria', $idEstudianteConvocatoria, PDO::PARAM_INT);
             $stmt->bindParam(':idAsignatura', $idAsignatura, PDO::PARAM_INT);
             $stmt->bindParam(':convocatoria', $convocatoria, PDO::PARAM_INT);
-            
+
             return $stmt->execute();
         } catch (PDOException $th) {
             return $th->getMessage();
         }
     }
 
-    public static function obtenerAsignaturasPorEstudiante($codigo) {
+    public static function obtenerAsignaturasPorEstudiante($idEstudiante)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT ea.*, a.Nombre as asignatura_nombre, a.creditos, c.Nombre as curso_nombre
-                    FROM Estudiante_Asignatura ea
-                    JOIN Asignatura a ON ea.idAsignatura = a.idAsignatura
-                    JOIN Curso c ON a.idCurso = c.idCurso
-                    WHERE ea.Codigo=:codigo
-                    ORDER BY a.Nombre";
+            $sql = "SELECT ea.*, a.NombreAsignatura, a.Creditos, c.NombreCurso
+                    FROM estudiante_asignatura ea
+                    JOIN asignatura a ON ea.idAsignatura = a.idAsignatura
+                    JOIN curso c ON a.idCurso = c.idCurso
+                    JOIN estudiante e ON ea.idEstudianteConvocatoria = e.idEstudiante
+                    WHERE e.idEstudiante=:idEstudiante
+                    ORDER BY a.NombreAsignatura";
             $stmt = $instanciaConexion->prepare($sql);
-            $stmt->bindParam(':codigo', $codigo, PDO::PARAM_STR);
+            $stmt->bindParam(':idEstudiante', $idEstudiante, PDO::PARAM_INT);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $th) {
@@ -582,17 +850,19 @@ class SecretarioDao {
 
 
     // FUNCIONES PARA VER EL HISTORIAL ACADÉMICO
-    public static function consultarHistorialAcademico($codigo) {
+    public static function consultarHistorialAcademico($idEstudiante)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT ea.*, a.Nombre as asignatura, a.creditos, e.tipo, e.nota, e.fecha 
-                    FROM Estudiante_Asignatura ea
-                    JOIN Asignatura a ON ea.idAsignatura = a.idAsignatura
-                    LEFT JOIN Evaluacion e ON a.idAsignatura = e.idAsignatura
-                    WHERE ea.Codigo = :codigo 
+            $sql = "SELECT ea.*, a.NombreAsignatura, a.Creditos, e.tipo, e.nota, e.fecha 
+                    FROM estudiante_asignatura ea
+                    JOIN asignatura a ON ea.idAsignatura = a.idAsignatura
+                    LEFT JOIN evaluación e ON a.idAsignatura = e.idExamen
+                    JOIN estudiante est ON ea.idEstudianteConvocatoria = est.idEstudiante
+                    WHERE est.idEstudiante = :idEstudiante 
                     ORDER BY e.fecha DESC";
             $stmt = $instanciaConexion->prepare($sql);
-            $stmt->bindParam(':codigo', $codigo, PDO::PARAM_STR);
+            $stmt->bindParam(':idEstudiante', $idEstudiante, PDO::PARAM_INT);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $th) {
@@ -602,18 +872,19 @@ class SecretarioDao {
 
 
     // FUNCIONES PARA LA GESTION DE PLANES DE ESTUDIO
-    public static function insertarPlanEstudio($datosPlan) {
+    public static function insertarPlanEstudio($datosPlan)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "INSERT INTO PlanEstudio (periodoPlanEstudio, nombre, idCarrera, fechaElaboracion) 
+            $sql = "INSERT INTO planestudio (periodoPlanEstudio, nombre, idCarrera, fechaElaboracion) 
                     VALUES (:periodoPlanEstudio, :nombre, :idCarrera, :fechaElaboracion)";
             $stmt = $instanciaConexion->prepare($sql);
-            
+
             $stmt->bindParam(':periodoPlanEstudio', $datosPlan['periodoPlanEstudio'], PDO::PARAM_STR);
             $stmt->bindParam(':nombre', $datosPlan['nombre'], PDO::PARAM_STR);
             $stmt->bindParam(':idCarrera', $datosPlan['idCarrera'], PDO::PARAM_INT);
             $stmt->bindParam(':fechaElaboracion', $datosPlan['fechaElaboracion'], PDO::PARAM_STR);
-            
+
             $stmt->execute();
             return $instanciaConexion->lastInsertId();
         } catch (PDOException $th) {
@@ -621,28 +892,30 @@ class SecretarioDao {
         }
     }
 
-    public static function actualizarPlanEstudio($idPlanEstudio, $datosPlan) {
+    public static function actualizarPlanEstudio($idPlanEstudio, $datosPlan)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "UPDATE PlanEstudio SET periodoPlanEstudio=:periodoPlanEstudio, nombre=:nombre, 
+            $sql = "UPDATE planestudio SET periodoPlanEstudio=:periodoPlanEstudio, nombre=:nombre, 
                     fechaElaboracion=:fechaElaboracion WHERE idPlanEstudio=:idPlanEstudio";
             $stmt = $instanciaConexion->prepare($sql);
-            
+
             $stmt->bindParam(':periodoPlanEstudio', $datosPlan['periodoPlanEstudio'], PDO::PARAM_STR);
             $stmt->bindParam(':nombre', $datosPlan['nombre'], PDO::PARAM_STR);
             $stmt->bindParam(':fechaElaboracion', $datosPlan['fechaElaboracion'], PDO::PARAM_STR);
             $stmt->bindParam(':idPlanEstudio', $idPlanEstudio, PDO::PARAM_INT);
-            
+
             return $stmt->execute();
         } catch (PDOException $th) {
             return $th->getMessage();
         }
     }
 
-    public static function eliminarPlanEstudio($idPlanEstudio) {
+    public static function eliminarPlanEstudio($idPlanEstudio)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "DELETE FROM PlanEstudio WHERE idPlanEstudio=:idPlanEstudio";
+            $sql = "DELETE FROM planestudio WHERE idPlanEstudio=:idPlanEstudio";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->bindParam(':idPlanEstudio', $idPlanEstudio, PDO::PARAM_INT);
             return $stmt->execute();
@@ -651,13 +924,13 @@ class SecretarioDao {
         }
     }
 
-    public static function obtenerPlanesEstudio() {
+    public static function obtenerPlanesEstudio()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT pe.*, c.Nombre as carrera_nombre, f.Nombre as facultad_nombre
-                    FROM PlanEstudio pe 
-                    JOIN Carrera c ON pe.idCarrera = c.idCarrera
-                    JOIN Facultad f ON c.idFacultad = f.idFacultad
+            $sql = "SELECT pe.*, c.NombreCarrera 
+                    FROM planestudio pe 
+                    JOIN carrera c ON pe.idCarrera = c.idCarrera
                     ORDER BY pe.nombre";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
@@ -667,14 +940,15 @@ class SecretarioDao {
         }
     }
 
-    public static function buscarPlanesEstudio($criterio) {
+    public static function buscarPlanesEstudio($criterio)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT pe.*, c.Nombre as carrera_nombre
-                    FROM PlanEstudio pe 
-                    JOIN Carrera c ON pe.idCarrera = c.idCarrera
+            $sql = "SELECT pe.*, c.NombreCarrera
+                    FROM planestudio pe 
+                    JOIN carrera c ON pe.idCarrera = c.idCarrera
                     WHERE pe.nombre LIKE :criterio OR pe.periodoPlanEstudio LIKE :criterio 
-                    OR c.Nombre LIKE :criterio
+                    OR c.NombreCarrera LIKE :criterio
                     ORDER BY pe.nombre";
             $stmt = $instanciaConexion->prepare($sql);
             $likeCriterio = "%" . $criterio . "%";
@@ -686,11 +960,12 @@ class SecretarioDao {
         }
     }
 
-    public static function cargarPlanesEstudioParaSelect() {
+    public static function cargarPlanesEstudioParaSelect()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
             $sql = "SELECT idPlanEstudio as value, CONCAT(nombre, ' (', periodoPlanEstudio, ')') as label 
-                    FROM PlanEstudio 
+                    FROM planestudio 
                     ORDER BY nombre";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
@@ -700,32 +975,34 @@ class SecretarioDao {
         }
     }
 
-    public static function asignarCursoPlanEstudio($idPlanEstudio, $idCurso, $idSemestre) {
+    public static function asignarCursoPlanEstudio($idPlanEstudio, $idCurso, $idSemestre)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "INSERT INTO Curso_PlanEstudio (idPlanEstudio, idCurso, idSemestre) 
+            $sql = "INSERT INTO curso_planestudio (idPlanEstudio, idCurso, idSemestre) 
                     VALUES (:idPlanEstudio, :idCurso, :idSemestre)";
             $stmt = $instanciaConexion->prepare($sql);
-            
+
             $stmt->bindParam(':idPlanEstudio', $idPlanEstudio, PDO::PARAM_INT);
             $stmt->bindParam(':idCurso', $idCurso, PDO::PARAM_INT);
             $stmt->bindParam(':idSemestre', $idSemestre, PDO::PARAM_INT);
-            
+
             return $stmt->execute();
         } catch (PDOException $th) {
             return $th->getMessage();
         }
     }
 
-    public static function obtenerCursosPorPlanEstudio($idPlanEstudio) {
+    public static function obtenerCursosPorPlanEstudio($idPlanEstudio)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT cpe.*, c.Nombre as curso_nombre, c.Creditos, s.Nombre as semestre_nombre
-                    FROM Curso_PlanEstudio cpe
-                    JOIN Curso c ON cpe.idCurso = c.idCurso
-                    JOIN Semestre s ON cpe.idSemestre = s.idSemestre
+            $sql = "SELECT cpe.*, c.NombreCurso, c.CreditosCurso, s.NombreSemestre
+                    FROM curso_planestudio cpe
+                    JOIN curso c ON cpe.idCurso = c.idCurso
+                    JOIN semestre s ON cpe.idSemestre = s.idSemestre
                     WHERE cpe.idPlanEstudio = :idPlanEstudio
-                    ORDER BY s.Nombre";
+                    ORDER BY s.NombreSemestre";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->bindParam(':idPlanEstudio', $idPlanEstudio, PDO::PARAM_INT);
             $stmt->execute();
@@ -737,18 +1014,21 @@ class SecretarioDao {
 
 
     // FUNCIONES PARA GESTIÓN DE ASIGNATURAS
-    public function insertarAsignatura($datosAsignatura) {
+    public static function insertarAsignatura($datosAsignatura)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "INSERT INTO Asignatura (Nombre, creditos, idCurso, modalidad) 
-                    VALUES (:Nombre, :creditos, :idCurso, :modalidad)";
+            $sql = "INSERT INTO asignatura (NombreAsignatura, Creditos, idProfesor, idCurso, idCarrera, idSemestre) 
+                    VALUES (:NombreAsignatura, :Creditos, :idProfesor, :idCurso, :idCarrera, :idSemestre)";
             $stmt = $instanciaConexion->prepare($sql);
-            
-            $stmt->bindParam(':Nombre', $datosAsignatura['Nombre'], PDO::PARAM_STR);
-            $stmt->bindParam(':creditos', $datosAsignatura['creditos'], PDO::PARAM_INT);
+
+            $stmt->bindParam(':NombreAsignatura', $datosAsignatura['NombreAsignatura'], PDO::PARAM_STR);
+            $stmt->bindParam(':Creditos', $datosAsignatura['Creditos'], PDO::PARAM_INT);
+            $stmt->bindParam(':idProfesor', $datosAsignatura['idProfesor'], PDO::PARAM_INT);
             $stmt->bindParam(':idCurso', $datosAsignatura['idCurso'], PDO::PARAM_INT);
-            $stmt->bindParam(':modalidad', $datosAsignatura['modalidad'], PDO::PARAM_STR);
-            
+            $stmt->bindParam(':idCarrera', $datosAsignatura['idCarrera'], PDO::PARAM_INT);
+            $stmt->bindParam(':idSemestre', $datosAsignatura['idSemestre'], PDO::PARAM_INT);
+
             $stmt->execute();
             return $instanciaConexion->lastInsertId();
         } catch (PDOException $th) {
@@ -756,29 +1036,34 @@ class SecretarioDao {
         }
     }
 
-    public function actualizarAsignatura($idAsignatura, $datosAsignatura) {
+    public static function actualizarAsignatura($idAsignatura, $datosAsignatura)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "UPDATE Asignatura SET Nombre=:Nombre, creditos=:creditos, idCurso=:idCurso, modalidad=:modalidad 
+            $sql = "UPDATE asignatura SET NombreAsignatura=:NombreAsignatura, Creditos=:Creditos, 
+                    idProfesor=:idProfesor, idCurso=:idCurso, idCarrera=:idCarrera, idSemestre=:idSemestre 
                     WHERE idAsignatura=:idAsignatura";
             $stmt = $instanciaConexion->prepare($sql);
-            
-            $stmt->bindParam(':Nombre', $datosAsignatura['Nombre'], PDO::PARAM_STR);
-            $stmt->bindParam(':creditos', $datosAsignatura['creditos'], PDO::PARAM_INT);
+
+            $stmt->bindParam(':NombreAsignatura', $datosAsignatura['NombreAsignatura'], PDO::PARAM_STR);
+            $stmt->bindParam(':Creditos', $datosAsignatura['Creditos'], PDO::PARAM_INT);
+            $stmt->bindParam(':idProfesor', $datosAsignatura['idProfesor'], PDO::PARAM_INT);
             $stmt->bindParam(':idCurso', $datosAsignatura['idCurso'], PDO::PARAM_INT);
-            $stmt->bindParam(':modalidad', $datosAsignatura['modalidad'], PDO::PARAM_STR);
+            $stmt->bindParam(':idCarrera', $datosAsignatura['idCarrera'], PDO::PARAM_INT);
+            $stmt->bindParam(':idSemestre', $datosAsignatura['idSemestre'], PDO::PARAM_INT);
             $stmt->bindParam(':idAsignatura', $idAsignatura, PDO::PARAM_INT);
-            
+
             return $stmt->execute();
         } catch (PDOException $th) {
             return $th->getMessage();
         }
     }
 
-    public function eliminarAsignatura($idAsignatura) {
+    public static function eliminarAsignatura($idAsignatura)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "DELETE FROM Asignatura WHERE idAsignatura=:idAsignatura";
+            $sql = "DELETE FROM asignatura WHERE idAsignatura=:idAsignatura";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->bindParam(':idAsignatura', $idAsignatura, PDO::PARAM_INT);
             return $stmt->execute();
@@ -787,12 +1072,17 @@ class SecretarioDao {
         }
     }
 
-    public function obtenerAsignaturas() {
+    public static function obtenerAsignaturas()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT a.*, c.Nombre as curso_nombre FROM Asignatura a 
-                    JOIN Curso c ON a.idCurso = c.idCurso
-                    ORDER BY a.Nombre";
+            $sql = "SELECT a.*, p.NombreProfesor, c.NombreCurso, car.NombreCarrera, s.NombreSemestre 
+                    FROM asignatura a 
+                    JOIN profesor p ON a.idProfesor = p.idProfesor
+                    JOIN curso c ON a.idCurso = c.idCurso
+                    JOIN carrera car ON a.idCarrera = car.idCarrera
+                    JOIN semestre s ON a.idSemestre = s.idSemestre
+                    ORDER BY a.NombreAsignatura";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -801,14 +1091,16 @@ class SecretarioDao {
         }
     }
 
-    public function buscarAsignaturas($criterio) {
+    public static function buscarAsignaturas($criterio)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT a.*, c.Nombre as curso_nombre 
-                    FROM Asignatura a 
-                    JOIN Curso c ON a.idCurso = c.idCurso
-                    WHERE a.Nombre LIKE :criterio OR c.Nombre LIKE :criterio OR a.modalidad LIKE :criterio
-                    ORDER BY a.Nombre";
+            $sql = "SELECT a.*, p.NombreProfesor, c.NombreCurso 
+                    FROM asignatura a 
+                    JOIN profesor p ON a.idProfesor = p.idProfesor
+                    JOIN curso c ON a.idCurso = c.idCurso
+                    WHERE a.NombreAsignatura LIKE :criterio OR c.NombreCurso LIKE :criterio OR p.NombreProfesor LIKE :criterio
+                    ORDER BY a.NombreAsignatura";
             $stmt = $instanciaConexion->prepare($sql);
             $likeCriterio = "%" . $criterio . "%";
             $stmt->bindParam(':criterio', $likeCriterio, PDO::PARAM_STR);
@@ -819,10 +1111,11 @@ class SecretarioDao {
         }
     }
 
-    public function cargarAsignaturasParaSelect() {
+    public static function cargarAsignaturasParaSelect()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT idAsignatura as value, Nombre as label FROM Asignatura ORDER BY Nombre";
+            $sql = "SELECT idAsignatura as value, NombreAsignatura as label FROM asignatura ORDER BY NombreAsignatura";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -831,11 +1124,12 @@ class SecretarioDao {
         }
     }
 
-    public function cargarNombresAsignaturas() {
+    public static function cargarNombresAsignaturas()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT idAsignatura as value, CONCAT(Nombre, ' (', creditos, ' créditos)') as label 
-                    FROM Asignatura ORDER BY Nombre";
+            $sql = "SELECT idAsignatura as value, CONCAT(NombreAsignatura, ' (', Creditos, ' créditos)') as label 
+                    FROM asignatura ORDER BY NombreAsignatura";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -846,16 +1140,16 @@ class SecretarioDao {
 
     // FUNCIONES PARA LA OFERTA ACADÉMICA POR CARRERA
 
-    public function consultarOfertaAcademica($idCarrera) {
+    public static function consultarOfertaAcademica($idCarrera)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT a.*, c.Nombre as curso_nombre 
-                    FROM Asignatura a
-                    JOIN Curso c ON a.idCurso = c.idCurso
-                    JOIN PlanEstudio pe ON c.idCurso IN (SELECT idCurso FROM Curso_PlanEstudio WHERE idPlanEstudio = pe.idPlanEstudio)
-                    WHERE pe.idCarrera = :idCarrera
-                    GROUP BY a.idAsignatura
-                    ORDER BY a.Nombre";
+            $sql = "SELECT a.*, c.NombreCurso, p.NombreProfesor
+                    FROM asignatura a
+                    JOIN curso c ON a.idCurso = c.idCurso
+                    JOIN profesor p ON a.idProfesor = p.idProfesor
+                    WHERE a.idCarrera = :idCarrera
+                    ORDER BY a.NombreAsignatura";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->bindParam(':idCarrera', $idCarrera, PDO::PARAM_INT);
             $stmt->execute();
@@ -866,13 +1160,14 @@ class SecretarioDao {
     }
 
     // FUNCIONES PARA LA GESTIÓN DE CLASES Y HORARIOS
-    public function insertarClase($datosClase) {
+    public static function insertarClase($datosClase)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "INSERT INTO Clase (idProfesor, idAsignatura, diaSemanal, idAula, idHorario, horalnicio, HoraFinal) 
+            $sql = "INSERT INTO clase (idProfesor, idAsignatura, diaSemanal, idAula, idHorario, horalnicio, HoraFinal) 
                     VALUES (:idProfesor, :idAsignatura, :diaSemanal, :idAula, :idHorario, :horalnicio, :HoraFinal)";
             $stmt = $instanciaConexion->prepare($sql);
-            
+
             $stmt->bindParam(':idProfesor', $datosClase['idProfesor'], PDO::PARAM_INT);
             $stmt->bindParam(':idAsignatura', $datosClase['idAsignatura'], PDO::PARAM_INT);
             $stmt->bindParam(':diaSemanal', $datosClase['diaSemanal'], PDO::PARAM_STR);
@@ -880,7 +1175,7 @@ class SecretarioDao {
             $stmt->bindParam(':idHorario', $datosClase['idHorario'], PDO::PARAM_INT);
             $stmt->bindParam(':horalnicio', $datosClase['horalnicio'], PDO::PARAM_STR);
             $stmt->bindParam(':HoraFinal', $datosClase['HoraFinal'], PDO::PARAM_STR);
-            
+
             $stmt->execute();
             return $instanciaConexion->lastInsertId();
         } catch (PDOException $th) {
@@ -888,14 +1183,15 @@ class SecretarioDao {
         }
     }
 
-    public function actualizarClase($idClase, $datosClase) {
+    public static function actualizarClase($idClase, $datosClase)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "UPDATE Clase SET idProfesor=:idProfesor, idAsignatura=:idAsignatura, diaSemanal=:diaSemanal, 
+            $sql = "UPDATE clase SET idProfesor=:idProfesor, idAsignatura=:idAsignatura, diaSemanal=:diaSemanal, 
                     idAula=:idAula, idHorario=:idHorario, horalnicio=:horalnicio, HoraFinal=:HoraFinal 
                     WHERE idClase=:idClase";
             $stmt = $instanciaConexion->prepare($sql);
-            
+
             $stmt->bindParam(':idProfesor', $datosClase['idProfesor'], PDO::PARAM_INT);
             $stmt->bindParam(':idAsignatura', $datosClase['idAsignatura'], PDO::PARAM_INT);
             $stmt->bindParam(':diaSemanal', $datosClase['diaSemanal'], PDO::PARAM_STR);
@@ -904,17 +1200,18 @@ class SecretarioDao {
             $stmt->bindParam(':horalnicio', $datosClase['horalnicio'], PDO::PARAM_STR);
             $stmt->bindParam(':HoraFinal', $datosClase['HoraFinal'], PDO::PARAM_STR);
             $stmt->bindParam(':idClase', $idClase, PDO::PARAM_INT);
-            
+
             return $stmt->execute();
         } catch (PDOException $th) {
             return $th->getMessage();
         }
     }
 
-    public function eliminarClase($idClase) {
+    public static function eliminarClase($idClase)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "DELETE FROM Clase WHERE idClase=:idClase";
+            $sql = "DELETE FROM clase WHERE idClase=:idClase";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->bindParam(':idClase', $idClase, PDO::PARAM_INT);
             return $stmt->execute();
@@ -923,16 +1220,16 @@ class SecretarioDao {
         }
     }
 
-    public function obtenerClases() {
+    public static function obtenerClases()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT c.*, p.nombre as profesor_nombre, p.apellidos as profesor_apellidos, 
-                    a.Nombre as asignatura_nombre, au.nombre as aula_nombre, h.nombre as horario_nombre
-                    FROM Clase c
-                    JOIN Profesor p ON c.idProfesor = p.idProfesor
-                    JOIN Asignatura a ON c.idAsignatura = a.idAsignatura
-                    JOIN Aulas au ON c.idAula = au.idAula
-                    LEFT JOIN Horario h ON c.idHorario = h.idHorario
+            $sql = "SELECT c.*, p.NombreProfesor, p.ApellidosProfesor, 
+                    a.NombreAsignatura, au.nombre as aula_nombre
+                    FROM clase c
+                    JOIN profesor p ON c.idProfesor = p.idProfesor
+                    JOIN asignatura a ON c.idAsignatura = a.idAsignatura
+                    JOIN aulas au ON c.idAula = au.idAula
                     ORDER BY c.diaSemanal, c.horalnicio";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
@@ -942,17 +1239,18 @@ class SecretarioDao {
         }
     }
 
-    public function buscarClases($criterio) {
+    public static function buscarClases($criterio)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT c.*, p.nombre as profesor_nombre, p.apellidos as profesor_apellidos, 
-                    a.Nombre as asignatura_nombre, au.nombre as aula_nombre
-                    FROM Clase c
-                    JOIN Profesor p ON c.idProfesor = p.idProfesor
-                    JOIN Asignatura a ON c.idAsignatura = a.idAsignatura
-                    JOIN Aulas au ON c.idAula = au.idAula
-                    WHERE p.nombre LIKE :criterio OR p.apellidos LIKE :criterio 
-                    OR a.Nombre LIKE :criterio OR au.nombre LIKE :criterio
+            $sql = "SELECT c.*, p.NombreProfesor, p.ApellidosProfesor, 
+                    a.NombreAsignatura, au.nombre as aula_nombre
+                    FROM clase c
+                    JOIN profesor p ON c.idProfesor = p.idProfesor
+                    JOIN asignatura a ON c.idAsignatura = a.idAsignatura
+                    JOIN aulas au ON c.idAula = au.idAula
+                    WHERE p.NombreProfesor LIKE :criterio OR p.ApellidosProfesor LIKE :criterio 
+                    OR a.NombreAsignatura LIKE :criterio OR au.nombre LIKE :criterio
                     OR c.diaSemanal LIKE :criterio
                     ORDER BY c.diaSemanal, c.horalnicio";
             $stmt = $instanciaConexion->prepare($sql);
@@ -966,17 +1264,19 @@ class SecretarioDao {
     }
 
     // FUNCIONES PARA LA GESTIÓN DE PAGOS 
-    public function insertarPago($datosPago) {
+    public static function insertarPago($datosPago)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "INSERT INTO Pago (fechaPago, idInscripcion, monto) 
-                    VALUES (:fechaPago, :idInscripcion, :monto)";
+            $sql = "INSERT INTO pago (cuotas, monto, idMatricula, fecha) 
+                    VALUES (:cuotas, :monto, :idMatricula, :fecha)";
             $stmt = $instanciaConexion->prepare($sql);
-            
-            $stmt->bindParam(':fechaPago', $datosPago['fechaPago'], PDO::PARAM_STR);
-            $stmt->bindParam(':idInscripcion', $datosPago['idInscripcion'], PDO::PARAM_INT);
-            $stmt->bindParam(':monto', $datosPago['monto'], PDO::PARAM_STR);
-            
+
+            $stmt->bindParam(':cuotas', $datosPago['cuotas'], PDO::PARAM_INT);
+            $stmt->bindParam(':monto', $datosPago['monto'], PDO::PARAM_INT);
+            $stmt->bindParam(':idMatricula', $datosPago['idMatricula'], PDO::PARAM_INT);
+            $stmt->bindParam(':fecha', $datosPago['fecha'], PDO::PARAM_STR);
+
             $stmt->execute();
             return $instanciaConexion->lastInsertId();
         } catch (PDOException $th) {
@@ -984,15 +1284,15 @@ class SecretarioDao {
         }
     }
 
-    public function obtenerPagos() {
+    public static function obtenerPagos()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT p.*, i.codigo as estudiante_codigo, e.Nombre as estudiante_nombre, 
-                    e.Apellidos as estudiante_apellidos 
-                    FROM Pago p
-                    JOIN Inscripcion i ON p.idInscripcion = i.idInscripcion
-                    JOIN Estudiante e ON i.codigo = e.codigo
-                    ORDER BY p.fechaPago DESC";
+            $sql = "SELECT p.*, m.idEstudiante, e.NombreEstudiante, e.ApellidosEstudiante, e.CodigoEstudiante
+                    FROM pago p
+                    JOIN matricula m ON p.idMatricula = m.idMatricula
+                    JOIN estudiante e ON m.idEstudiante = e.idEstudiante
+                    ORDER BY p.fecha DESC";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -1001,16 +1301,16 @@ class SecretarioDao {
         }
     }
 
-    public function buscarPagos($criterio) {
+    public static function buscarPagos($criterio)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT p.*, i.codigo as estudiante_codigo, e.Nombre as estudiante_nombre, 
-                    e.Apellidos as estudiante_apellidos 
-                    FROM Pago p
-                    JOIN Inscripcion i ON p.idInscripcion = i.idInscripcion
-                    JOIN Estudiante e ON i.codigo = e.codigo
-                    WHERE i.codigo LIKE :criterio OR e.Nombre LIKE :criterio OR e.Apellidos LIKE :criterio
-                    ORDER BY p.fechaPago DESC";
+            $sql = "SELECT p.*, m.idEstudiante, e.NombreEstudiante, e.ApellidosEstudiante, e.CodigoEstudiante
+                    FROM pago p
+                    JOIN matricula m ON p.idMatricula = m.idMatricula
+                    JOIN estudiante e ON m.idEstudiante = e.idEstudiante
+                    WHERE e.CodigoEstudiante LIKE :criterio OR e.NombreEstudiante LIKE :criterio OR e.ApellidosEstudiante LIKE :criterio
+                    ORDER BY p.fecha DESC";
             $stmt = $instanciaConexion->prepare($sql);
             $likeCriterio = "%" . $criterio . "%";
             $stmt->bindParam(':criterio', $likeCriterio, PDO::PARAM_STR);
@@ -1021,17 +1321,18 @@ class SecretarioDao {
         }
     }
 
-    public function consultarEstadoPago($codigoEstudiante) {
+    public static function consultarEstadoPago($idEstudiante)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT p.*, i.idCarrera, c.Nombre as carrera_nombre
-                    FROM Pago p
-                    JOIN Inscripcion i ON p.idInscripcion = i.idInscripcion
-                    JOIN Carrera c ON i.idCarrera = c.idCarrera
-                    WHERE i.codigo = :codigo
-                    ORDER BY p.fechaPago DESC";
+            $sql = "SELECT p.*, m.idCurso, c.NombreCurso
+                    FROM pago p
+                    JOIN matricula m ON p.idMatricula = m.idMatricula
+                    JOIN curso c ON m.idCurso = c.idCurso
+                    WHERE m.idEstudiante = :idEstudiante
+                    ORDER BY p.fecha DESC";
             $stmt = $instanciaConexion->prepare($sql);
-            $stmt->bindParam(':codigo', $codigoEstudiante, PDO::PARAM_STR);
+            $stmt->bindParam(':idEstudiante', $idEstudiante, PDO::PARAM_INT);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $th) {
@@ -1039,13 +1340,14 @@ class SecretarioDao {
         }
     }
 
-    public function generarReporteIngresos($fechaInicio, $fechaFin) {
+    public static function generarReporteIngresos($fechaInicio, $fechaFin)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT SUM(monto) as total, DATE(fechaPago) as fecha, COUNT(*) as cantidad_pagos
-                    FROM Pago 
-                    WHERE fechaPago BETWEEN :fechaInicio AND :fechaFin 
-                    GROUP BY DATE(fechaPago)
+            $sql = "SELECT SUM(monto) as total, DATE(fecha) as fecha, COUNT(*) as cantidad_pagos
+                    FROM pago 
+                    WHERE fecha BETWEEN :fechaInicio AND :fechaFin 
+                    GROUP BY DATE(fecha)
                     ORDER BY fecha";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->bindParam(':fechaInicio', $fechaInicio, PDO::PARAM_STR);
@@ -1059,18 +1361,19 @@ class SecretarioDao {
 
 
     // FUNCIONES PARA LA GESTIÓN  DE CONSULTAS DE USUARIOS
-    public function insertarConsulta($datosConsulta) {
+    public static function insertarConsulta($datosConsulta)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "INSERT INTO Consultas (tipo, motivo, contenido, idEmisor) 
+            $sql = "INSERT INTO consultas (tipo, motivo, contenido, idEmisor) 
                     VALUES (:tipo, :motivo, :contenido, :idEmisor)";
             $stmt = $instanciaConexion->prepare($sql);
-            
+
             $stmt->bindParam(':tipo', $datosConsulta['tipo'], PDO::PARAM_STR);
             $stmt->bindParam(':motivo', $datosConsulta['motivo'], PDO::PARAM_STR);
             $stmt->bindParam(':contenido', $datosConsulta['contenido'], PDO::PARAM_STR);
             $stmt->bindParam(':idEmisor', $datosConsulta['idEmisor'], PDO::PARAM_INT);
-            
+
             $stmt->execute();
             return $instanciaConexion->lastInsertId();
         } catch (PDOException $th) {
@@ -1078,12 +1381,11 @@ class SecretarioDao {
         }
     }
 
-    public function obtenerConsultas() {
+    public static function obtenerConsultas()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT c.*, u.login as emisor_login 
-                    FROM Consultas c
-                    JOIN Usuario u ON c.idEmisor = u.idUsuario
+            $sql = "SELECT c.* FROM consultas c
                     ORDER BY c.idConsulta DESC";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
@@ -1093,13 +1395,12 @@ class SecretarioDao {
         }
     }
 
-    public function buscarConsultas($criterio) {
+    public static function buscarConsultas($criterio)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT c.*, u.login as emisor_login 
-                    FROM Consultas c
-                    JOIN Usuario u ON c.idEmisor = u.idUsuario
-                    WHERE c.tipo LIKE :criterio OR c.motivo LIKE :criterio OR u.login LIKE :criterio
+            $sql = "SELECT c.* FROM consultas c
+                    WHERE c.tipo LIKE :criterio OR c.motivo LIKE :criterio
                     ORDER BY c.idConsulta DESC";
             $stmt = $instanciaConexion->prepare($sql);
             $likeCriterio = "%" . $criterio . "%";
@@ -1111,17 +1412,18 @@ class SecretarioDao {
         }
     }
 
-    public function insertarDestinatarioConsulta($idConsulta, $idUsuarioDestinatario, $rolDestinado) {
+    public static function insertarDestinatarioConsulta($idConsulta, $idUsuarioDestinatario, $rolDestinado)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "INSERT INTO DestinatarioConsulta (idConsulta, idUsuarioDestinatario, rolDestinado) 
-                    VALUES (:idConsulta, :idUsuarioDestinatario, :rolDestinado)";
+            $sql = "INSERT INTO destinatarioconsulta (idConsulta, idUsuarioDestinatario, rolDestinado, estado) 
+                    VALUES (:idConsulta, :idUsuarioDestinatario, :rolDestinado, 'pendiente')";
             $stmt = $instanciaConexion->prepare($sql);
-            
+
             $stmt->bindParam(':idConsulta', $idConsulta, PDO::PARAM_INT);
             $stmt->bindParam(':idUsuarioDestinatario', $idUsuarioDestinatario, PDO::PARAM_INT);
             $stmt->bindParam(':rolDestinado', $rolDestinado, PDO::PARAM_STR);
-            
+
             return $stmt->execute();
         } catch (PDOException $th) {
             return $th->getMessage();
@@ -1130,36 +1432,38 @@ class SecretarioDao {
 
 
     // FUNCIONES PARA LA GESTIÓN DE GUÍAS DIDÁCTICAS
-    public function insertarGuiaDidactica($datosGuia) {
+    public static function insertarGuiaDidactica($datosGuia)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "INSERT INTO Guiasdidacticas (idAsignatura) VALUES (:idAsignatura)";
+            $sql = "INSERT INTO guiasdidacticas (idAsignatura) VALUES (:idAsignatura)";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->bindParam(':idAsignatura', $datosGuia['idAsignatura'], PDO::PARAM_INT);
             $stmt->execute();
             $idGuia = $instanciaConexion->lastInsertId();
-            
+
             if (isset($datosGuia['url'])) {
-                $sqlDoc = "INSERT INTO Documentos (url, idGuia) VALUES (:url, :idGuia)";
+                $sqlDoc = "INSERT INTO documentos (url, idGuia) VALUES (:url, :idGuia)";
                 $stmtDoc = $instanciaConexion->prepare($sqlDoc);
                 $stmtDoc->bindParam(':url', $datosGuia['url'], PDO::PARAM_STR);
                 $stmtDoc->bindParam(':idGuia', $idGuia, PDO::PARAM_INT);
                 $stmtDoc->execute();
             }
-            
+
             return $idGuia;
         } catch (PDOException $th) {
             return $th->getMessage();
         }
     }
 
-    public function obtenerGuiasPorAsignatura($idAsignatura) {
+    public static function obtenerGuiasPorAsignatura($idAsignatura)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT g.*, d.url as documento_url, a.Nombre as asignatura_nombre
-                    FROM Guiasdidacticas g
-                    LEFT JOIN Documentos d ON g.idGuia = d.idGuia
-                    JOIN Asignatura a ON g.idAsignatura = a.idAsignatura
+            $sql = "SELECT g.*, d.url as documento_url, a.NombreAsignatura
+                    FROM guiasdidacticas g
+                    LEFT JOIN documentos d ON g.idGuia = d.idGuia
+                    JOIN asignatura a ON g.idAsignatura = a.idAsignatura
                     WHERE g.idAsignatura = :idAsignatura
                     ORDER BY g.idGuia DESC";
             $stmt = $instanciaConexion->prepare($sql);
@@ -1171,15 +1475,16 @@ class SecretarioDao {
         }
     }
 
-    public function buscarGuias($criterio) {
+    public static function buscarGuias($criterio)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT g.*, d.url as documento_url, a.Nombre as asignatura_nombre
-                    FROM Guiasdidacticas g
-                    LEFT JOIN Documentos d ON g.idGuia = d.idGuia
-                    JOIN Asignatura a ON g.idAsignatura = a.idAsignatura
-                    WHERE a.Nombre LIKE :criterio
-                    ORDER BY a.Nombre";
+            $sql = "SELECT g.*, d.url as documento_url, a.NombreAsignatura
+                    FROM guiasdidacticas g
+                    LEFT JOIN documentos d ON g.idGuia = d.idGuia
+                    JOIN asignatura a ON g.idAsignatura = a.idAsignatura
+                    WHERE a.NombreAsignatura LIKE :criterio
+                    ORDER BY a.NombreAsignatura";
             $stmt = $instanciaConexion->prepare($sql);
             $likeCriterio = "%" . $criterio . "%";
             $stmt->bindParam(':criterio', $likeCriterio, PDO::PARAM_STR);
@@ -1191,17 +1496,18 @@ class SecretarioDao {
     }
 
     // FUNCIONES PARA LA GESTIÓN DE INFORMES ACADÉMICOS
-    public function insertarInforme($datosInforme) {
+    public static function insertarInforme($datosInforme)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "INSERT INTO Informes (asunto, contenido, idUsuario) 
+            $sql = "INSERT INTO informes (asunto, contenido, idUsuario) 
                     VALUES (:asunto, :contenido, :idUsuario)";
             $stmt = $instanciaConexion->prepare($sql);
-            
+
             $stmt->bindParam(':asunto', $datosInforme['asunto'], PDO::PARAM_STR);
             $stmt->bindParam(':contenido', $datosInforme['contenido'], PDO::PARAM_STR);
             $stmt->bindParam(':idUsuario', $datosInforme['idUsuario'], PDO::PARAM_INT);
-            
+
             $stmt->execute();
             return $instanciaConexion->lastInsertId();
         } catch (PDOException $th) {
@@ -1209,12 +1515,11 @@ class SecretarioDao {
         }
     }
 
-    public function obtenerInformes() {
+    public static function obtenerInformes()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT i.*, u.login as usuario_login 
-                    FROM Informes i
-                    JOIN Usuario u ON i.idUsuario = u.idUsuario
+            $sql = "SELECT i.* FROM informes i
                     ORDER BY i.idInforme DESC";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
@@ -1224,13 +1529,12 @@ class SecretarioDao {
         }
     }
 
-    public function buscarInformes($criterio) {
+    public static function buscarInformes($criterio)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT i.*, u.login as usuario_login 
-                    FROM Informes i
-                    JOIN Usuario u ON i.idUsuario = u.idUsuario
-                    WHERE i.asunto LIKE :criterio OR u.login LIKE :criterio
+            $sql = "SELECT i.* FROM informes i
+                    WHERE i.asunto LIKE :criterio
                     ORDER BY i.idInforme DESC";
             $stmt = $instanciaConexion->prepare($sql);
             $likeCriterio = "%" . $criterio . "%";
@@ -1243,15 +1547,16 @@ class SecretarioDao {
     }
 
     // FUNCIONES PARA LA GESTION DE TÍTULOS Y CERTIFICACIONES
-    public function insertarTitulo($datosTitulo) {
+    public static function insertarDocumento($datosDocumento)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "INSERT INTO Titulos (url, idFormacion) VALUES (:url, :idFormacion)";
+            $sql = "INSERT INTO documentos (url, idGuia) VALUES (:url, :idGuia)";
             $stmt = $instanciaConexion->prepare($sql);
-            
-            $stmt->bindParam(':url', $datosTitulo['url'], PDO::PARAM_STR);
-            $stmt->bindParam(':idFormacion', $datosTitulo['idFormacion'], PDO::PARAM_INT);
-            
+
+            $stmt->bindParam(':url', $datosDocumento['url'], PDO::PARAM_STR);
+            $stmt->bindParam(':idGuia', $datosDocumento['idGuia'], PDO::PARAM_INT);
+
             $stmt->execute();
             return $instanciaConexion->lastInsertId();
         } catch (PDOException $th) {
@@ -1259,12 +1564,13 @@ class SecretarioDao {
         }
     }
 
-    public function obtenerTitulosPorFormacion($idFormacion) {
+    public static function obtenerDocumentosPorGuia($idGuia)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT * FROM Titulos WHERE idFormacion=:idFormacion ORDER BY idTitulo DESC";
+            $sql = "SELECT * FROM documentos WHERE idGuia=:idGuia ORDER BY idDocumento DESC";
             $stmt = $instanciaConexion->prepare($sql);
-            $stmt->bindParam(':idFormacion', $idFormacion, PDO::PARAM_INT);
+            $stmt->bindParam(':idGuia', $idGuia, PDO::PARAM_INT);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $th) {
@@ -1273,19 +1579,20 @@ class SecretarioDao {
     }
 
     // FUNCIONES PARA GESTIONAR LAS ESTADÍSTICAS ACADÉMICAS
-    public function consultarEstadisticasAcademicas($anoAcademico = null) {
+    public static function consultarEstadisticasAcademicas($anoAcademico = null)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
             $sql = "SELECT 
-                    (SELECT COUNT(DISTINCT codigo) FROM Estudiante) as total_estudiantes,
-                    (SELECT COUNT(DISTINCT idProfesor) FROM Profesor WHERE estado='alta') as total_profesores,
-                    (SELECT COUNT(DISTINCT idAsignatura) FROM Asignatura) as total_asignaturas,
-                    (SELECT COUNT(DISTINCT idCarrera) FROM Carrera) as total_carreras,
-                    (SELECT AVG(nota) FROM Evaluacion WHERE tipo='Final') as promedio_notas_finales,
-                    (SELECT COUNT(DISTINCT codigo) FROM Inscripcion WHERE anoAcademico = :anoAcademico) as estudiantes_inscritos_ano";
-            
+                    (SELECT COUNT(DISTINCT idEstudiante) FROM estudiante) as total_estudiantes,
+                    (SELECT COUNT(DISTINCT idProfesor) FROM profesor) as total_profesores,
+                    (SELECT COUNT(DISTINCT idAsignatura) FROM asignatura) as total_asignaturas,
+                    (SELECT COUNT(DISTINCT idCarrera) FROM carrera) as total_carreras,
+                    (SELECT AVG(nota) FROM evaluación WHERE tipo='Final') as promedio_notas_finales,
+                    (SELECT COUNT(DISTINCT idEstudiante) FROM matricula WHERE AñoAcademico = :anoAcademico) as estudiantes_matriculados_ano";
+
             $stmt = $instanciaConexion->prepare($sql);
-            $stmt->bindParam(':anoAcademico', $anoAcademico, PDO::PARAM_INT);
+            $stmt->bindParam(':anoAcademico', $anoAcademico, PDO::PARAM_STR);
             $stmt->execute();
             return $stmt->fetch(PDO::FETCH_ASSOC);
         } catch (PDOException $th) {
@@ -1294,14 +1601,18 @@ class SecretarioDao {
     }
 
 
-    
+
     // FACULTADES
-    public function insertarFacultad($datosFacultad) {
+    public static function insertarFacultad($datosFacultad)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "INSERT INTO Facultad (Nombre) VALUES (:Nombre)";
+            $sql = "INSERT INTO facultad (NombreFacultad, TelefonoFacultad, DireccionFacultad) 
+                    VALUES (:NombreFacultad, :TelefonoFacultad, :DireccionFacultad)";
             $stmt = $instanciaConexion->prepare($sql);
-            $stmt->bindParam(':Nombre', $datosFacultad['Nombre'], PDO::PARAM_STR);
+            $stmt->bindParam(':NombreFacultad', $datosFacultad['NombreFacultad'], PDO::PARAM_STR);
+            $stmt->bindParam(':TelefonoFacultad', $datosFacultad['TelefonoFacultad'], PDO::PARAM_INT);
+            $stmt->bindParam(':DireccionFacultad', $datosFacultad['DireccionFacultad'], PDO::PARAM_STR);
             $stmt->execute();
             return $instanciaConexion->lastInsertId();
         } catch (PDOException $th) {
@@ -1309,10 +1620,11 @@ class SecretarioDao {
         }
     }
 
-    public function obtenerFacultades() {
+    public static function obtenerFacultades()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT * FROM Facultad ORDER BY Nombre";
+            $sql = "SELECT * FROM facultad ORDER BY NombreFacultad";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -1321,10 +1633,11 @@ class SecretarioDao {
         }
     }
 
-    public function buscarFacultades($criterio) {
+    public static function buscarFacultades($criterio)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT * FROM Facultad WHERE Nombre LIKE :criterio ORDER BY Nombre";
+            $sql = "SELECT * FROM facultad WHERE NombreFacultad LIKE :criterio ORDER BY NombreFacultad";
             $stmt = $instanciaConexion->prepare($sql);
             $likeCriterio = "%" . $criterio . "%";
             $stmt->bindParam(':criterio', $likeCriterio, PDO::PARAM_STR);
@@ -1335,10 +1648,11 @@ class SecretarioDao {
         }
     }
 
-    public function cargarFacultadesParaSelect() {
+    public static function cargarFacultadesParaSelect()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT idFacultad as value, Nombre as label FROM Facultad ORDER BY Nombre";
+            $sql = "SELECT idfacultad as value, NombreFacultad as label FROM facultad ORDER BY NombreFacultad";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -1347,10 +1661,11 @@ class SecretarioDao {
         }
     }
 
-    public function cargarNombresFacultades() {
+    public static function cargarNombresFacultades()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT idFacultad as value, Nombre as label FROM Facultad ORDER BY Nombre";
+            $sql = "SELECT idfacultad as value, NombreFacultad as label FROM facultad ORDER BY NombreFacultad";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -1360,12 +1675,15 @@ class SecretarioDao {
     }
 
     // CARRERAS
-    public function insertarCarrera($datosCarrera) {
+    public static function insertarCarrera($datosCarrera)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "INSERT INTO Carrera (idFacultad) VALUES (:idFacultad)";
+            $sql = "INSERT INTO carrera (NombreCarrera, idDepartamento) 
+                    VALUES (:NombreCarrera, :idDepartamento)";
             $stmt = $instanciaConexion->prepare($sql);
-            $stmt->bindParam(':idFacultad', $datosCarrera['idFacultad'], PDO::PARAM_INT);
+            $stmt->bindParam(':NombreCarrera', $datosCarrera['NombreCarrera'], PDO::PARAM_STR);
+            $stmt->bindParam(':idDepartamento', $datosCarrera['idDepartamento'], PDO::PARAM_INT);
             $stmt->execute();
             return $instanciaConexion->lastInsertId();
         } catch (PDOException $th) {
@@ -1373,13 +1691,15 @@ class SecretarioDao {
         }
     }
 
-    public function obtenerCarreras() {
+    public static function obtenerCarreras()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT c.*, f.Nombre as facultad_nombre 
-                    FROM Carrera c 
-                    JOIN Facultad f ON c.idFacultad = f.idFacultad
-                    ORDER BY f.Nombre";
+            $sql = "SELECT c.*, d.NombreDepartamento, f.NombreFacultad
+                    FROM carrera c 
+                    JOIN departamento d ON c.idDepartamento = d.idDepartamento
+                    JOIN facultad f ON d.idFacultad = f.idfacultad
+                    ORDER BY c.NombreCarrera";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -1388,14 +1708,16 @@ class SecretarioDao {
         }
     }
 
-    public function buscarCarreras($criterio) {
+    public static function buscarCarreras($criterio)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT c.*, f.Nombre as facultad_nombre 
-                    FROM Carrera c 
-                    JOIN Facultad f ON c.idFacultad = f.idFacultad
-                    WHERE f.Nombre LIKE :criterio
-                    ORDER BY f.Nombre";
+            $sql = "SELECT c.*, d.NombreDepartamento, f.NombreFacultad
+                    FROM carrera c 
+                    JOIN departamento d ON c.idDepartamento = d.idDepartamento
+                    JOIN facultad f ON d.idFacultad = f.idfacultad
+                    WHERE c.NombreCarrera LIKE :criterio OR d.NombreDepartamento LIKE :criterio OR f.NombreFacultad LIKE :criterio
+                    ORDER BY c.NombreCarrera";
             $stmt = $instanciaConexion->prepare($sql);
             $likeCriterio = "%" . $criterio . "%";
             $stmt->bindParam(':criterio', $likeCriterio, PDO::PARAM_STR);
@@ -1406,13 +1728,14 @@ class SecretarioDao {
         }
     }
 
-    public function cargarCarrerasParaSelect() {
+    public static function cargarCarrerasParaSelect()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT c.idCarrera as value, CONCAT(f.Nombre, ' - Carrera #', c.idCarrera) as label 
-                    FROM Carrera c 
-                    JOIN Facultad f ON c.idFacultad = f.idFacultad
-                    ORDER BY f.Nombre";
+            $sql = "SELECT c.idCarrera as value, CONCAT(c.NombreCarrera, ' (', d.NombreDepartamento, ')') as label 
+                    FROM carrera c 
+                    JOIN departamento d ON c.idDepartamento = d.idDepartamento
+                    ORDER BY c.NombreCarrera";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -1421,13 +1744,13 @@ class SecretarioDao {
         }
     }
 
-    public function cargarNombresCarreras() {
+    public static function cargarNombresCarreras()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT c.idCarrera as value, f.Nombre as label 
-                    FROM Carrera c 
-                    JOIN Facultad f ON c.idFacultad = f.idFacultad
-                    ORDER BY f.Nombre";
+            $sql = "SELECT c.idCarrera as value, c.NombreCarrera as label 
+                    FROM carrera c 
+                    ORDER BY c.NombreCarrera";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -1437,10 +1760,11 @@ class SecretarioDao {
     }
 
     // AULAS
-    public function insertarAula($datosAula) {
+    public static function insertarAula($datosAula)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "INSERT INTO Aulas (nombre) VALUES (:nombre)";
+            $sql = "INSERT INTO aulas (nombre) VALUES (:nombre)";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->bindParam(':nombre', $datosAula['nombre'], PDO::PARAM_STR);
             $stmt->execute();
@@ -1450,10 +1774,11 @@ class SecretarioDao {
         }
     }
 
-    public function obtenerAulas() {
+    public static function obtenerAulas()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT * FROM Aulas ORDER BY nombre";
+            $sql = "SELECT * FROM aulas ORDER BY nombre";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -1462,10 +1787,11 @@ class SecretarioDao {
         }
     }
 
-    public function buscarAulas($criterio) {
+    public static function buscarAulas($criterio)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT * FROM Aulas WHERE nombre LIKE :criterio ORDER BY nombre";
+            $sql = "SELECT * FROM aulas WHERE nombre LIKE :criterio ORDER BY nombre";
             $stmt = $instanciaConexion->prepare($sql);
             $likeCriterio = "%" . $criterio . "%";
             $stmt->bindParam(':criterio', $likeCriterio, PDO::PARAM_STR);
@@ -1476,10 +1802,11 @@ class SecretarioDao {
         }
     }
 
-    public function cargarAulasParaSelect() {
+    public static function cargarAulasParaSelect()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT idAula as value, nombre as label FROM Aulas ORDER BY nombre";
+            $sql = "SELECT idAula as value, nombre as label FROM aulas ORDER BY nombre";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -1488,10 +1815,11 @@ class SecretarioDao {
         }
     }
 
-    public function cargarNombresAulas() {
+    public static function cargarNombresAulas()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT idAula as value, nombre as label FROM Aulas ORDER BY nombre";
+            $sql = "SELECT idAula as value, nombre as label FROM aulas ORDER BY nombre";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -1501,12 +1829,24 @@ class SecretarioDao {
     }
 
     // HORARIOS
-    public function insertarHorario($datosHorario) {
+    public static function insertarHorario($datosHorario)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "INSERT INTO Horario (nombre) VALUES (:nombre)";
+            $sql = "INSERT INTO horario (NumeroAula, idCarrera, idCurso, dia, idAsignatura, Horalnicio, HoraFinal, idProfesor, idSemestre) 
+                    VALUES (:NumeroAula, :idCarrera, :idCurso, :dia, :idAsignatura, :Horalnicio, :HoraFinal, :idProfesor, :idSemestre)";
             $stmt = $instanciaConexion->prepare($sql);
-            $stmt->bindParam(':nombre', $datosHorario['nombre'], PDO::PARAM_STR);
+
+            $stmt->bindParam(':NumeroAula', $datosHorario['NumeroAula'], PDO::PARAM_INT);
+            $stmt->bindParam(':idCarrera', $datosHorario['idCarrera'], PDO::PARAM_INT);
+            $stmt->bindParam(':idCurso', $datosHorario['idCurso'], PDO::PARAM_INT);
+            $stmt->bindParam(':dia', $datosHorario['dia'], PDO::PARAM_STR);
+            $stmt->bindParam(':idAsignatura', $datosHorario['idAsignatura'], PDO::PARAM_INT);
+            $stmt->bindParam(':Horalnicio', $datosHorario['Horalnicio'], PDO::PARAM_STR);
+            $stmt->bindParam(':HoraFinal', $datosHorario['HoraFinal'], PDO::PARAM_STR);
+            $stmt->bindParam(':idProfesor', $datosHorario['idProfesor'], PDO::PARAM_INT);
+            $stmt->bindParam(':idSemestre', $datosHorario['idSemestre'], PDO::PARAM_INT);
+
             $stmt->execute();
             return $instanciaConexion->lastInsertId();
         } catch (PDOException $th) {
@@ -1514,10 +1854,18 @@ class SecretarioDao {
         }
     }
 
-    public function obtenerHorarios() {
+    public static function obtenerHorarios()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT * FROM Horario ORDER BY nombre";
+            $sql = "SELECT h.*, c.NombreCarrera, cur.NombreCurso, a.NombreAsignatura, p.NombreProfesor, s.NombreSemestre
+                    FROM horario h
+                    JOIN carrera c ON h.idCarrera = c.idCarrera
+                    JOIN curso cur ON h.idCurso = cur.idCurso
+                    JOIN asignatura a ON h.idAsignatura = a.idAsignatura
+                    JOIN profesor p ON h.idProfesor = p.idProfesor
+                    JOIN semestre s ON h.idSemestre = s.idSemestre
+                    ORDER BY h.dia, h.Horalnicio";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -1526,10 +1874,18 @@ class SecretarioDao {
         }
     }
 
-    public function buscarHorarios($criterio) {
+    public static function buscarHorarios($criterio)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT * FROM Horario WHERE nombre LIKE :criterio ORDER BY nombre";
+            $sql = "SELECT h.*, c.NombreCarrera, a.NombreAsignatura, p.NombreProfesor
+                    FROM horario h
+                    JOIN carrera c ON h.idCarrera = c.idCarrera
+                    JOIN asignatura a ON h.idAsignatura = a.idAsignatura
+                    JOIN profesor p ON h.idProfesor = p.idProfesor
+                    WHERE c.NombreCarrera LIKE :criterio OR a.NombreAsignatura LIKE :criterio OR p.NombreProfesor LIKE :criterio
+                    OR h.dia LIKE :criterio
+                    ORDER BY h.dia, h.Horalnicio";
             $stmt = $instanciaConexion->prepare($sql);
             $likeCriterio = "%" . $criterio . "%";
             $stmt->bindParam(':criterio', $likeCriterio, PDO::PARAM_STR);
@@ -1540,10 +1896,14 @@ class SecretarioDao {
         }
     }
 
-    public function cargarHorariosParaSelect() {
+    public static function cargarHorariosParaSelect()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT idHorario as value, nombre as label FROM Horario ORDER BY nombre";
+            $sql = "SELECT idHorario as value, CONCAT(dia, ' ', Horalnicio, '-', HoraFinal, ' - ', a.NombreAsignatura) as label 
+                    FROM horario h
+                    JOIN asignatura a ON h.idAsignatura = a.idAsignatura
+                    ORDER BY h.dia, h.Horalnicio";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -1552,10 +1912,13 @@ class SecretarioDao {
         }
     }
 
-    public function cargarNombresHorarios() {
+    public static function cargarNombresHorarios()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT idHorario as value, nombre as label FROM Horario ORDER BY nombre";
+            $sql = "SELECT idHorario as value, CONCAT(dia, ' ', Horalnicio, '-', HoraFinal) as label 
+                    FROM horario 
+                    ORDER BY dia, Horalnicio";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -1565,17 +1928,19 @@ class SecretarioDao {
     }
 
     // CURSOS
-    public function insertarCurso($datosCurso) {
+    public static function insertarCurso($datosCurso)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "INSERT INTO Curso (Nombre, Creditos, Nivel) 
-                    VALUES (:Nombre, :Creditos, :Nivel)";
+            $sql = "INSERT INTO curso (NombreCurso, CreditosCurso, idCarrera, idSemestre) 
+                    VALUES (:NombreCurso, :CreditosCurso, :idCarrera, :idSemestre)";
             $stmt = $instanciaConexion->prepare($sql);
-            
-            $stmt->bindParam(':Nombre', $datosCurso['Nombre'], PDO::PARAM_STR);
-            $stmt->bindParam(':Creditos', $datosCurso['Creditos'], PDO::PARAM_INT);
-            $stmt->bindParam(':Nivel', $datosCurso['Nivel'], PDO::PARAM_INT);
-            
+
+            $stmt->bindParam(':NombreCurso', $datosCurso['NombreCurso'], PDO::PARAM_STR);
+            $stmt->bindParam(':CreditosCurso', $datosCurso['CreditosCurso'], PDO::PARAM_INT);
+            $stmt->bindParam(':idCarrera', $datosCurso['idCarrera'], PDO::PARAM_INT);
+            $stmt->bindParam(':idSemestre', $datosCurso['idSemestre'], PDO::PARAM_INT);
+
             $stmt->execute();
             return $instanciaConexion->lastInsertId();
         } catch (PDOException $th) {
@@ -1583,10 +1948,15 @@ class SecretarioDao {
         }
     }
 
-    public function obtenerCursos() {
+    public static function obtenerCursos()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT * FROM Curso ORDER BY Nombre";
+            $sql = "SELECT c.*, car.NombreCarrera, s.NombreSemestre 
+                    FROM curso c
+                    JOIN carrera car ON c.idCarrera = car.idCarrera
+                    JOIN semestre s ON c.idSemestre = s.idSemestre
+                    ORDER BY c.NombreCurso";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -1595,12 +1965,16 @@ class SecretarioDao {
         }
     }
 
-    public function buscarCursos($criterio) {
+    public static function buscarCursos($criterio)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT * FROM Curso 
-                    WHERE Nombre LIKE :criterio 
-                    ORDER BY Nombre";
+            $sql = "SELECT c.*, car.NombreCarrera, s.NombreSemestre 
+                    FROM curso c
+                    JOIN carrera car ON c.idCarrera = car.idCarrera
+                    JOIN semestre s ON c.idSemestre = s.idSemestre
+                    WHERE c.NombreCurso LIKE :criterio OR car.NombreCarrera LIKE :criterio
+                    ORDER BY c.NombreCurso";
             $stmt = $instanciaConexion->prepare($sql);
             $likeCriterio = "%" . $criterio . "%";
             $stmt->bindParam(':criterio', $likeCriterio, PDO::PARAM_STR);
@@ -1611,11 +1985,12 @@ class SecretarioDao {
         }
     }
 
-    public function cargarCursosParaSelect() {
+    public static function cargarCursosParaSelect()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT idCurso as value, CONCAT(Nombre, ' (', Creditos, ' créditos)') as label 
-                    FROM Curso ORDER BY Nombre";
+            $sql = "SELECT idCurso as value, CONCAT(NombreCurso, ' (', CreditosCurso, ' créditos)') as label 
+                    FROM curso ORDER BY NombreCurso";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -1624,10 +1999,11 @@ class SecretarioDao {
         }
     }
 
-    public function cargarNombresCursos() {
+    public static function cargarNombresCursos()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT idCurso as value, Nombre as label FROM Curso ORDER BY Nombre";
+            $sql = "SELECT idCurso as value, NombreCurso as label FROM curso ORDER BY NombreCurso";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -1637,17 +2013,20 @@ class SecretarioDao {
     }
 
     // SEMESTRES
-    public function insertarSemestre($datosSemestre) {
+    public static function insertarSemestre($datosSemestre)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "INSERT INTO Semestre (Nombre, Año, periodo) 
-                    VALUES (:Nombre, :Año, :periodo)";
+            $sql = "INSERT INTO semestre (NombreSemestre, idAsignatura, idCarrera, idCurso, idEstudiante) 
+                    VALUES (:NombreSemestre, :idAsignatura, :idCarrera, :idCurso, :idEstudiante)";
             $stmt = $instanciaConexion->prepare($sql);
-            
-            $stmt->bindParam(':Nombre', $datosSemestre['Nombre'], PDO::PARAM_STR);
-            $stmt->bindParam(':Año', $datosSemestre['Año'], PDO::PARAM_INT);
-            $stmt->bindParam(':periodo', $datosSemestre['periodo'], PDO::PARAM_STR);
-            
+
+            $stmt->bindParam(':NombreSemestre', $datosSemestre['NombreSemestre'], PDO::PARAM_STR);
+            $stmt->bindParam(':idAsignatura', $datosSemestre['idAsignatura'], PDO::PARAM_INT);
+            $stmt->bindParam(':idCarrera', $datosSemestre['idCarrera'], PDO::PARAM_INT);
+            $stmt->bindParam(':idCurso', $datosSemestre['idCurso'], PDO::PARAM_INT);
+            $stmt->bindParam(':idEstudiante', $datosSemestre['idEstudiante'], PDO::PARAM_INT);
+
             $stmt->execute();
             return $instanciaConexion->lastInsertId();
         } catch (PDOException $th) {
@@ -1655,10 +2034,17 @@ class SecretarioDao {
         }
     }
 
-    public function obtenerSemestres() {
+    public static function obtenerSemestres()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT * FROM Semestre ORDER BY Año DESC, periodo DESC";
+            $sql = "SELECT s.*, a.NombreAsignatura, c.NombreCarrera, cur.NombreCurso, e.NombreEstudiante
+                    FROM semestre s
+                    LEFT JOIN asignatura a ON s.idAsignatura = a.idAsignatura
+                    LEFT JOIN carrera c ON s.idCarrera = c.idCarrera
+                    LEFT JOIN curso cur ON s.idCurso = cur.idCurso
+                    LEFT JOIN estudiante e ON s.idEstudiante = e.idEstudiante
+                    ORDER BY s.NombreSemestre";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -1667,12 +2053,18 @@ class SecretarioDao {
         }
     }
 
-    public function buscarSemestres($criterio) {
+    public static function buscarSemestres($criterio)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT * FROM Semestre 
-                    WHERE Nombre LIKE :criterio OR periodo LIKE :criterio
-                    ORDER BY Año DESC, periodo DESC";
+            $sql = "SELECT s.*, a.NombreAsignatura, c.NombreCarrera, e.NombreEstudiante
+                    FROM semestre s
+                    LEFT JOIN asignatura a ON s.idAsignatura = a.idAsignatura
+                    LEFT JOIN carrera c ON s.idCarrera = c.idCarrera
+                    LEFT JOIN estudiante e ON s.idEstudiante = e.idEstudiante
+                    WHERE s.NombreSemestre LIKE :criterio OR a.NombreAsignatura LIKE :criterio 
+                    OR c.NombreCarrera LIKE :criterio OR e.NombreEstudiante LIKE :criterio
+                    ORDER BY s.NombreSemestre";
             $stmt = $instanciaConexion->prepare($sql);
             $likeCriterio = "%" . $criterio . "%";
             $stmt->bindParam(':criterio', $likeCriterio, PDO::PARAM_STR);
@@ -1683,12 +2075,13 @@ class SecretarioDao {
         }
     }
 
-    public function cargarSemestresParaSelect() {
+    public static function cargarSemestresParaSelect()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT idSemestre as value, CONCAT(Nombre, ' (Año ', Año, ', Periodo ', periodo, ')') as label 
-                    FROM Semestre 
-                    ORDER BY Año DESC, periodo DESC";
+            $sql = "SELECT idSemestre as value, NombreSemestre as label 
+                    FROM semestre 
+                    ORDER BY NombreSemestre";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -1697,56 +2090,13 @@ class SecretarioDao {
         }
     }
 
-    public function cargarNombresSemestres() {
+    public static function cargarNombresSemestres()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT idSemestre as value, Nombre as label 
-                    FROM Semestre 
-                    ORDER BY Año DESC, periodo DESC";
-            $stmt = $instanciaConexion->prepare($sql);
-            $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $th) {
-            return $th->getMessage();
-        }
-    }
-
-    
-    // FUNCIONES ADICIONALES PARA SELECTS
-    
-    public function cargarProfesoresParaSelect() {
-        try {
-            $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT idProfesor as value, CONCAT(nombre, ' ', apellidos) as label 
-                    FROM Profesor 
-                    WHERE estado='alta' 
-                    ORDER BY apellidos, nombre";
-            $stmt = $instanciaConexion->prepare($sql);
-            $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $th) {
-            return $th->getMessage();
-        }
-    }
-
-    public function cargarEstudiantesParaSelect() {
-        try {
-            $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT codigo as value, CONCAT(Nombre, ' ', Apellidos, ' (', codigo, ')') as label 
-                    FROM Estudiante 
-                    ORDER BY Apellidos, Nombre";
-            $stmt = $instanciaConexion->prepare($sql);
-            $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $th) {
-            return $th->getMessage();
-        }
-    }
-
-    public function cargarBecariosParaSelect() {
-        try {
-            $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT idBecario as value, institucionBeca as label FROM Becario ORDER BY institucionBeca";
+            $sql = "SELECT idSemestre as value, NombreSemestre as label 
+                    FROM semestre 
+                    ORDER BY NombreSemestre";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -1756,54 +2106,63 @@ class SecretarioDao {
     }
 
 
-    public function cargarModalidadesParaSelect() {
-        $modalidades = [
-            ['value' => 'presencial', 'label' => 'Presencial'],
-            ['value' => 'virtual', 'label' => 'Virtual'],
-            ['value' => 'hibrida', 'label' => 'Híbrida']
-        ];
-        return $modalidades;
+    // FUNCIONES ADICIONALES PARA SELECTS   
+    public static function cargarProfesoresParaSelect()
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+            $sql = "SELECT idProfesor as value, CONCAT(NombreProfesor, ' ', ApellidosProfesor) as label 
+                    FROM profesor 
+                    ORDER BY ApellidosProfesor, NombreProfesor";
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $th) {
+            return $th->getMessage();
+        }
     }
 
-    public function cargarTiposEvaluacionParaSelect() {
-        $tipos = [
-            ['value' => 'parcial', 'label' => 'Parcial'],
-            ['value' => 'trabajoPractico', 'label' => 'Trabajo Práctico'],
-            ['value' => 'Final', 'label' => 'Final'],
-            ['value' => 'Extraordinaria', 'label' => 'Extraordinaria']
-        ];
-        return $tipos;
+    public static function cargarEstudiantesParaSelect()
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+            $sql = "SELECT idEstudiante as value, CONCAT(NombreEstudiante, ' ', ApellidosEstudiante, ' (', CodigoEstudiante, ')') as label 
+                    FROM estudiante 
+                    ORDER BY ApellidosEstudiante, NombreEstudiante";
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $th) {
+            return $th->getMessage();
+        }
     }
 
-    public function cargarDiasSemanaParaSelect() {
-        $dias = [
-            ['value' => 'L', 'label' => 'Lunes'],
-            ['value' => 'M', 'label' => 'Martes'],
-            ['value' => 'X', 'label' => 'Miércoles'],
-            ['value' => 'J', 'label' => 'Jueves'],
-            ['value' => 'V', 'label' => 'Viernes'],
-            ['value' => 'S', 'label' => 'Sábado'],
-            ['value' => 'D', 'label' => 'Domingo']
-        ];
-        return $dias;
+    public static function cargarBecariosParaSelect()
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+            $sql = "SELECT idBecario as value, institucionBeca as label FROM becario ORDER BY institucionBeca";
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $th) {
+            return $th->getMessage();
+        }
     }
 
-
-    // ============================================
-    // FUNCIONES DE CONSULTA RÁPIDA
-    // ============================================
-    
-    public function obtenerResumenEstadistico() {
+    // FUNCIONES DE CONSULTA RÁPIDA    
+    public static function obtenerResumenEstadistico()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
             $sql = "SELECT 
-                    (SELECT COUNT(*) FROM Estudiante) as total_estudiantes,
-                    (SELECT COUNT(*) FROM Profesor WHERE estado='alta') as total_profesores,
-                    (SELECT COUNT(*) FROM Asignatura) as total_asignaturas,
-                    (SELECT COUNT(*) FROM Carrera) as total_carreras,
-                    (SELECT COUNT(*) FROM Inscripcion WHERE YEAR(fecha) = YEAR(CURDATE())) as inscripciones_ano,
-                    (SELECT SUM(monto) FROM Pago WHERE YEAR(fechaPago) = YEAR(CURDATE())) as ingresos_ano";
-            
+                    (SELECT COUNT(*) FROM estudiante) as total_estudiantes,
+                    (SELECT COUNT(*) FROM profesor) as total_profesores,
+                    (SELECT COUNT(*) FROM asignatura) as total_asignaturas,
+                    (SELECT COUNT(*) FROM carrera) as total_carreras,
+                    (SELECT COUNT(*) FROM matricula WHERE YEAR(FechaMatricula) = YEAR(CURDATE())) as matriculas_ano,
+                    (SELECT SUM(monto) FROM pago WHERE YEAR(fecha) = YEAR(CURDATE())) as ingresos_ano";
+
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
             return $stmt->fetch(PDO::FETCH_ASSOC);
@@ -1812,10 +2171,11 @@ class SecretarioDao {
         }
     }
 
-    public function obtenerUltimasNoticias($limite = 5) {
+    public static function obtenerUltimasNoticias($limite = 5)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT * FROM Noticias ORDER BY idNoticia DESC LIMIT :limite";
+            $sql = "SELECT * FROM noticia ORDER BY idNoticia DESC LIMIT :limite";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->bindParam(':limite', $limite, PDO::PARAM_INT);
             $stmt->execute();
@@ -1825,31 +2185,15 @@ class SecretarioDao {
         }
     }
 
-
-    public function obtenerEstudiantesPorCarrera($idCarrera) {
+    public static function obtenerProfesoresPorDepartamento($idDepartamento)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT e.* FROM Estudiante e
-                    JOIN Inscripcion i ON e.codigo = i.codigo
-                    WHERE i.idCarrera = :idCarrera
-                    ORDER BY e.Apellidos, e.Nombre";
+            $sql = "SELECT * FROM profesor 
+                    WHERE idDepartamento = :idDepartamento
+                    ORDER BY ApellidosProfesor, NombreProfesor";
             $stmt = $instanciaConexion->prepare($sql);
-            $stmt->bindParam(':idCarrera', $idCarrera, PDO::PARAM_INT);
-            $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $th) {
-            return $th->getMessage();
-        }
-    }
-
-    public function obtenerProfesoresPorDepartamento($departamento) {
-        try {
-            $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT * FROM Profesor 
-                    WHERE departamento = :departamento AND estado='alta'
-                    ORDER BY apellidos, nombre";
-            $stmt = $instanciaConexion->prepare($sql);
-            $stmt->bindParam(':departamento', $departamento, PDO::PARAM_STR);
+            $stmt->bindParam(':idDepartamento', $idDepartamento, PDO::PARAM_INT);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $th) {
@@ -1858,20 +2202,12 @@ class SecretarioDao {
     }
 
 
-    // FUNCIONES PARA LA GESTIÓN DE SEMESTRES Y PERIODOS ACADÉMICOS
-    
-    public function obtenerSemestreActivo() {
+    // FUNCIONES PARA LA GESTIÓN DE SEMESTRES Y PERIODOS ACADÉMICOS   
+    public static function obtenerSemestreActivo()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT * FROM Semestre 
-                    WHERE YEAR(CURDATE()) = Año 
-                    AND periodo = (
-                        CASE 
-                            WHEN MONTH(CURDATE()) BETWEEN 1 AND 6 THEN '1'
-                            WHEN MONTH(CURDATE()) BETWEEN 7 AND 12 THEN '2'
-                            ELSE periodo
-                        END
-                    )
+            $sql = "SELECT * FROM semestre 
                     LIMIT 1";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
@@ -1881,12 +2217,13 @@ class SecretarioDao {
         }
     }
 
-    public function obtenerPeriodosAcademicos() {
+    public static function obtenerPeriodosAcademicos()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT DISTINCT anoAcademico, periodo 
-                    FROM Inscripcion 
-                    ORDER BY anoAcademico DESC, periodo DESC";
+            $sql = "SELECT DISTINCT AñoAcademico, EstadoMatricula 
+                    FROM matricula 
+                    ORDER BY AñoAcademico DESC";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -1895,12 +2232,12 @@ class SecretarioDao {
         }
     }
 
-    // GESTIÓN DE AULAS
-    
-    public function verificarDisponibilidadAula($idAula, $diaSemanal, $horaInicio, $horaFin, $excluirClaseId = null) {
+    // GESTIÓN DE AULAS   
+    public static function verificarDisponibilidadAula($idAula, $diaSemanal, $horaInicio, $horaFin, $excluirClaseId = null)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT COUNT(*) as ocupada FROM Clase 
+            $sql = "SELECT COUNT(*) as ocupada FROM clase 
                     WHERE idAula = :idAula 
                     AND diaSemanal = :diaSemanal
                     AND (
@@ -1908,21 +2245,21 @@ class SecretarioDao {
                         (:horaFin BETWEEN horalnicio AND HoraFinal) OR
                         (horalnicio BETWEEN :horaInicio AND :horaFin)
                     )";
-            
+
             if ($excluirClaseId) {
                 $sql .= " AND idClase != :excluirClaseId";
             }
-            
+
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->bindParam(':idAula', $idAula, PDO::PARAM_INT);
             $stmt->bindParam(':diaSemanal', $diaSemanal, PDO::PARAM_STR);
             $stmt->bindParam(':horaInicio', $horaInicio, PDO::PARAM_STR);
             $stmt->bindParam(':horaFin', $horaFin, PDO::PARAM_STR);
-            
+
             if ($excluirClaseId) {
                 $stmt->bindParam(':excluirClaseId', $excluirClaseId, PDO::PARAM_INT);
             }
-            
+
             $stmt->execute();
             $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
             return $resultado['ocupada'] == 0; // Devuelve true si está disponible
@@ -1931,34 +2268,35 @@ class SecretarioDao {
         }
     }
 
-    public function obtenerAulasDisponibles($diaSemanal, $horaInicio, $horaFin, $excluirClaseId = null) {
+    public static function obtenerAulasDisponibles($diaSemanal, $horaInicio, $horaFin, $excluirClaseId = null)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT a.* FROM Aulas a
+            $sql = "SELECT a.* FROM aulas a
                     WHERE a.idAula NOT IN (
-                        SELECT c.idAula FROM Clase c
+                        SELECT c.idAula FROM clase c
                         WHERE c.diaSemanal = :diaSemanal
                         AND (
                             (:horaInicio BETWEEN c.horalnicio AND c.HoraFinal) OR
                             (:horaFin BETWEEN c.horalnicio AND c.HoraFinal) OR
                             (c.horalnicio BETWEEN :horaInicio AND :horaFin)
                         )";
-            
+
             if ($excluirClaseId) {
                 $sql .= " AND c.idClase != :excluirClaseId";
             }
-            
+
             $sql .= ") ORDER BY a.nombre";
-            
+
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->bindParam(':diaSemanal', $diaSemanal, PDO::PARAM_STR);
             $stmt->bindParam(':horaInicio', $horaInicio, PDO::PARAM_STR);
             $stmt->bindParam(':horaFin', $horaFin, PDO::PARAM_STR);
-            
+
             if ($excluirClaseId) {
                 $stmt->bindParam(':excluirClaseId', $excluirClaseId, PDO::PARAM_INT);
             }
-            
+
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $th) {
@@ -1967,13 +2305,13 @@ class SecretarioDao {
     }
 
     // GESTIÓN DE CURSOS Y NIVELES
-    
-    public function obtenerCursosPorNivel($nivel) {
+    public static function obtenerCursosPorCarrera($idCarrera)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT * FROM Curso WHERE Nivel = :nivel ORDER BY Nombre";
+            $sql = "SELECT * FROM curso WHERE idCarrera = :idCarrera ORDER BY NombreCurso";
             $stmt = $instanciaConexion->prepare($sql);
-            $stmt->bindParam(':nivel', $nivel, PDO::PARAM_INT);
+            $stmt->bindParam(':idCarrera', $idCarrera, PDO::PARAM_INT);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $th) {
@@ -1981,10 +2319,11 @@ class SecretarioDao {
         }
     }
 
-    public function obtenerAsignaturasPorCurso($idCurso) {
+    public static function obtenerAsignaturasPorCurso($idCurso)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT * FROM Asignatura WHERE idCurso = :idCurso ORDER BY Nombre";
+            $sql = "SELECT * FROM asignatura WHERE idCurso = :idCurso ORDER BY NombreAsignatura";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->bindParam(':idCurso', $idCurso, PDO::PARAM_INT);
             $stmt->execute();
@@ -1994,16 +2333,16 @@ class SecretarioDao {
         }
     }
 
-    // GESTIÓN DE CONVOCATORIAS DE ESTUDIANTES
-    
-    public function obtenerConvocatoriasEstudianteAsignatura($codigo, $idAsignatura) {
+    // GESTIÓN DE CONVOCATORIAS DE ESTUDIANTES   
+    public static function obtenerConvocatoriasEstudianteAsignatura($idEstudiante, $idAsignatura)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT * FROM Estudiante_Asignatura 
-                    WHERE Codigo = :codigo AND idAsignatura = :idAsignatura
+            $sql = "SELECT * FROM estudiante_asignatura 
+                    WHERE idEstudianteConvocatoria = :idEstudiante AND idAsignatura = :idAsignatura
                     ORDER BY convocatoria";
             $stmt = $instanciaConexion->prepare($sql);
-            $stmt->bindParam(':codigo', $codigo, PDO::PARAM_STR);
+            $stmt->bindParam(':idEstudiante', $idEstudiante, PDO::PARAM_INT);
             $stmt->bindParam(':idAsignatura', $idAsignatura, PDO::PARAM_INT);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -2013,23 +2352,43 @@ class SecretarioDao {
     }
 
     //GESTIÓN DE HORARIOS
-    
-    public function crearHorario($nombreHorario) {
+
+    public static function crearHorario($datosHorario)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "INSERT INTO Horario (nombre) VALUES (:nombre)";
+            $sql = "INSERT INTO horario (NumeroAula, idCarrera, idCurso, dia, idAsignatura, Horalnicio, HoraFinal, idProfesor, idSemestre) 
+                    VALUES (:NumeroAula, :idCarrera, :idCurso, :dia, :idAsignatura, :Horalnicio, :HoraFinal, :idProfesor, :idSemestre)";
             $stmt = $instanciaConexion->prepare($sql);
-            $stmt->bindParam(':nombre', $nombreHorario, PDO::PARAM_STR);
+
+            $stmt->bindParam(':NumeroAula', $datosHorario['NumeroAula'], PDO::PARAM_INT);
+            $stmt->bindParam(':idCarrera', $datosHorario['idCarrera'], PDO::PARAM_INT);
+            $stmt->bindParam(':idCurso', $datosHorario['idCurso'], PDO::PARAM_INT);
+            $stmt->bindParam(':dia', $datosHorario['dia'], PDO::PARAM_STR);
+            $stmt->bindParam(':idAsignatura', $datosHorario['idAsignatura'], PDO::PARAM_INT);
+            $stmt->bindParam(':Horalnicio', $datosHorario['Horalnicio'], PDO::PARAM_STR);
+            $stmt->bindParam(':HoraFinal', $datosHorario['HoraFinal'], PDO::PARAM_STR);
+            $stmt->bindParam(':idProfesor', $datosHorario['idProfesor'], PDO::PARAM_INT);
+            $stmt->bindParam(':idSemestre', $datosHorario['idSemestre'], PDO::PARAM_INT);
+
             return $stmt->execute();
         } catch (PDOException $th) {
             return $th->getMessage();
         }
     }
 
-    public function obtenerTodosHorarios() {
+    public static function obtenerTodosHorarios()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT * FROM Horario ORDER BY nombre";
+            $sql = "SELECT h.*, c.NombreCarrera, cur.NombreCurso, a.NombreAsignatura, p.NombreProfesor, s.NombreSemestre
+                    FROM horario h
+                    JOIN carrera c ON h.idCarrera = c.idCarrera
+                    JOIN curso cur ON h.idCurso = cur.idCurso
+                    JOIN asignatura a ON h.idAsignatura = a.idAsignatura
+                    JOIN profesor p ON h.idProfesor = p.idProfesor
+                    JOIN semestre s ON h.idSemestre = s.idSemestre
+                    ORDER BY h.dia, h.Horalnicio";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -2038,10 +2397,18 @@ class SecretarioDao {
         }
     }
 
-    public function obtenerHorarioPorId($idHorario) {
+    public static function obtenerHorarioPorId($idHorario)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT * FROM Horario WHERE idHorario = :idHorario";
+            $sql = "SELECT h.*, c.NombreCarrera, cur.NombreCurso, a.NombreAsignatura, p.NombreProfesor, s.NombreSemestre
+                    FROM horario h
+                    JOIN carrera c ON h.idCarrera = c.idCarrera
+                    JOIN curso cur ON h.idCurso = cur.idCurso
+                    JOIN asignatura a ON h.idAsignatura = a.idAsignatura
+                    JOIN profesor p ON h.idProfesor = p.idProfesor
+                    JOIN semestre s ON h.idSemestre = s.idSemestre
+                    WHERE h.idHorario = :idHorario";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->bindParam(':idHorario', $idHorario, PDO::PARAM_INT);
             $stmt->execute();
@@ -2051,12 +2418,39 @@ class SecretarioDao {
         }
     }
 
-    public function actualizarHorario($idHorario, $nombreHorario) {
+    public static function actualizarHorario($idHorario, $datosHorario)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "UPDATE Horario SET nombre = :nombre WHERE idHorario = :idHorario";
+            $sql = "UPDATE horario SET NumeroAula=:NumeroAula, idCarrera=:idCarrera, idCurso=:idCurso, 
+                    dia=:dia, idAsignatura=:idAsignatura, Horalnicio=:Horalnicio, HoraFinal=:HoraFinal, 
+                    idProfesor=:idProfesor, idSemestre=:idSemestre 
+                    WHERE idHorario=:idHorario";
             $stmt = $instanciaConexion->prepare($sql);
-            $stmt->bindParam(':nombre', $nombreHorario, PDO::PARAM_STR);
+
+            $stmt->bindParam(':NumeroAula', $datosHorario['NumeroAula'], PDO::PARAM_INT);
+            $stmt->bindParam(':idCarrera', $datosHorario['idCarrera'], PDO::PARAM_INT);
+            $stmt->bindParam(':idCurso', $datosHorario['idCurso'], PDO::PARAM_INT);
+            $stmt->bindParam(':dia', $datosHorario['dia'], PDO::PARAM_STR);
+            $stmt->bindParam(':idAsignatura', $datosHorario['idAsignatura'], PDO::PARAM_INT);
+            $stmt->bindParam(':Horalnicio', $datosHorario['Horalnicio'], PDO::PARAM_STR);
+            $stmt->bindParam(':HoraFinal', $datosHorario['HoraFinal'], PDO::PARAM_STR);
+            $stmt->bindParam(':idProfesor', $datosHorario['idProfesor'], PDO::PARAM_INT);
+            $stmt->bindParam(':idSemestre', $datosHorario['idSemestre'], PDO::PARAM_INT);
+            $stmt->bindParam(':idHorario', $idHorario, PDO::PARAM_INT);
+
+            return $stmt->execute();
+        } catch (PDOException $th) {
+            return $th->getMessage();
+        }
+    }
+
+    public static function eliminarHorario($idHorario)
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+            $sql = "DELETE FROM horario WHERE idHorario = :idHorario";
+            $stmt = $instanciaConexion->prepare($sql);
             $stmt->bindParam(':idHorario', $idHorario, PDO::PARAM_INT);
             return $stmt->execute();
         } catch (PDOException $th) {
@@ -2064,22 +2458,17 @@ class SecretarioDao {
         }
     }
 
-    public function eliminarHorario($idHorario) {
+    public static function buscarHorariosPorNombre($nombre)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "DELETE FROM Horario WHERE idHorario = :idHorario";
-            $stmt = $instanciaConexion->prepare($sql);
-            $stmt->bindParam(':idHorario', $idHorario, PDO::PARAM_INT);
-            return $stmt->execute();
-        } catch (PDOException $th) {
-            return $th->getMessage();
-        }
-    }
-
-    public function buscarHorariosPorNombre($nombre) {
-        try {
-            $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT * FROM Horario WHERE nombre LIKE :nombre ORDER BY nombre";
+            $sql = "SELECT h.*, c.NombreCarrera, a.NombreAsignatura, p.NombreProfesor
+                    FROM horario h
+                    JOIN carrera c ON h.idCarrera = c.idCarrera
+                    JOIN asignatura a ON h.idAsignatura = a.idAsignatura
+                    JOIN profesor p ON h.idProfesor = p.idProfesor
+                    WHERE c.NombreCarrera LIKE :nombre OR a.NombreAsignatura LIKE :nombre OR p.NombreProfesor LIKE :nombre
+                    ORDER BY h.dia, h.Horalnicio";
             $stmt = $instanciaConexion->prepare($sql);
             $nombreBusqueda = "%" . $nombre . "%";
             $stmt->bindParam(':nombre', $nombreBusqueda, PDO::PARAM_STR);
@@ -2090,10 +2479,11 @@ class SecretarioDao {
         }
     }
 
-    public function horarioEstaEnUso($idHorario) {
+    public static function horarioEstaEnUso($idHorario)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT COUNT(*) as total FROM Clase WHERE idHorario = :idHorario";
+            $sql = "SELECT COUNT(*) as total FROM clase WHERE idHorario = :idHorario";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->bindParam(':idHorario', $idHorario, PDO::PARAM_INT);
             $stmt->execute();
@@ -2104,13 +2494,14 @@ class SecretarioDao {
         }
     }
 
-    public function obtenerHorariosDisponibles() {
+    public static function obtenerHorariosDisponibles()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT h.* FROM Horario h 
-                    LEFT JOIN Clase c ON h.idHorario = c.idHorario 
+            $sql = "SELECT h.* FROM horario h 
+                    LEFT JOIN clase c ON h.idHorario = c.idHorario 
                     WHERE c.idHorario IS NULL 
-                    ORDER BY h.nombre";
+                    ORDER BY h.dia, h.Horalnicio";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -2119,12 +2510,13 @@ class SecretarioDao {
         }
     }
 
-    public function obtenerHorariosEnUso() {
+    public static function obtenerHorariosEnUso()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT DISTINCT h.* FROM Horario h 
-                    JOIN Clase c ON h.idHorario = c.idHorario 
-                    ORDER BY h.nombre";
+            $sql = "SELECT DISTINCT h.* FROM horario h 
+                    JOIN clase c ON h.idHorario = c.idHorario 
+                    ORDER BY h.dia, h.Horalnicio";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -2133,10 +2525,11 @@ class SecretarioDao {
         }
     }
 
-    public function asignarHorarioAClase($idClase, $idHorario) {
+    public static function asignarHorarioAClase($idClase, $idHorario)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "UPDATE Clase SET idHorario = :idHorario WHERE idClase = :idClase";
+            $sql = "UPDATE clase SET idHorario = :idHorario WHERE idClase = :idClase";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->bindParam(':idHorario', $idHorario, PDO::PARAM_INT);
             $stmt->bindParam(':idClase', $idClase, PDO::PARAM_INT);
@@ -2146,10 +2539,11 @@ class SecretarioDao {
         }
     }
 
-    public function quitarHorarioDeClase($idClase) {
+    public static function quitarHorarioDeClase($idClase)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "UPDATE Clase SET idHorario = NULL WHERE idClase = :idClase";
+            $sql = "UPDATE clase SET idHorario = NULL WHERE idClase = :idClase";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->bindParam(':idClase', $idClase, PDO::PARAM_INT);
             return $stmt->execute();
@@ -2158,17 +2552,18 @@ class SecretarioDao {
         }
     }
 
-    public function obtenerClasesConHorarios() {
+    public static function obtenerClasesConHorarios()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT c.*, h.nombre as nombre_horario, 
-                    p.nombre as profesor_nombre, p.apellidos as profesor_apellidos,
-                    a.Nombre as asignatura_nombre, au.nombre as aula_nombre
-                    FROM Clase c
-                    LEFT JOIN Horario h ON c.idHorario = h.idHorario
-                    JOIN Profesor p ON c.idProfesor = p.idProfesor
-                    JOIN Asignatura a ON c.idAsignatura = a.idAsignatura
-                    JOIN Aulas au ON c.idAula = au.idAula
+            $sql = "SELECT c.*, h.dia as horario_dia, h.Horalnicio as horario_inicio, h.HoraFinal as horario_fin, 
+                    p.NombreProfesor, p.ApellidosProfesor,
+                    a.NombreAsignatura, au.nombre as aula_nombre
+                    FROM clase c
+                    LEFT JOIN horario h ON c.idHorario = h.idHorario
+                    JOIN profesor p ON c.idProfesor = p.idProfesor
+                    JOIN asignatura a ON c.idAsignatura = a.idAsignatura
+                    JOIN aulas au ON c.idAula = au.idAula
                     ORDER BY c.diaSemanal, c.horalnicio";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
@@ -2178,15 +2573,16 @@ class SecretarioDao {
         }
     }
 
-    public function obtenerClasesSinHorario() {
+    public static function obtenerClasesSinHorario()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT c.*, p.nombre as profesor_nombre, p.apellidos as profesor_apellidos,
-                    a.Nombre as asignatura_nombre, au.nombre as aula_nombre
-                    FROM Clase c
-                    JOIN Profesor p ON c.idProfesor = p.idProfesor
-                    JOIN Asignatura a ON c.idAsignatura = a.idAsignatura
-                    JOIN Aulas au ON c.idAula = au.idAula
+            $sql = "SELECT c.*, p.NombreProfesor, p.ApellidosProfesor,
+                    a.NombreAsignatura, au.nombre as aula_nombre
+                    FROM clase c
+                    JOIN profesor p ON c.idProfesor = p.idProfesor
+                    JOIN asignatura a ON c.idAsignatura = a.idAsignatura
+                    JOIN aulas au ON c.idAula = au.idAula
                     WHERE c.idHorario IS NULL
                     ORDER BY c.diaSemanal, c.horalnicio";
             $stmt = $instanciaConexion->prepare($sql);
@@ -2197,15 +2593,16 @@ class SecretarioDao {
         }
     }
 
-    public function obtenerClasesPorHorario($idHorario) {
+    public static function obtenerClasesPorHorario($idHorario)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT c.*, p.nombre as profesor_nombre, p.apellidos as profesor_apellidos,
-                    a.Nombre as asignatura_nombre, au.nombre as aula_nombre
-                    FROM Clase c
-                    JOIN Profesor p ON c.idProfesor = p.idProfesor
-                    JOIN Asignatura a ON c.idAsignatura = a.idAsignatura
-                    JOIN Aulas au ON c.idAula = au.idAula
+            $sql = "SELECT c.*, p.NombreProfesor, p.ApellidosProfesor,
+                    a.NombreAsignatura, au.nombre as aula_nombre
+                    FROM clase c
+                    JOIN profesor p ON c.idProfesor = p.idProfesor
+                    JOIN asignatura a ON c.idAsignatura = a.idAsignatura
+                    JOIN aulas au ON c.idAula = au.idAula
                     WHERE c.idHorario = :idHorario
                     ORDER BY c.diaSemanal, c.horalnicio";
             $stmt = $instanciaConexion->prepare($sql);
@@ -2217,13 +2614,14 @@ class SecretarioDao {
         }
     }
 
- 
- 
+
+
     // GESTIÓN DE CONFLICTOS DE HORARIOS
-    public function verificarConflictoProfesor($idProfesor, $diaSemanal, $horaInicio, $horaFin, $excluirClaseId = null) {
+    public static function verificarConflictoProfesor($idProfesor, $diaSemanal, $horaInicio, $horaFin, $excluirClaseId = null)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT COUNT(*) as conflicto FROM Clase 
+            $sql = "SELECT COUNT(*) as conflicto FROM clase 
                     WHERE idProfesor = :idProfesor 
                     AND diaSemanal = :diaSemanal
                     AND (
@@ -2231,21 +2629,21 @@ class SecretarioDao {
                         (:horaFin BETWEEN horalnicio AND HoraFinal) OR
                         (horalnicio BETWEEN :horaInicio AND :horaFin)
                     )";
-            
+
             if ($excluirClaseId) {
                 $sql .= " AND idClase != :excluirClaseId";
             }
-            
+
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->bindParam(':idProfesor', $idProfesor, PDO::PARAM_INT);
             $stmt->bindParam(':diaSemanal', $diaSemanal, PDO::PARAM_STR);
             $stmt->bindParam(':horaInicio', $horaInicio, PDO::PARAM_STR);
             $stmt->bindParam(':horaFin', $horaFin, PDO::PARAM_STR);
-            
+
             if ($excluirClaseId) {
                 $stmt->bindParam(':excluirClaseId', $excluirClaseId, PDO::PARAM_INT);
             }
-            
+
             $stmt->execute();
             $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
             return $resultado['conflicto'] > 0;
@@ -2254,10 +2652,11 @@ class SecretarioDao {
         }
     }
 
-    public function verificarConflictoAula($idAula, $diaSemanal, $horaInicio, $horaFin, $excluirClaseId = null) {
+    public static function verificarConflictoAula($idAula, $diaSemanal, $horaInicio, $horaFin, $excluirClaseId = null)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT COUNT(*) as conflicto FROM Clase 
+            $sql = "SELECT COUNT(*) as conflicto FROM clase 
                     WHERE idAula = :idAula 
                     AND diaSemanal = :diaSemanal
                     AND (
@@ -2265,21 +2664,21 @@ class SecretarioDao {
                         (:horaFin BETWEEN horalnicio AND HoraFinal) OR
                         (horalnicio BETWEEN :horaInicio AND :horaFin)
                     )";
-            
+
             if ($excluirClaseId) {
                 $sql .= " AND idClase != :excluirClaseId";
             }
-            
+
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->bindParam(':idAula', $idAula, PDO::PARAM_INT);
             $stmt->bindParam(':diaSemanal', $diaSemanal, PDO::PARAM_STR);
             $stmt->bindParam(':horaInicio', $horaInicio, PDO::PARAM_STR);
             $stmt->bindParam(':horaFin', $horaFin, PDO::PARAM_STR);
-            
+
             if ($excluirClaseId) {
                 $stmt->bindParam(':excluirClaseId', $excluirClaseId, PDO::PARAM_INT);
             }
-            
+
             $stmt->execute();
             $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
             return $resultado['conflicto'] > 0;
@@ -2289,16 +2688,16 @@ class SecretarioDao {
     }
 
 
-    // GENERACIÓN DE HORARIOS   
-    public function generarHorarioProfesor($idProfesor) {
+    public static function generarHorarioProfesor($idProfesor)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT c.*, a.Nombre as asignatura_nombre, au.nombre as aula_nombre,
-                    h.nombre as horario_nombre
-                    FROM Clase c
-                    JOIN Asignatura a ON c.idAsignatura = a.idAsignatura
-                    JOIN Aulas au ON c.idAula = au.idAula
-                    LEFT JOIN Horario h ON c.idHorario = h.idHorario
+            $sql = "SELECT c.*, a.NombreAsignatura, au.nombre as aula_nombre,
+                    h.dia as horario_dia, h.Horalnicio as horario_inicio, h.HoraFinal as horario_fin
+                    FROM clase c
+                    JOIN asignatura a ON c.idAsignatura = a.idAsignatura
+                    JOIN aulas au ON c.idAula = au.idAula
+                    LEFT JOIN horario h ON c.idHorario = h.idHorario
                     WHERE c.idProfesor = :idProfesor
                     ORDER BY 
                         CASE c.diaSemanal 
@@ -2312,7 +2711,7 @@ class SecretarioDao {
                             ELSE 8
                         END,
                         c.horalnicio";
-            
+
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->bindParam(':idProfesor', $idProfesor, PDO::PARAM_INT);
             $stmt->execute();
@@ -2322,16 +2721,17 @@ class SecretarioDao {
         }
     }
 
-    public function generarHorarioAula($idAula) {
+    public static function generarHorarioAula($idAula)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT c.*, a.Nombre as asignatura_nombre, 
-                    p.nombre as profesor_nombre, p.apellidos as profesor_apellidos,
-                    h.nombre as horario_nombre
-                    FROM Clase c
-                    JOIN Asignatura a ON c.idAsignatura = a.idAsignatura
-                    JOIN Profesor p ON c.idProfesor = p.idProfesor
-                    LEFT JOIN Horario h ON c.idHorario = h.idHorario
+            $sql = "SELECT c.*, a.NombreAsignatura, 
+                    p.NombreProfesor, p.ApellidosProfesor,
+                    h.dia as horario_dia, h.Horalnicio as horario_inicio, h.HoraFinal as horario_fin
+                    FROM clase c
+                    JOIN asignatura a ON c.idAsignatura = a.idAsignatura
+                    JOIN profesor p ON c.idProfesor = p.idProfesor
+                    LEFT JOIN horario h ON c.idHorario = h.idHorario
                     WHERE c.idAula = :idAula
                     ORDER BY 
                         CASE c.diaSemanal 
@@ -2345,7 +2745,7 @@ class SecretarioDao {
                             ELSE 8
                         END,
                         c.horalnicio";
-            
+
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->bindParam(':idAula', $idAula, PDO::PARAM_INT);
             $stmt->execute();
@@ -2355,24 +2755,25 @@ class SecretarioDao {
         }
     }
 
-    public function generarHorarioCompleto($dia = null) {
+    public static function generarHorarioCompleto($dia = null)
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
             $sql = "SELECT c.*, 
-                    a.Nombre as asignatura_nombre,
-                    p.nombre as profesor_nombre, p.apellidos as profesor_apellidos,
+                    a.NombreAsignatura,
+                    p.NombreProfesor, p.ApellidosProfesor,
                     au.nombre as aula_nombre,
-                    h.nombre as horario_nombre
-                    FROM Clase c
-                    JOIN Asignatura a ON c.idAsignatura = a.idAsignatura
-                    JOIN Profesor p ON c.idProfesor = p.idProfesor
-                    JOIN Aulas au ON c.idAula = au.idAula
-                    LEFT JOIN Horario h ON c.idHorario = h.idHorario";
-            
+                    h.dia as horario_dia, h.Horalnicio as horario_inicio, h.HoraFinal as horario_fin
+                    FROM clase c
+                    JOIN asignatura a ON c.idAsignatura = a.idAsignatura
+                    JOIN profesor p ON c.idProfesor = p.idProfesor
+                    JOIN aulas au ON c.idAula = au.idAula
+                    LEFT JOIN horario h ON c.idHorario = h.idHorario";
+
             if ($dia) {
                 $sql .= " WHERE c.diaSemanal = :dia";
             }
-            
+
             $sql .= " ORDER BY 
                         CASE c.diaSemanal 
                             WHEN 'L' THEN 1
@@ -2386,13 +2787,13 @@ class SecretarioDao {
                         END,
                         c.horalnicio,
                         au.nombre";
-            
+
             $stmt = $instanciaConexion->prepare($sql);
-            
+
             if ($dia) {
                 $stmt->bindParam(':dia', $dia, PDO::PARAM_STR);
             }
-            
+
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $th) {
@@ -2400,18 +2801,17 @@ class SecretarioDao {
         }
     }
 
-
-    // ESTADÍSTICAS DE HORARIOS    
-    public function obtenerEstadisticasHorarios() {
+    public static function obtenerEstadisticasHorarios()
+    {
         try {
             $instanciaConexion = ConexionUtil::conectar();
             $sql = "SELECT 
-                    (SELECT COUNT(*) FROM Horario) as total_horarios,
-                    (SELECT COUNT(DISTINCT idHorario) FROM Clase WHERE idHorario IS NOT NULL) as horarios_en_uso,
-                    (SELECT COUNT(*) FROM Clase WHERE idHorario IS NULL) as clases_sin_horario,
-                    (SELECT COUNT(DISTINCT idProfesor) FROM Clase) as profesores_con_clases,
-                    (SELECT COUNT(DISTINCT idAula) FROM Clase) as aulas_en_uso";
-            
+                    (SELECT COUNT(*) FROM horario) as total_horarios,
+                    (SELECT COUNT(DISTINCT idHorario) FROM clase WHERE idHorario IS NOT NULL) as horarios_en_uso,
+                    (SELECT COUNT(*) FROM clase WHERE idHorario IS NULL) as clases_sin_horario,
+                    (SELECT COUNT(DISTINCT idProfesor) FROM clase) as profesores_con_clases,
+                    (SELECT COUNT(DISTINCT idAula) FROM clase) as aulas_en_uso";
+
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
             return $stmt->fetch(PDO::FETCH_ASSOC);
@@ -2419,24 +2819,4 @@ class SecretarioDao {
             return $th->getMessage();
         }
     }
-
-    public function obtenerHorariosMasUtilizados($limite = 5) {
-        try {
-            $instanciaConexion = ConexionUtil::conectar();
-            $sql = "SELECT h.nombre, COUNT(c.idClase) as total_clases
-                    FROM Horario h
-                    LEFT JOIN Clase c ON h.idHorario = c.idHorario
-                    GROUP BY h.idHorario, h.nombre
-                    ORDER BY total_clases DESC, h.nombre
-                    LIMIT :limite";
-            
-            $stmt = $instanciaConexion->prepare($sql);
-            $stmt->bindParam(':limite', $limite, PDO::PARAM_INT);
-            $stmt->execute();
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $th) {
-            return $th->getMessage();
-        }
-    }
 }
-?>
