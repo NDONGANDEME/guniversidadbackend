@@ -1,5 +1,4 @@
 <?php
-
 require_once __DIR__ . "/../utilidades/u_conexion.php";
 
 class NoticiasDao
@@ -35,7 +34,7 @@ class NoticiasDao
             $stmt = $instanciaConexion->prepare($sql);
 
             $stmt->bindParam(':lote', $lote, PDO::PARAM_INT);
-            $stmt->bindParam(':offset', $saltos, PDO::PARAM_INT);
+            $stmt->bindParam(':saltos', $saltos, PDO::PARAM_INT);
             $stmt->execute();
 
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -60,7 +59,7 @@ class NoticiasDao
         }
     }
 
-    // FUNCIÓN PARA OBTENER LAS 5 NOTICIAS MÁS RECIENTES (existente)
+    // FUNCIÓN PARA OBTENER LAS 5 NOTICIAS MÁS RECIENTES
     public static function obtenerNoticiasRecientes()
     {
         try {
@@ -76,7 +75,7 @@ class NoticiasDao
         }
     }
 
-    // FUNCIÓN PARA OBTENER UNA NOTICIA POR ID (existente)
+    // FUNCIÓN PARA OBTENER UNA NOTICIA POR ID
     public static function obtenerNoticiaPorId(int $id)
     {
         try {
@@ -89,9 +88,126 @@ class NoticiasDao
 
             $noticia = $stmt->fetch(PDO::FETCH_ASSOC);
 
+            // Si existe la noticia, obtener sus fotos y documentos
+            if ($noticia) {
+                $noticia['fotos'] = self::obtenerFotosNoticia($id);
+                $noticia['documentos'] = self::obtenerDocumentosNoticia($id);
+            }
+
             return $noticia;
         } catch (PDOException $e) {
             return null;
         }
     }
+
+    // NUEVA FUNCIÓN: Crear noticia
+    public static function crearNoticia($datos)
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+
+            $sql = "INSERT INTO noticias (titulo, contenido, fecha_creacion) 
+                    VALUES (:titulo, :contenido, :fecha_creacion)";
+            
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->bindParam(':titulo', $datos['titulo']);
+            $stmt->bindParam(':contenido', $datos['contenido']);
+            $stmt->bindParam(':fecha_creacion', $datos['fecha_creacion']);
+            
+            if ($stmt->execute()) {
+                return $instanciaConexion->lastInsertId();
+            }
+            
+            return null;
+        } catch (PDOException $e) {
+            return null;
+        }
+    }
+
+    // NUEVA FUNCIÓN: Guardar fotos de una noticia
+    public static function guardarFotosNoticia($noticiaId, $fotos)
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+
+            $sql = "INSERT INTO noticias_fotos (noticia_id, nombre_archivo) 
+                    VALUES (:noticia_id, :nombre_archivo)";
+            
+            $stmt = $instanciaConexion->prepare($sql);
+            
+            foreach ($fotos as $foto) {
+                $stmt->bindParam(':noticia_id', $noticiaId);
+                $stmt->bindParam(':nombre_archivo', $foto);
+                $stmt->execute();
+            }
+            
+            return true;
+        } catch (PDOException $e) {
+            return false;
+        }
+    }
+
+    // NUEVA FUNCIÓN: Guardar documentos de una noticia
+    public static function guardarDocumentosNoticia($noticiaId, $documentos)
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+
+            $sql = "INSERT INTO noticias_documentos (noticia_id, nombre_archivo) 
+                    VALUES (:noticia_id, :nombre_archivo)";
+            
+            $stmt = $instanciaConexion->prepare($sql);
+            
+            foreach ($documentos as $documento) {
+                $stmt->bindParam(':noticia_id', $noticiaId);
+                $stmt->bindParam(':nombre_archivo', $documento);
+                $stmt->execute();
+            }
+            
+            return true;
+        } catch (PDOException $e) {
+            return false;
+        }
+    }
+
+    // NUEVA FUNCIÓN: Obtener fotos de una noticia
+    public static function obtenerFotosNoticia($noticiaId)
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+
+            $sql = "SELECT id, nombre_archivo FROM noticias_fotos 
+                    WHERE noticia_id = :noticia_id 
+                    ORDER BY id ASC";
+            
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->bindParam(':noticia_id', $noticiaId, PDO::PARAM_INT);
+            $stmt->execute();
+
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            return [];
+        }
+    }
+
+    // NUEVA FUNCIÓN: Obtener documentos de una noticia
+    public static function obtenerDocumentosNoticia($noticiaId)
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+
+            $sql = "SELECT id, nombre_archivo FROM noticias_documentos 
+                    WHERE noticia_id = :noticia_id 
+                    ORDER BY id ASC";
+            
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->bindParam(':noticia_id', $noticiaId, PDO::PARAM_INT);
+            $stmt->execute();
+
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            return [];
+        }
+    }
 }
+?>

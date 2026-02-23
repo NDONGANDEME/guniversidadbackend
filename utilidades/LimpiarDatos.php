@@ -151,5 +151,169 @@ class LimpiarDatos
         
         return false;
     }
+
+    // ... (tus funciones existentes) ...
+
+    /**
+     * NUEVO: Generar ID único para archivos
+     * @param string $prefijo Prefijo para el archivo (Foto_, Documento_, etc)
+     * @return string Nombre único con prefijo
+     */
+    public static function generarIdUnicoArchivo($prefijo = '')
+    {
+        // Generar ID único: prefijo + timestamp + bin2hex + extension
+        $timestamp = time();
+        $random = bin2hex(random_bytes(8));
+        return $prefijo . $timestamp . '_' . $random;
+    }
+
+    /**
+     * NUEVO: Procesar y guardar archivos de noticias
+     * @param array $archivos Array de archivos del campo 'fotos' o 'documentos'
+     * @param string $tipo 'fotos' o 'documentos'
+     * @param int $noticiaId ID de la noticia para referencia
+     * @return array Array con los nombres de los archivos guardados
+     */
+    public static function procesarArchivosNoticia($archivos, $tipo, $noticiaId)
+    {
+        $archivosGuardados = [];
+        
+        if (empty($archivos)) {
+            return $archivosGuardados;
+        }
+
+        // Determinar carpeta y prefijo según tipo
+        $carpeta = ($tipo === 'fotos') ? 'imagenes' : 'documentos';
+        $prefijo = ($tipo === 'fotos') ? 'Foto_' : 'Documento_';
+        
+        $rutaBase = __DIR__ . "/../../uploads/{$carpeta}/";
+        
+        // Crear carpeta si no existe
+        if (!file_exists($rutaBase)) {
+            mkdir($rutaBase, 0777, true);
+        }
+
+        // Si es un array de archivos (múltiples)
+        if (isset($archivos[0]) && is_array($archivos[0])) {
+            foreach ($archivos as $archivo) {
+                $nombreGuardado = self::guardarArchivoIndividual(
+                    $archivo, 
+                    $rutaBase, 
+                    $prefijo,
+                    $noticiaId
+                );
+                if ($nombreGuardado) {
+                    $archivosGuardados[] = $nombreGuardado;
+                }
+            }
+        } else {
+            // Archivo único
+            $nombreGuardado = self::guardarArchivoIndividual(
+                $archivos, 
+                $rutaBase, 
+                $prefijo,
+                $noticiaId
+            );
+            if ($nombreGuardado) {
+                $archivosGuardados[] = $nombreGuardado;
+            }
+        }
+
+        return $archivosGuardados;
+    }
+
+    /**
+     * NUEVO: Guardar archivo individual
+     */
+    private static function guardarArchivoIndividual($archivo, $rutaBase, $prefijo, $noticiaId)
+    {
+        // Validar que el archivo se subió correctamente
+        if ($archivo['error'] !== UPLOAD_ERR_OK) {
+            return null;
+        }
+
+        // Obtener extensión
+        $extension = pathinfo($archivo['name'], PATHINFO_EXTENSION);
+        
+        // Generar nombre único: prefijo + noticiaId + timestamp + random
+        $timestamp = time();
+        $random = bin2hex(random_bytes(8));
+        $nombreUnico = $prefijo . $noticiaId . '_' . $timestamp . '_' . $random . '.' . $extension;
+        
+        $rutaCompleta = $rutaBase . $nombreUnico;
+
+        // Mover el archivo usando tmp_name original
+        if (move_uploaded_file($archivo['tmp_name'], $rutaCompleta)) {
+            return $nombreUnico;
+        }
+
+        return null;
+    }
+
+    /**
+     * NUEVO: Validar que los archivos sean del tipo correcto
+     */
+    public static function validarArchivosNoticia($archivos, $tipo)
+    {
+        if (empty($archivos)) {
+            return true; // No hay archivos, válido
+        }
+
+        $tiposPermitidos = ($tipo === 'fotos') 
+            ? ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+            : ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+
+        $extensionesPermitidas = ($tipo === 'fotos')
+            ? ['jpg', 'jpeg', 'png', 'gif', 'webp']
+            : ['pdf', 'doc', 'docx'];
+
+        // Si es array de archivos
+        if (isset($archivos[0]) && is_array($archivos[0])) {
+            foreach ($archivos as $archivo) {
+                if (!self::validarArchivoIndividual($archivo, $tiposPermitidos, $extensionesPermitidas)) {
+                    return false;
+                }
+            }
+        } else {
+            // Archivo único
+            return self::validarArchivoIndividual($archivos, $tiposPermitidos, $extensionesPermitidas);
+        }
+
+        return true;
+    }
+
+    /**
+     * NUEVO: Validar archivo individual
+     */
+    private static function validarArchivoIndividual($archivo, $tiposPermitidos, $extensionesPermitidas)
+    {
+        // Validar que no haya error
+        if ($archivo['error'] !== UPLOAD_ERR_OK) {
+            return false;
+        }
+
+        // Validar tamaño (10MB máximo)
+        if ($archivo['size'] > 10 * 1024 * 1024) {
+            return false;
+        }
+
+        $extension = strtolower(pathinfo($archivo['name'], PATHINFO_EXTENSION));
+        
+        // Validar por extensión
+        if (!in_array($extension, $extensionesPermitidas)) {
+            return false;
+        }
+
+        // Validar por tipo MIME (si es necesario)
+        if (!in_array($archivo['type'], $tiposPermitidos)) {
+            // Algunos navegadores envían application/octet-stream para .docx
+            if ($extension === 'docx' && $archivo['type'] !== 'application/octet-stream') {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
 }
 ?>
