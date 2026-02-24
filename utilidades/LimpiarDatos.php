@@ -10,7 +10,7 @@ class LimpiarDatos
         if (preg_match('/^[a-zA-Z0-9_]+$/', $ruta)) {
             return $ruta;
         }
-        return ''; // inválida → devolver vacío o lanzar excepción
+        return ''; // inválida → devolver vacío
     }
 
     /**
@@ -82,8 +82,8 @@ class LimpiarDatos
                         'size' => $archivo['size'][$i]
                     ];
                     
-                    // Validar tipo (pero mantener propiedades originales)
-                    if (self::validarTipoArchivo($archivoOriginal)) {
+                    // Validar tipo básico (imagen o pdf)
+                    if (self::validarTipoBasico($archivoOriginal)) {
                         $resultado[$campoLimpio][] = $archivoOriginal;
                     }
                 }
@@ -97,8 +97,8 @@ class LimpiarDatos
                     'size' => $archivo['size']
                 ];
                 
-                // Validar tipo (pero mantener propiedades originales)
-                if (self::validarTipoArchivo($archivoOriginal)) {
+                // Validar tipo básico (imagen o pdf)
+                if (self::validarTipoBasico($archivoOriginal)) {
                     $resultado[$campoLimpio] = $archivoOriginal;
                 }
             }
@@ -108,73 +108,97 @@ class LimpiarDatos
     }
 
     /**
-     * Validar tipo de archivo permitido (AHORA INCLUYE WORD)
+     * Validación básica: solo imágenes y PDFs
      */
-    private static function validarTipoArchivo($archivo)
+    private static function validarTipoBasico($archivo)
     {
-        // Si hay error, no validar tipo (el error ya indica problema)
+        // Si hay error, no validar tipo
         if ($archivo['error'] !== UPLOAD_ERR_OK) {
             return false;
         }
 
         $extension = strtolower(pathinfo($archivo['name'], PATHINFO_EXTENSION));
-        $tipo = $archivo['type'];
         
-        // Tipos permitidos para imágenes
-        $tiposImagen = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-        $extensionesImagen = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        // Extensiones permitidas
+        $extensionesPermitidas = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf'];
         
-        // Tipos permitidos para documentos (PDF y WORD)
-        $tiposDocumento = [
-            'application/pdf',
-            'application/msword',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            'application/vnd.ms-word',
-            'application/word',
-            'application/octet-stream' // Algunos navegadores envían este para .docx
-        ];
-        $extensionesDocumento = ['pdf', 'doc', 'docx'];
-        
-        // Validar por extensión primero (más fiable)
-        if (in_array($extension, $extensionesImagen)) {
-            return true;
-        }
-        
-        if (in_array($extension, $extensionesDocumento)) {
-            return true;
-        }
-        
-        // Si la extensión no coincide, validar por tipo MIME
-        if (in_array($tipo, $tiposImagen) || in_array($tipo, $tiposDocumento)) {
-            return true;
-        }
-        
-        return false;
+        return in_array($extension, $extensionesPermitidas);
     }
 
-    // ... (tus funciones existentes) ...
+    /**
+     * CONSTANTES PARA CARPETAS
+     */
+    const CARPETA_IMAGENES = "/../../htdocs/guniversidadfrontend/public/imagenes/";
+    const CARPETA_DOCUMENTOS = "/../../htdocs/guniversidadfrontend/public/documentos/";
 
     /**
-     * NUEVO: Generar ID único para archivos
-     * @param string $prefijo Prefijo para el archivo (Foto_, Documento_, etc)
-     * @return string Nombre único con prefijo
+     * Generar nombre único para archivo
+     * @param string $prefijo Prefijo (ej: 'Foto_', 'Documento_')
+     * @param int $registroId ID del registro
+     * @param string $extension Extensión del archivo
+     * @return string Nombre único
      */
-    public static function generarIdUnicoArchivo($prefijo = '')
+    public static function generarNombreUnico($prefijo, $registroId, $extension)
     {
-        // Generar ID único: prefijo + timestamp + bin2hex + extension
         $timestamp = time();
         $random = bin2hex(random_bytes(8));
-        return $prefijo . $timestamp . '_' . $random;
+        return $prefijo . $registroId . '_' . $timestamp . '_' . $random . '.' . $extension;
     }
 
     /**
-     * NUEVO: Procesar y guardar archivos de noticias
-     * @param array $archivos Array de archivos del campo 'fotos' o 'documentos'
-     * @param string $tipo 'fotos' o 'documentos'
-     * @param int $noticiaId ID de la noticia para referencia
-     * @return array Array con los nombres de los archivos guardados
+     * Guardar archivo (foto o documento)
+     * @param array $archivo Datos del archivo (de $_FILES)
+     * @param string $tipo 'foto' o 'documento'
+     * @param int $registroId ID del registro asociado
+     * @return string|null Nombre del archivo guardado o null si falla
      */
-    public static function procesarArchivosNoticia($archivos, $tipo, $noticiaId)
+    public static function guardarArchivo($archivo, $tipo, $registroId)
+    {
+        // Validar que el archivo se subió correctamente
+        if ($archivo['error'] !== UPLOAD_ERR_OK) {
+            return null;
+        }
+
+        // Determinar carpeta y prefijo según tipo
+        if ($tipo === 'foto') {
+            $carpeta = __DIR__ . self::CARPETA_IMAGENES;
+            $prefijo = 'Foto_';
+        } else if ($tipo === 'documento') {
+            $carpeta = __DIR__ . self::CARPETA_DOCUMENTOS;
+            $prefijo = 'Documento_';
+        } else {
+            return null;
+        }
+
+        // Crear carpeta si no existe
+        if (!file_exists($carpeta)) {
+            mkdir($carpeta, 0777, true);
+        }
+
+        // Obtener extensión
+        $extension = strtolower(pathinfo($archivo['name'], PATHINFO_EXTENSION));
+        
+        // Generar nombre único
+        $nombreUnico = self::generarNombreUnico($prefijo, $registroId, $extension);
+        
+        $rutaCompleta = $carpeta . $nombreUnico;
+
+        // Mover el archivo
+        if (move_uploaded_file($archivo['tmp_name'], $rutaCompleta)) {
+            return $nombreUnico;
+        }
+
+        return null;
+    }
+
+    /**
+     * Guardar múltiples archivos
+     * @param array $archivos Array de archivos
+     * @param string $tipo 'foto' o 'documento'
+     * @param int $registroId ID del registro asociado
+     * @return array Nombres de los archivos guardados
+     */
+    public static function guardarMultiplesArchivos($archivos, $tipo, $registroId)
     {
         $archivosGuardados = [];
         
@@ -182,38 +206,17 @@ class LimpiarDatos
             return $archivosGuardados;
         }
 
-        // Determinar carpeta y prefijo según tipo
-        $carpeta = ($tipo === 'fotos') ? 'imagenes' : 'documentos';
-        $prefijo = ($tipo === 'fotos') ? 'Foto_' : 'Documento_';
-        
-        $rutaBase = __DIR__ . "/../../uploads/{$carpeta}/";
-        
-        // Crear carpeta si no existe
-        if (!file_exists($rutaBase)) {
-            mkdir($rutaBase, 0777, true);
-        }
-
         // Si es un array de archivos (múltiples)
         if (isset($archivos[0]) && is_array($archivos[0])) {
             foreach ($archivos as $archivo) {
-                $nombreGuardado = self::guardarArchivoIndividual(
-                    $archivo, 
-                    $rutaBase, 
-                    $prefijo,
-                    $noticiaId
-                );
+                $nombreGuardado = self::guardarArchivo($archivo, $tipo, $registroId);
                 if ($nombreGuardado) {
                     $archivosGuardados[] = $nombreGuardado;
                 }
             }
         } else {
             // Archivo único
-            $nombreGuardado = self::guardarArchivoIndividual(
-                $archivos, 
-                $rutaBase, 
-                $prefijo,
-                $noticiaId
-            );
+            $nombreGuardado = self::guardarArchivo($archivos, $tipo, $registroId);
             if ($nombreGuardado) {
                 $archivosGuardados[] = $nombreGuardado;
             }
@@ -223,97 +226,58 @@ class LimpiarDatos
     }
 
     /**
-     * NUEVO: Guardar archivo individual
+     * Validar archivo (foto o documento)
+     * @param array $archivo Datos del archivo
+     * @param string $tipo 'foto' o 'documento'
+     * @return bool True si es válido
      */
-    private static function guardarArchivoIndividual($archivo, $rutaBase, $prefijo, $noticiaId)
+    public static function validarArchivo($archivo, $tipo)
     {
-        // Validar que el archivo se subió correctamente
-        if ($archivo['error'] !== UPLOAD_ERR_OK) {
-            return null;
-        }
-
-        // Obtener extensión
-        $extension = pathinfo($archivo['name'], PATHINFO_EXTENSION);
-        
-        // Generar nombre único: prefijo + noticiaId + timestamp + random
-        $timestamp = time();
-        $random = bin2hex(random_bytes(8));
-        $nombreUnico = $prefijo . $noticiaId . '_' . $timestamp . '_' . $random . '.' . $extension;
-        
-        $rutaCompleta = $rutaBase . $nombreUnico;
-
-        // Mover el archivo usando tmp_name original
-        if (move_uploaded_file($archivo['tmp_name'], $rutaCompleta)) {
-            return $nombreUnico;
-        }
-
-        return null;
-    }
-
-    /**
-     * NUEVO: Validar que los archivos sean del tipo correcto
-     */
-    public static function validarArchivosNoticia($archivos, $tipo)
-    {
-        if (empty($archivos)) {
-            return true; // No hay archivos, válido
-        }
-
-        $tiposPermitidos = ($tipo === 'fotos') 
-            ? ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-            : ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-
-        $extensionesPermitidas = ($tipo === 'fotos')
-            ? ['jpg', 'jpeg', 'png', 'gif', 'webp']
-            : ['pdf', 'doc', 'docx'];
-
-        // Si es array de archivos
-        if (isset($archivos[0]) && is_array($archivos[0])) {
-            foreach ($archivos as $archivo) {
-                if (!self::validarArchivoIndividual($archivo, $tiposPermitidos, $extensionesPermitidas)) {
-                    return false;
-                }
-            }
-        } else {
-            // Archivo único
-            return self::validarArchivoIndividual($archivos, $tiposPermitidos, $extensionesPermitidas);
-        }
-
-        return true;
-    }
-
-    /**
-     * NUEVO: Validar archivo individual
-     */
-    private static function validarArchivoIndividual($archivo, $tiposPermitidos, $extensionesPermitidas)
-    {
-        // Validar que no haya error
         if ($archivo['error'] !== UPLOAD_ERR_OK) {
             return false;
         }
 
-        // Validar tamaño (10MB máximo)
+        // Tamaño máximo 10MB
         if ($archivo['size'] > 10 * 1024 * 1024) {
             return false;
         }
 
         $extension = strtolower(pathinfo($archivo['name'], PATHINFO_EXTENSION));
         
-        // Validar por extensión
-        if (!in_array($extension, $extensionesPermitidas)) {
-            return false;
+        if ($tipo === 'foto') {
+            $extensionesPermitidas = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+            return in_array($extension, $extensionesPermitidas);
+        } else if ($tipo === 'documento') {
+            $extensionesPermitidas = ['pdf'];
+            return in_array($extension, $extensionesPermitidas);
         }
 
-        // Validar por tipo MIME (si es necesario)
-        if (!in_array($archivo['type'], $tiposPermitidos)) {
-            // Algunos navegadores envían application/octet-stream para .docx
-            if ($extension === 'docx' && $archivo['type'] !== 'application/octet-stream') {
-                return false;
+        return false;
+    }
+
+    /**
+     * Validar múltiples archivos
+     * @param array $archivos Array de archivos
+     * @param string $tipo 'foto' o 'documento'
+     * @return bool True si todos son válidos
+     */
+    public static function validarMultiplesArchivos($archivos, $tipo)
+    {
+        if (empty($archivos)) {
+            return true;
+        }
+
+        if (isset($archivos[0]) && is_array($archivos[0])) {
+            foreach ($archivos as $archivo) {
+                if (!self::validarArchivo($archivo, $tipo)) {
+                    return false;
+                }
             }
+        } else {
+            return self::validarArchivo($archivos, $tipo);
         }
 
         return true;
     }
-
 }
 ?>

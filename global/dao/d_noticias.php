@@ -88,10 +88,9 @@ class NoticiasDao
 
             $noticia = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            // Si existe la noticia, obtener sus fotos y documentos
+            // Si existe la noticia, obtener sus fotos
             if ($noticia) {
                 $noticia['fotos'] = self::obtenerFotosNoticia($id);
-                $noticia['documentos'] = self::obtenerDocumentosNoticia($id);
             }
 
             return $noticia;
@@ -147,29 +146,6 @@ class NoticiasDao
         }
     }
 
-    // NUEVA FUNCIÓN: Guardar documentos de una noticia
-    public static function guardarDocumentosNoticia($noticiaId, $documentos)
-    {
-        try {
-            $instanciaConexion = ConexionUtil::conectar();
-
-            $sql = "INSERT INTO noticias_documentos (noticia_id, nombre_archivo) 
-                    VALUES (:noticia_id, :nombre_archivo)";
-            
-            $stmt = $instanciaConexion->prepare($sql);
-            
-            foreach ($documentos as $documento) {
-                $stmt->bindParam(':noticia_id', $noticiaId);
-                $stmt->bindParam(':nombre_archivo', $documento);
-                $stmt->execute();
-            }
-            
-            return true;
-        } catch (PDOException $e) {
-            return false;
-        }
-    }
-
     // NUEVA FUNCIÓN: Obtener fotos de una noticia
     public static function obtenerFotosNoticia($noticiaId)
     {
@@ -177,26 +153,6 @@ class NoticiasDao
             $instanciaConexion = ConexionUtil::conectar();
 
             $sql = "SELECT id, nombre_archivo FROM noticias_fotos 
-                    WHERE noticia_id = :noticia_id 
-                    ORDER BY id ASC";
-            
-            $stmt = $instanciaConexion->prepare($sql);
-            $stmt->bindParam(':noticia_id', $noticiaId, PDO::PARAM_INT);
-            $stmt->execute();
-
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            return [];
-        }
-    }
-
-    // NUEVA FUNCIÓN: Obtener documentos de una noticia
-    public static function obtenerDocumentosNoticia($noticiaId)
-    {
-        try {
-            $instanciaConexion = ConexionUtil::conectar();
-
-            $sql = "SELECT id, nombre_archivo FROM noticias_documentos 
                     WHERE noticia_id = :noticia_id 
                     ORDER BY id ASC";
             

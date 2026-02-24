@@ -6,6 +6,7 @@ header('Content-Type: application/json; charset=utf-8');
 // 1. Sanitizar ruta y acción (vienen por GET)
 $ruta = LimpiarDatos::limpiarRuta($_GET['ruta'] ?? '');
 $accion = LimpiarDatos::limpiarParametro($_GET['accion'] ?? 'index');
+$actor = ucfirst(LimpiarDatos::limpiarParametro($_GET['actor'] ?? 'index'));
 
 // 2. RECUPERAR TODOS LOS PARÁMETROS DE LA URL Y ALMACENARLOS EN $parametros
 $parametros = [];
@@ -13,7 +14,7 @@ $parametros = [];
 // Agregar TODOS los parámetros GET (incluyendo ruta y acción, pero ya los tenemos)
 foreach ($_GET as $key => $value) {
     // No sobrescribir ruta y acción si ya existen, pero mantener el resto
-    if ($key !== 'ruta' && $key !== 'accion') {
+    if ($key !== 'ruta' && $key !== 'accion' && $key !== 'actor') {
         $parametros[$key] = LimpiarDatos::limpiarParametro($value);
     }
 }
@@ -53,8 +54,16 @@ if (empty($ruta)) {
     exit;
 }
 
+// 3. Validar que la ruta no esté vacía
+if (empty($actor)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'el parametro actor es necesario']);
+    exit;
+}
+
 // 4. Construir archivo y clase
-$archivo = "controlador/c_{$ruta}.php";
+
+$archivo = "../{$actor}/controlador/c_{$ruta}.php";
 if (!file_exists($archivo)) {
     http_response_code(404);
     echo json_encode(['error' => 'Controlador no encontrado']);

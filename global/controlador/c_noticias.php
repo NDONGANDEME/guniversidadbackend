@@ -24,7 +24,7 @@ class NoticiasController
                 case "obtenerCantidadPaginacion":
                     self::getCantidadPaginacion();
                     break;
-                case "crearNoticia": // NUEVA ACCIÓN
+                case "crearNoticia":
                     self::crearNoticia($parametros);
                     break;
                 default:
@@ -109,7 +109,8 @@ class NoticiasController
         ]);
     }
 
-    // NUEVA FUNCIÓN: Crear noticia con fotos y documentos
+
+    // Crear noticia usando las funciones genéricas de archivos
     private static function crearNoticia($parametros)
     {
         // Validar campos obligatorios
@@ -125,15 +126,15 @@ class NoticiasController
             return;
         }
 
-        // Validar archivos si existen
+        // Obtener archivos
         $fotos = $parametros['fotos'] ?? null;
 
-        // Validar fotos
-        if ($fotos && !LimpiarDatos::validarArchivosNoticia($fotos, 'fotos')) {
+        // Validar fotos si existen
+        if ($fotos && !LimpiarDatos::validarMultiplesArchivos($fotos, 'foto')) {
             echo json_encode([
                 'estado' => 400,
                 'éxito' => false,
-                'mensaje' => 'Una o más fotos no son válidas (solo imágenes JPG, PNG, GIF, WEBP)'
+                'mensaje' => 'Una o más fotos no son válidas (solo imágenes JPG, PNG, GIF, WEBP - máx 10MB)'
             ]);
             return;
         }
@@ -158,9 +159,9 @@ class NoticiasController
             'fotos' => [],
         ];
 
-        // Procesar y guardar fotos
+        // Procesar y guardar fotos usando función genérica
         if ($fotos) {
-            $archivosGuardados['fotos'] = LimpiarDatos::procesarArchivosNoticia($fotos, 'fotos', $noticiaId);
+            $archivosGuardados['fotos'] = LimpiarDatos::guardarMultiplesArchivos($fotos, 'foto', $noticiaId);
             
             // Guardar referencias de fotos en BD
             if (!empty($archivosGuardados['fotos'])) {
