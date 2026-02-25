@@ -8,7 +8,7 @@ class ConexionUtil
     {
         if (self::$conexion === null) {
             $host = 'localhost';
-            $base_datos = 'gfacultad';
+            $base_datos = 'guniversidad';
             $usuario = 'root';
             $contrasena = '';
 

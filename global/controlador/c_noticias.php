@@ -27,6 +27,12 @@ class NoticiasController
                 case "crearNoticia":
                     self::crearNoticia($parametros);
                     break;
+                case "actualizarNoticia":
+                    self::actualizarNoticia($parametros);
+                    break;
+                case "eliminarNoticia":
+                    self::eliminarNoticia($parametros['id'] ?? null);
+                    break;
                 default:
                     echo json_encode([
                         'estado' => 400,
@@ -109,19 +115,19 @@ class NoticiasController
         ]);
     }
 
-
-    // Crear noticia usando las funciones genéricas de archivos
+    // Crear noticia usando las funciones adaptadas
     private static function crearNoticia($parametros)
     {
-        // Validar campos obligatorios
-        $titulo = $parametros['titulo'] ?? '';
-        $contenido = $parametros['contenido'] ?? '';
+        // Validar campos obligatorios - ADAPTADO a los campos de tu BD
+        $asunto = $parametros['asunto'] ?? $parametros['titulo'] ?? ''; // Acepta ambos nombres
+        $descripcion = $parametros['descripcion'] ?? $parametros['contenido'] ?? '';
+        $tipo = $parametros['tipo'] ?? 'general';
         
-        if (empty($titulo) || empty($contenido)) {
+        if (empty($asunto) || empty($descripcion)) {
             echo json_encode([
                 'estado' => 400,
                 'éxito' => false,
-                'mensaje' => 'Título y contenido son obligatorios'
+                'mensaje' => 'Asunto y descripción son obligatorios'
             ]);
             return;
         }
@@ -139,11 +145,12 @@ class NoticiasController
             return;
         }
 
-        // Insertar noticia en BD primero (sin archivos)
+        // Insertar noticia en BD primero (con los campos correctos)
         $noticiaId = NoticiasDao::crearNoticia([
-            'titulo' => $titulo,
-            'contenido' => $contenido,
-            'fecha_creacion' => date('Y-m-d H:i:s')
+            'asunto' => $asunto,
+            'descripcion' => $descripcion,
+            'tipo' => $tipo,
+            'fechaPublicacion' => date('Y-m-d H:i:s')
         ]);
 
         if (!$noticiaId) {
@@ -163,22 +170,153 @@ class NoticiasController
         if ($fotos) {
             $archivosGuardados['fotos'] = LimpiarDatos::guardarMultiplesArchivos($fotos, 'foto', $noticiaId);
             
-            // Guardar referencias de fotos en BD
+            // Guardar referencias de fotos en BD (tabla foto)
             if (!empty($archivosGuardados['fotos'])) {
                 NoticiasDao::guardarFotosNoticia($noticiaId, $archivosGuardados['fotos']);
             }
         }
 
+        // Obtener la noticia creada con sus fotos
+        $noticiaCreada = NoticiasDao::obtenerNoticiaPorId($noticiaId);
+
         echo json_encode([
             'estado' => 201,
             'éxito' => true,
             'mensaje' => 'Noticia creada exitosamente',
-            'datos' => [
-                'id' => $noticiaId,
-                'titulo' => $titulo,
-                'archivos' => $archivosGuardados
-            ]
+            'datos' => $noticiaCreada
         ]);
+    }
+
+    // NUEVA FUNCIÓN: Actualizar noticia
+    private static function actualizarNoticia($parametros)
+    {
+        $id = $parametros['id'] ?? null;
+        
+        if (!$id) {
+            echo json_encode([
+                'estado' => 400,
+                'éxito' => false,
+                'mensaje' => 'ID de noticia no proporcionado'
+            ]);
+            return;
+        }
+
+        // Verificar que la noticia existe
+        $noticiaExistente = NoticiasDao::obtenerNoticiaPorId($id);
+        if (!$noticiaExistente) {
+            echo json_encode([
+                'estado' => 404,
+                'éxito' => false,
+                'mensaje' => 'Noticia no encontrada'
+            ]);
+            return;
+        }
+
+        // Preparar datos a actualizar
+        $asunto = $parametros['asunto'] ?? $parametros['titulo'] ?? $noticiaExistente['asunto'];
+        $descripcion = $parametros['descripcion'] ?? $parametros['contenido'] ?? $noticiaExistente['descripcion'];
+        $tipo = $parametros['tipo'] ?? $noticiaExistente['tipo'];
+
+        if (empty($asunto) || empty($descripcion)) {
+            echo json_encode([
+                'estado' => 400,
+                'éxito' => false,
+                'mensaje' => 'Asunto y descripción son obligatorios'
+            ]);
+            return;
+        }
+
+        // Obtener nuevas fotos si existen
+        $fotos = $parametros['fotos'] ?? null;
+
+        // Validar fotos si existen
+        if ($fotos && !LimpiarDatos::validarMultiplesArchivos($fotos, 'foto')) {
+            echo json_encode([
+                'estado' => 400,
+                'éxito' => false,
+                'mensaje' => 'Una o más fotos no son válidas'
+            ]);
+            return;
+        }
+
+        // Actualizar noticia
+        $actualizado = NoticiasDao::actualizarNoticia($id, [
+            'asunto' => $asunto,
+            'descripcion' => $descripcion,
+            'tipo' => $tipo
+        ]);
+
+        if (!$actualizado) {
+            echo json_encode([
+                'estado' => 500,
+                'éxito' => false,
+                'mensaje' => 'Error al actualizar la noticia'
+            ]);
+            return;
+        }
+
+        // Si hay nuevas fotos, reemplazar las existentes
+        if ($fotos) {
+            // Eliminar fotos antiguas
+            NoticiasDao::eliminarFotosNoticia($id);
+            
+            // Guardar nuevas fotos
+            $fotosGuardadas = LimpiarDatos::guardarMultiplesArchivos($fotos, 'foto', $id);
+            if (!empty($fotosGuardadas)) {
+                NoticiasDao::guardarFotosNoticia($id, $fotosGuardadas);
+            }
+        }
+
+        // Obtener noticia actualizada
+        $noticiaActualizada = NoticiasDao::obtenerNoticiaPorId($id);
+
+        echo json_encode([
+            'estado' => 200,
+            'éxito' => true,
+            'mensaje' => 'Noticia actualizada exitosamente',
+            'datos' => $noticiaActualizada
+        ]);
+    }
+
+    // NUEVA FUNCIÓN: Eliminar noticia
+    private static function eliminarNoticia($id)
+    {
+        if (!$id) {
+            echo json_encode([
+                'estado' => 400,
+                'éxito' => false,
+                'mensaje' => 'ID de noticia no proporcionado'
+            ]);
+            return;
+        }
+
+        // Verificar que la noticia existe
+        $noticiaExistente = NoticiasDao::obtenerNoticiaPorId($id);
+        if (!$noticiaExistente) {
+            echo json_encode([
+                'estado' => 404,
+                'éxito' => false,
+                'mensaje' => 'Noticia no encontrada'
+            ]);
+            return;
+        }
+
+        // Eliminar noticia (esto también eliminará las fotos por la función en el DAO)
+        $eliminado = NoticiasDao::eliminarNoticia($id);
+
+        if ($eliminado) {
+            echo json_encode([
+                'estado' => 200,
+                'éxito' => true,
+                'mensaje' => 'Noticia eliminada exitosamente'
+            ]);
+        } else {
+            echo json_encode([
+                'estado' => 500,
+                'éxito' => false,
+                'mensaje' => 'Error al eliminar la noticia'
+            ]);
+        }
     }
 }
 ?>

@@ -1,4 +1,4 @@
-<?php
+<<?php
 require_once __DIR__ . "/../../utilidades/u_conexion.php";
 
 class UsuariosDao
@@ -104,7 +104,7 @@ class UsuariosDao
 
             $sql = "SELECT idUsuario, nombreUsuario, correo, foto, rol, estado, ultimoAcceso 
                     FROM usuarios 
-                    WHERE estado = 1 
+                    WHERE estado = 'activo' 
                     ORDER BY idUsuario DESC";
             
             $stmt = $instanciaConexion->prepare($sql);
@@ -228,7 +228,7 @@ class UsuariosDao
                         rol, 
                         estado, 
                         preguntaRecuperacion, 
-                        RespuestaRecuperacion
+                        respuestaRecuperacion
                     ) VALUES (
                         :nombreUsuario, 
                         :contrasena, 
@@ -271,7 +271,7 @@ class UsuariosDao
                         correo = :correo,
                         rol = :rol,
                         preguntaRecuperacion = :preguntaRecuperacion,
-                        RespuestaRecuperacion = :respuestaRecuperacion";
+                        respuestaRecuperacion = :respuestaRecuperacion";
             
             // Agregar foto solo si viene
             if (isset($datos['foto'])) {
@@ -380,13 +380,13 @@ class UsuariosDao
     }
 
     /**
-     * FUNCIÓN PARA ELIMINAR USUARIO (soft delete - cambiar estado a 0)
+     * FUNCIÓN PARA ELIMINAR USUARIO (soft delete - cambiar estado a 'inactivo')
      */
     public static function eliminarUsuario($id)
     {
         try {
             $instanciaConexion = ConexionUtil::conectar();
-            $estadoInactivo = 0;
+            $estadoInactivo = 'inactivo';
 
             $sql = "UPDATE usuarios SET estado = :estado WHERE idUsuario = :id";
             
@@ -461,13 +461,13 @@ class UsuariosDao
             $estadisticas['total'] = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
             // Usuarios activos
-            $sql = "SELECT COUNT(*) as total FROM usuarios WHERE estado = 1";
+            $sql = "SELECT COUNT(*) as total FROM usuarios WHERE estado = 'activo'";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
             $estadisticas['activos'] = $stmt->fetch(PDO::FETCH_ASSOC)['total'];
 
             // Usuarios inactivos
-            $sql = "SELECT COUNT(*) as total FROM usuarios WHERE estado = 0";
+            $sql = "SELECT COUNT(*) as total FROM usuarios WHERE estado = 'inactivo'";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
             $estadisticas['inactivos'] = $stmt->fetch(PDO::FETCH_ASSOC)['total'];

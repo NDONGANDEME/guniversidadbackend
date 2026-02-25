@@ -2,6 +2,7 @@
 require_once __DIR__ . "/../dao/d_sesion.php";
 require_once __DIR__ . "/../utilidades/LimpiarDatos.php";
 require_once __DIR__ . "/../../utilidades/u_verificaciones.php";
+require_once __DIR__ . "/../../Admin/dao/d_usuario.php"; // Añadido para usar UsuariosDao
 
 class SesionController
 {
@@ -75,8 +76,8 @@ class SesionController
             return;
         }
 
-        // Verificar si el usuario está activo
-        if ($usuario['estado'] != 1) {
+        // Verificar si el usuario está activo (cambiado de 1 a 'activo')
+        if ($usuario['estado'] != 'activo') {
             echo json_encode([
                 'estado' => 403,
                 'éxito' => false,
@@ -113,7 +114,7 @@ class SesionController
         // No enviar datos sensibles
         unset($usuario['contrasena']);
         unset($usuario['preguntaRecuperacion']);
-        unset($usuario['RespuestaRecuperacion']);
+        unset($usuario['respuestaRecuperacion']); // Cambiado de RespuestaRecuperacion a respuestaRecuperacion
 
         echo json_encode([
             'estado' => 200,
@@ -264,9 +265,8 @@ class SesionController
         $id = intval($id);
         $respuestaLimpia = LimpiarDatos::limpiarParametro($respuesta);
 
-        // Obtener usuario por ID
-        require_once __DIR__ . "/../dao/d_usuarios.php";
-        $usuario = UsuariosDao::obtenerUsuarioPorId($id);
+        // Usar D_Sesion::obtenerUsuarioById en lugar de UsuariosDao
+        $usuario = D_Sesion::obtenerUsuarioById($id);
 
         if (!$usuario) {
             echo json_encode([
@@ -277,8 +277,8 @@ class SesionController
             return;
         }
 
-        // Verificar respuesta (case-insensitive)
-        if (strtolower(trim($respuestaLimpia)) !== strtolower(trim($usuario['RespuestaRecuperacion']))) {
+        // Verificar respuesta usando respuestaRecuperacion (minúscula)
+        if (strtolower(trim($respuestaLimpia)) !== strtolower(trim($usuario['respuestaRecuperacion']))) {
             echo json_encode([
                 'estado' => 401,
                 'éxito' => false,
@@ -290,7 +290,7 @@ class SesionController
         // Generar token temporal para cambio de contraseña
         $token = bin2hex(random_bytes(32));
         
-        // Guardar token en sesión o BD (por simplicidad, lo devolvemos)
+        // Guardar token en sesión
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
@@ -375,9 +375,8 @@ class SesionController
         // Encriptar nueva contraseña
         $contrasenaHash = password_hash($nuevaContrasena, PASSWORD_DEFAULT);
 
-        // Actualizar contraseña
-        require_once __DIR__ . "/../dao/d_usuarios.php";
-        $actualizado = UsuariosDao::actualizarContrasena($id, $contrasenaHash);
+        // Usar D_Sesion::actualizarContrasena en lugar de UsuariosDao
+        $actualizado = D_Sesion::actualizarContrasena($id, $contrasenaHash);
 
         if ($actualizado) {
             // Limpiar datos de recuperación
@@ -400,7 +399,7 @@ class SesionController
     }
 
     /**
-     * Obtener usuario por correo (método legacy)
+     * Obtener usuario por correo
      */
     public static function getUsuarioByCorreo($parametros)
     {
@@ -421,6 +420,7 @@ class SesionController
         if ($usuario) {
             // No enviar datos sensibles
             unset($usuario['contrasena']);
+            unset($usuario['respuestaRecuperacion']); // Cambiado
             
             echo json_encode([
                 'estado' => 200,

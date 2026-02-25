@@ -5,6 +5,7 @@ require_once __DIR__ . "/../utilidades/LimpiarDatos.php";
 
 class UsuarioController
 {
+
     public static function dispatch($accion, $parametros)
     {
         if (VerificacionesUtil::validarDispatch($accion, $parametros)) {
@@ -71,12 +72,37 @@ class UsuarioController
             }
         }
     }
+    
 
+    /**
+     * VERIFICAR SI HAY UNA SESIÓN ACTIVA
+     */
+    private static function verificarSesionActiva()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        
+        if (!isset($_SESSION['usuario_id']) || !isset($_SESSION['usuario_correo'])) {
+            return false;
+        }
+        
+        return true;
+    }
     /**
      * Listar todos los usuarios
      */
     private static function getUsuarios()
     {
+        if (!self::verificarSesionActiva()) {
+            echo json_encode([
+                'estado' => 401,
+                'éxito' => false,
+                'mensaje' => 'No hay sesión activa'
+            ]);
+            return;
+        }
+
         $resultado = UsuariosDao::listarUsuarios();
         echo json_encode([
             'estado' => 200,
@@ -90,6 +116,15 @@ class UsuarioController
      */
     private static function getUsuarioById($id)
     {
+        if (!self::verificarSesionActiva()) {
+            echo json_encode([
+                'estado' => 401,
+                'éxito' => false,
+                'mensaje' => 'No hay sesión activa'
+            ]);
+            return;
+        }
+
         if (!$id) {
             echo json_encode([
                 'estado' => 400,
@@ -104,6 +139,7 @@ class UsuarioController
         if ($resultado) {
             // No enviar la contraseña en la respuesta
             unset($resultado['contrasena']);
+            unset($resultado['respuestaRecuperacion']);
             
             echo json_encode([
                 'estado' => 200,
@@ -124,6 +160,15 @@ class UsuarioController
      */
     private static function getUsuariosPorRol($rol)
     {
+        if (!self::verificarSesionActiva()) {
+            echo json_encode([
+                'estado' => 401,
+                'éxito' => false,
+                'mensaje' => 'No hay sesión activa'
+            ]);
+            return;
+        }
+
         if (empty($rol)) {
             echo json_encode([
                 'estado' => 400,
@@ -146,6 +191,15 @@ class UsuarioController
      */
     private static function getUsuariosActivos()
     {
+        if (!self::verificarSesionActiva()) {
+            echo json_encode([
+                'estado' => 401,
+                'éxito' => false,
+                'mensaje' => 'No hay sesión activa'
+            ]);
+            return;
+        }
+
         $resultado = UsuariosDao::listarUsuariosActivos();
         echo json_encode([
             'estado' => 200,
@@ -159,6 +213,15 @@ class UsuarioController
      */
     private static function getUsuariosPaginacion($pagina)
     {
+        if (!self::verificarSesionActiva()) {
+            echo json_encode([
+                'estado' => 401,
+                'éxito' => false,
+                'mensaje' => 'No hay sesión activa'
+            ]);
+            return;
+        }
+
         $pagina = intval($pagina);
         if ($pagina < 1) $pagina = 1;
         
@@ -176,6 +239,15 @@ class UsuarioController
      */
     private static function getCantidadPaginacion()
     {
+        if (!self::verificarSesionActiva()) {
+            echo json_encode([
+                'estado' => 401,
+                'éxito' => false,
+                'mensaje' => 'No hay sesión activa'
+            ]);
+            return;
+        }
+
         $resultado = UsuariosDao::contarUsuarios();
         echo json_encode([
             'estado' => 200,
@@ -189,11 +261,20 @@ class UsuarioController
      */
     private static function crearUsuario($parametros)
     {
+        if (!self::verificarSesionActiva()) {
+            echo json_encode([
+                'estado' => 401,
+                'éxito' => false,
+                'mensaje' => 'No hay sesión activa'
+            ]);
+            return;
+        }
+
         // Validar campos obligatorios
         $nombreUsuario = $parametros['nombreUsuario'] ?? '';
         $contrasena = $parametros['contrasena'] ?? '';
         $correo = $parametros['correo'] ?? '';
-        $rol = $parametros['rol'] ?? 'usuario'; // Rol por defecto: usuario
+        $rol = $parametros['rol'] ?? 'usuario';
         $preguntaRecuperacion = $parametros['preguntaRecuperacion'] ?? '';
         $respuestaRecuperacion = $parametros['respuestaRecuperacion'] ?? '';
 
@@ -257,7 +338,7 @@ class UsuarioController
         // Obtener foto si existe
         $foto = $parametros['foto'] ?? null;
 
-        // Validar foto si existe (solo una foto para usuario)
+        // Validar foto si existe
         if ($foto && !LimpiarDatos::validarArchivo($foto, 'foto')) {
             echo json_encode([
                 'estado' => 400,
@@ -270,16 +351,15 @@ class UsuarioController
         // Encriptar contraseña
         $contrasenaHash = password_hash($contrasena, PASSWORD_DEFAULT);
 
-        // Insertar usuario en BD primero (sin foto)
+        // Insertar usuario en BD (con estado 'activo')
         $usuarioId = UsuariosDao::crearUsuario([
             'nombreUsuario' => $nombreUsuario,
             'contrasena' => $contrasenaHash,
             'correo' => $correo,
             'rol' => $rol,
-            'estado' => 1, // Activo por defecto
+            'estado' => 'activo',
             'preguntaRecuperacion' => $preguntaRecuperacion,
-            'respuestaRecuperacion' => $respuestaRecuperacion,
-            'ultimoAcceso' => null
+            'respuestaRecuperacion' => $respuestaRecuperacion
         ]);
 
         if (!$usuarioId) {
@@ -291,16 +371,12 @@ class UsuarioController
             return;
         }
 
-        $fotoGuardada = null;
-
-        // Procesar y guardar foto si existe (usando función genérica)
+        // Procesar y guardar foto si existe
         if ($foto) {
             $fotosGuardadas = LimpiarDatos::guardarMultiplesArchivos($foto, 'foto', $usuarioId);
             
             if (!empty($fotosGuardadas)) {
-                $fotoGuardada = $fotosGuardadas[0]; // Tomar la primera foto
-                
-                // Actualizar usuario con la foto
+                $fotoGuardada = $fotosGuardadas[0];
                 UsuariosDao::actualizarFotoUsuario($usuarioId, $fotoGuardada);
             }
         }
@@ -308,6 +384,7 @@ class UsuarioController
         // Obtener usuario creado (sin contraseña)
         $usuarioCreado = UsuariosDao::obtenerUsuarioPorId($usuarioId);
         unset($usuarioCreado['contrasena']);
+        unset($usuarioCreado['respuestaRecuperacion']);
 
         echo json_encode([
             'estado' => 201,
@@ -322,6 +399,15 @@ class UsuarioController
      */
     private static function actualizarUsuario($parametros)
     {
+        if (!self::verificarSesionActiva()) {
+            echo json_encode([
+                'estado' => 401,
+                'éxito' => false,
+                'mensaje' => 'No hay sesión activa'
+            ]);
+            return;
+        }
+
         $id = $parametros['id'] ?? null;
         
         if (!$id) {
@@ -349,7 +435,7 @@ class UsuarioController
         $correo = $parametros['correo'] ?? $usuarioExistente['correo'];
         $rol = $parametros['rol'] ?? $usuarioExistente['rol'];
         $preguntaRecuperacion = $parametros['preguntaRecuperacion'] ?? $usuarioExistente['preguntaRecuperacion'];
-        $respuestaRecuperacion = $parametros['respuestaRecuperacion'] ?? $usuarioExistente['RespuestaRecuperacion'];
+        $respuestaRecuperacion = $parametros['respuestaRecuperacion'] ?? $usuarioExistente['respuestaRecuperacion'];
 
         // Validaciones
         $errores = [];
@@ -432,6 +518,7 @@ class UsuarioController
         // Obtener usuario actualizado (sin contraseña)
         $usuarioActualizado = UsuariosDao::obtenerUsuarioPorId($id);
         unset($usuarioActualizado['contrasena']);
+        unset($usuarioActualizado['respuestaRecuperacion']);
 
         echo json_encode([
             'estado' => 200,
@@ -442,10 +529,19 @@ class UsuarioController
     }
 
     /**
-     * Eliminar usuario (soft delete o físico)
+     * Eliminar usuario (soft delete)
      */
     private static function eliminarUsuario($id)
     {
+        if (!self::verificarSesionActiva()) {
+            echo json_encode([
+                'estado' => 401,
+                'éxito' => false,
+                'mensaje' => 'No hay sesión activa'
+            ]);
+            return;
+        }
+
         if (!$id) {
             echo json_encode([
                 'estado' => 400,
@@ -466,7 +562,7 @@ class UsuarioController
             return;
         }
 
-        // Eliminar usuario (soft delete - cambiar estado a 0)
+        // Eliminar usuario (soft delete - cambiar estado a 'inactivo')
         $eliminado = UsuariosDao::eliminarUsuario($id);
 
         if ($eliminado) {
@@ -489,6 +585,15 @@ class UsuarioController
      */
     private static function cambiarEstadoUsuario($id, $estado)
     {
+        if (!self::verificarSesionActiva()) {
+            echo json_encode([
+                'estado' => 401,
+                'éxito' => false,
+                'mensaje' => 'No hay sesión activa'
+            ]);
+            return;
+        }
+
         if (!$id) {
             echo json_encode([
                 'estado' => 400,
@@ -498,11 +603,11 @@ class UsuarioController
             return;
         }
 
-        if ($estado === null || !in_array($estado, [0, 1])) {
+        if (!in_array($estado, ['activo', 'inactivo'])) {
             echo json_encode([
                 'estado' => 400,
                 'éxito' => false,
-                'mensaje' => 'Estado no válido (debe ser 0 o 1)'
+                'mensaje' => 'Estado no válido (debe ser "activo" o "inactivo")'
             ]);
             return;
         }
@@ -510,7 +615,7 @@ class UsuarioController
         $cambiado = UsuariosDao::cambiarEstadoUsuario($id, $estado);
 
         if ($cambiado) {
-            $mensaje = $estado == 1 ? 'Usuario activado exitosamente' : 'Usuario desactivado exitosamente';
+            $mensaje = $estado == 'activo' ? 'Usuario activado exitosamente' : 'Usuario desactivado exitosamente';
             echo json_encode([
                 'estado' => 200,
                 'éxito' => true,
@@ -555,7 +660,7 @@ class UsuarioController
         }
 
         // Verificar si el usuario está activo
-        if ($usuario['estado'] != 1) {
+        if ($usuario['estado'] != 'activo') {
             echo json_encode([
                 'estado' => 403,
                 'éxito' => false,
@@ -577,10 +682,22 @@ class UsuarioController
         // Actualizar último acceso
         UsuariosDao::actualizarUltimoAcceso($usuario['idUsuario']);
 
-        // No enviar la contraseña en la respuesta
+        // Iniciar sesión en PHP
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        
+        $_SESSION['usuario_id'] = $usuario['idUsuario'];
+        $_SESSION['usuario_nombre'] = $usuario['nombreUsuario'];
+        $_SESSION['usuario_correo'] = $usuario['correo'];
+        $_SESSION['usuario_rol'] = $usuario['rol'];
+        $_SESSION['usuario_foto'] = $usuario['foto'];
+        $_SESSION['ultimo_acceso'] = time();
+
+        // No enviar datos sensibles
         unset($usuario['contrasena']);
         unset($usuario['preguntaRecuperacion']);
-        unset($usuario['RespuestaRecuperacion']);
+        unset($usuario['respuestaRecuperacion']);
 
         echo json_encode([
             'estado' => 200,
@@ -595,6 +712,15 @@ class UsuarioController
      */
     private static function actualizarUltimoAcceso($id)
     {
+        if (!self::verificarSesionActiva()) {
+            echo json_encode([
+                'estado' => 401,
+                'éxito' => false,
+                'mensaje' => 'No hay sesión activa'
+            ]);
+            return;
+        }
+
         if (!$id) {
             echo json_encode([
                 'estado' => 400,
@@ -626,6 +752,15 @@ class UsuarioController
      */
     private static function cambiarContrasena($parametros)
     {
+        if (!self::verificarSesionActiva()) {
+            echo json_encode([
+                'estado' => 401,
+                'éxito' => false,
+                'mensaje' => 'No hay sesión activa'
+            ]);
+            return;
+        }
+
         $id = $parametros['id'] ?? null;
         $contrasenaActual = $parametros['contrasenaActual'] ?? '';
         $nuevaContrasena = $parametros['nuevaContrasena'] ?? '';
@@ -792,8 +927,8 @@ class UsuarioController
             return;
         }
 
-        // Verificar respuesta (comparación simple, podrías usar hash si es necesario)
-        if ($respuesta !== $usuario['RespuestaRecuperacion']) {
+        // Verificar respuesta
+        if ($respuesta !== $usuario['respuestaRecuperacion']) {
             echo json_encode([
                 'estado' => 401,
                 'éxito' => false,

@@ -36,7 +36,7 @@ class D_Sesion
             $instanciaConexion = ConexionUtil::conectar();
 
             $sql = "SELECT idUsuario, nombreUsuario, correo, foto, rol, estado, ultimoAcceso,
-                           preguntaRecuperacion, RespuestaRecuperacion
+                           preguntaRecuperacion, respuestaRecuperacion
                     FROM usuarios 
                     WHERE idUsuario = :id";
             
@@ -121,6 +121,28 @@ class D_Sesion
     }
 
     /**
+     * VERIFICAR SI EL NOMBRE DE USUARIO EXISTE
+     */
+    public static function existeNombreUsuario($nombreUsuario)
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+
+            $sql = "SELECT COUNT(*) as total FROM usuarios WHERE nombreUsuario = :nombreUsuario";
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->bindParam(':nombreUsuario', $nombreUsuario);
+            $stmt->execute();
+
+            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $resultado['total'] > 0;
+            
+        } catch (PDOException $e) {
+            error_log("Error en existeNombreUsuario: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
      * ACTUALIZAR CONTRASEÑA
      */
     public static function actualizarContrasena($id, $nuevaContrasena)
@@ -156,7 +178,7 @@ class D_Sesion
             $stmt->execute();
 
             $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $resultado ? $resultado['estado'] == 1 : false;
+            return $resultado ? $resultado['estado'] == 'activo' : false;
             
         } catch (PDOException $e) {
             error_log("Error en verificarEstadoUsuario: " . $e->getMessage());
@@ -165,7 +187,8 @@ class D_Sesion
     }
 
     /**
-     * REGISTRAR INTENTO FALLIDO DE LOGIN (opcional)
+     * REGISTRAR INTENTO FALLIDO DE LOGIN
+     * Nota: Esta tabla no existe en tu BD, habría que crearla
      */
     public static function registrarIntentoFallido($correo)
     {
@@ -206,6 +229,33 @@ class D_Sesion
         } catch (PDOException $e) {
             error_log("Error en obtenerPreguntaRecuperacion: " . $e->getMessage());
             return null;
+        }
+    }
+
+    /**
+     * VERIFICAR RESPUESTA DE RECUPERACIÓN
+     */
+    public static function verificarRespuestaRecuperacion($id, $respuesta)
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+
+            $sql = "SELECT respuestaRecuperacion FROM usuarios WHERE idUsuario = :id";
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($resultado) {
+                return $resultado['respuestaRecuperacion'] === $respuesta;
+            }
+            
+            return false;
+            
+        } catch (PDOException $e) {
+            error_log("Error en verificarRespuestaRecuperacion: " . $e->getMessage());
+            return false;
         }
     }
 }
