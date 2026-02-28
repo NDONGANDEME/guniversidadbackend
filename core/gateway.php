@@ -1,6 +1,6 @@
 <?php
 
-require_once "utilidades/LimpiarDatos.php";
+require_once __DIR__. "/../utilidades/LimpiarDatos.php";
 header('Content-Type: application/json; charset=utf-8');
 
 // 1. Sanitizar ruta y acción (vienen por GET)

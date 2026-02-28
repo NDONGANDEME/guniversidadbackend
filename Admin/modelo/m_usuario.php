@@ -1,19 +1,20 @@
 <?php
-class SesionModel
+class UsuarioModel
 {
     public $idUsuario;
     public $nombreUsuario;
-    public $correo;
     public $contrasena;
-    public $foto;
+    public $correo;
     public $rol;
+    public $foto;
     public $estado;
     public $ultimoAcceso;
     public $preguntaRecuperacion;
     public $respuestaRecuperacion;
 
-    public function __construct($correo = null, $contrasena = null)
+    public function __construct($nombreUsuario = null, $correo = null, $contrasena = null)
     {
+        $this->nombreUsuario = $nombreUsuario;
         $this->correo = $correo;
         $this->contrasena = $contrasena;
     }
@@ -23,10 +24,10 @@ class SesionModel
     {
         if (isset($data['idUsuario'])) $this->idUsuario = $data['idUsuario'];
         if (isset($data['nombreUsuario'])) $this->nombreUsuario = $data['nombreUsuario'];
-        if (isset($data['correo'])) $this->correo = $data['correo'];
         if (isset($data['contrasena'])) $this->contrasena = $data['contrasena'];
-        if (isset($data['foto'])) $this->foto = $data['foto'];
+        if (isset($data['correo'])) $this->correo = $data['correo'];
         if (isset($data['rol'])) $this->rol = $data['rol'];
+        if (isset($data['foto'])) $this->foto = $data['foto'];
         if (isset($data['estado'])) $this->estado = $data['estado'];
         if (isset($data['ultimoAcceso'])) $this->ultimoAcceso = $data['ultimoAcceso'];
         if (isset($data['preguntaRecuperacion'])) $this->preguntaRecuperacion = $data['preguntaRecuperacion'];
@@ -42,8 +43,8 @@ class SesionModel
             'idUsuario' => $this->idUsuario,
             'nombreUsuario' => $this->nombreUsuario,
             'correo' => $this->correo,
-            'foto' => $this->foto,
             'rol' => $this->rol,
+            'foto' => $this->foto,
             'estado' => $this->estado,
             'ultimoAcceso' => $this->ultimoAcceso
         ];
@@ -57,9 +58,9 @@ class SesionModel
     }
 
     // Validar contraseña
-    public function validarContrasena($password)
+    public function validarContrasena($contrasena)
     {
-        return password_verify($password, $this->contrasena);
+        return password_verify($contrasena, $this->contrasena);
     }
 
     // Verificar si el usuario está activo
@@ -68,16 +69,11 @@ class SesionModel
         return $this->estado === 'activo';
     }
 
-    // Verificar si tiene pregunta de recuperación
-    public function tienePreguntaRecuperacion()
+    // Cambiar estado
+    public function cambiarEstado($nuevoEstado)
     {
-        return !empty($this->preguntaRecuperacion) && !empty($this->respuestaRecuperacion);
-    }
-
-    // Verificar respuesta de recuperación
-    public function verificarRespuestaRecuperacion($respuesta)
-    {
-        return strtolower(trim($respuesta)) === strtolower(trim($this->respuestaRecuperacion));
+        $this->estado = $nuevoEstado;
+        return $this;
     }
 }
 ?>

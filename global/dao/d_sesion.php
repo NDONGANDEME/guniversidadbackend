@@ -1,12 +1,11 @@
 <?php
 require_once __DIR__ . "/../utilidades/u_conexion.php";
+require_once __DIR__ . "/../modelo/m_sesion.php";
 
 class D_Sesion
 {
-    /**
-     * OBTENER USUARIO POR CORREO
-     */
-    public static function obtenerUsuarioByCorreo($correo)
+    // OBTENER USUARIO POR CORREO
+    public static function obtenerUsuarioPorCorreo($correo)
     {
         try {
             $instanciaConexion = ConexionUtil::conectar();
@@ -18,19 +17,21 @@ class D_Sesion
 
             $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            // Si no hay resultados, devolver null
-            return $resultado ? $resultado : null;
+            if ($resultado) {
+                $model = new SesionModel();
+                return $model->hidratarDesdeArray($resultado);
+            }
+            
+            return null;
             
         } catch (PDOException $e) {
-            error_log("Error en obtenerUsuarioByCorreo: " . $e->getMessage());
+            error_log("Error en obtenerUsuarioPorCorreo: " . $e->getMessage());
             return null;
         }
     }
 
-    /**
-     * OBTENER USUARIO POR ID
-     */
-    public static function obtenerUsuarioById($id)
+    // OBTENER USUARIO POR ID
+    public static function obtenerUsuarioPorId($id)
     {
         try {
             $instanciaConexion = ConexionUtil::conectar();
@@ -45,18 +46,22 @@ class D_Sesion
             $stmt->execute();
 
             $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $resultado ? $resultado : null;
+            
+            if ($resultado) {
+                $model = new SesionModel();
+                return $model->hidratarDesdeArray($resultado);
+            }
+            
+            return null;
             
         } catch (PDOException $e) {
-            error_log("Error en obtenerUsuarioById: " . $e->getMessage());
+            error_log("Error en obtenerUsuarioPorId: " . $e->getMessage());
             return null;
         }
     }
 
-    /**
-     * OBTENER USUARIO POR NOMBRE DE USUARIO
-     */
-    public static function obtenerUsuarioByNombreUsuario($nombreUsuario)
+    // OBTENER USUARIO POR NOMBRE DE USUARIO
+    public static function obtenerUsuarioPorNombreUsuario($nombreUsuario)
     {
         try {
             $instanciaConexion = ConexionUtil::conectar();
@@ -67,17 +72,21 @@ class D_Sesion
             $stmt->execute();
 
             $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $resultado ? $resultado : null;
+            
+            if ($resultado) {
+                $model = new SesionModel();
+                return $model->hidratarDesdeArray($resultado);
+            }
+            
+            return null;
             
         } catch (PDOException $e) {
-            error_log("Error en obtenerUsuarioByNombreUsuario: " . $e->getMessage());
+            error_log("Error en obtenerUsuarioPorNombreUsuario: " . $e->getMessage());
             return null;
         }
     }
 
-    /**
-     * ACTUALIZAR ÚLTIMO ACCESO DEL USUARIO
-     */
+    // ACTUALIZAR ÚLTIMO ACCESO DEL USUARIO
     public static function actualizarUltimoAcceso($id)
     {
         try {
@@ -98,9 +107,7 @@ class D_Sesion
         }
     }
 
-    /**
-     * VERIFICAR SI EL CORREO EXISTE
-     */
+    // VERIFICAR SI EL CORREO EXISTE
     public static function existeCorreo($correo)
     {
         try {
@@ -120,9 +127,7 @@ class D_Sesion
         }
     }
 
-    /**
-     * VERIFICAR SI EL NOMBRE DE USUARIO EXISTE
-     */
+    // VERIFICAR SI EL NOMBRE DE USUARIO EXISTE
     public static function existeNombreUsuario($nombreUsuario)
     {
         try {
@@ -142,9 +147,7 @@ class D_Sesion
         }
     }
 
-    /**
-     * ACTUALIZAR CONTRASEÑA
-     */
+    // ACTUALIZAR CONTRASEÑA
     public static function actualizarContrasena($id, $nuevaContrasena)
     {
         try {
@@ -164,9 +167,7 @@ class D_Sesion
         }
     }
 
-    /**
-     * VERIFICAR ESTADO DEL USUARIO
-     */
+    // VERIFICAR ESTADO DEL USUARIO
     public static function verificarEstadoUsuario($id)
     {
         try {
@@ -186,10 +187,7 @@ class D_Sesion
         }
     }
 
-    /**
-     * REGISTRAR INTENTO FALLIDO DE LOGIN
-     * Nota: Esta tabla no existe en tu BD, habría que crearla
-     */
+    // REGISTRAR INTENTO FALLIDO DE LOGIN
     public static function registrarIntentoFallido($correo)
     {
         try {
@@ -211,9 +209,7 @@ class D_Sesion
         }
     }
 
-    /**
-     * OBTENER PREGUNTA DE RECUPERACIÓN POR CORREO
-     */
+    // OBTENER PREGUNTA DE RECUPERACIÓN POR CORREO
     public static function obtenerPreguntaRecuperacion($correo)
     {
         try {
@@ -232,9 +228,7 @@ class D_Sesion
         }
     }
 
-    /**
-     * VERIFICAR RESPUESTA DE RECUPERACIÓN
-     */
+    // VERIFICAR RESPUESTA DE RECUPERACIÓN
     public static function verificarRespuestaRecuperacion($id, $respuesta)
     {
         try {
@@ -248,7 +242,7 @@ class D_Sesion
             $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
             
             if ($resultado) {
-                return $resultado['respuestaRecuperacion'] === $respuesta;
+                return strtolower(trim($resultado['respuestaRecuperacion'])) === strtolower(trim($respuesta));
             }
             
             return false;
