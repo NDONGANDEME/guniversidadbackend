@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . "/../utilidades/u_conexion.php";
+require_once __DIR__ . "/../../utilidades/u_conexion.php";
 require_once __DIR__ . "/../modelo/m_noticia.php";
 
 class D_Noticias

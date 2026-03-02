@@ -1,30 +1,48 @@
 <?php
 require_once __DIR__ . "/../dao/d_noticias.php";
-require_once __DIR__ . "/../utilidades/LimpiarDatos.php";
-require_once __DIR__ . "/../utilidades/u_verificaciones.php";
+require_once __DIR__ . "/../../utilidades/LimpiarDatos.php";
+require_once __DIR__ . "/../../utilidades/u_verificaciones.php";
+require_once __DIR__ . "/../modelo/m_noticia.php";
 
-class NoticiasController
+class NoticiaController
 {
     public static function dispatch($accion, $parametros)
     {
         if (VerificacionesUtil::validarDispatch($accion, $parametros)) {
-            // Verificar sesión activa para todas las acciones CRUD
+            // Verificar sesión activa para todas las acciones
             if (!self::verificarSesionActiva()) {
                 echo json_encode([
                     'estado' => 401,
-                    'éxito' => false,
-                    'mensaje' => 'No hay sesión activa'
+                    'exito' => false,
+                    'mensaje' => 'No hay sesión activa',
+                    'resultado' => null
                 ]);
                 return;
             }
 
             switch ($accion) {
-                case "crearNoticia":
+                // Operaciones de listado y consulta
+                case "obtenerNoticias":
+                    self::obtenerNoticias();
+                    break;
+                    
+                case "obtenerNoticiaPorId":
+                    self::obtenerNoticiaPorId($parametros['id'] ?? null);
+                    break;
+                    
+                case "obtenerCantidadPaginacion":
+                    self::obtenerCantidadPaginacion();
+                    break;
+                    
+                // Operaciones CRUD
+                case "insertarNoticia":
                     self::crearNoticia($parametros);
                     break;
+                    
                 case "actualizarNoticia":
                     self::actualizarNoticia($parametros);
                     break;
+                    
                 case "eliminarNoticia":
                     self::eliminarNoticia($parametros['id'] ?? null);
                     break;
@@ -32,32 +50,90 @@ class NoticiasController
                 default:
                     echo json_encode([
                         'estado' => 400,
-                        'éxito' => false,
-                        'mensaje' => "Acción '$accion' no válida en CRUD de noticias"
+                        'exito' => false,
+                        'mensaje' => "Accion '$accion' no valida en CRUD de noticias",
+                        'resultado' => null
                     ]);
             }
         }
     }
 
-    /**
-     * VERIFICAR SI HAY UNA SESIÓN ACTIVA
-     */
+    // VERIFICAR SI HAY UNA SESIÓN ACTIVA
     private static function verificarSesionActiva()
     {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
         
-        if (!isset($_SESSION['usuario_id']) || !isset($_SESSION['usuario_correo'])) {
-            return false;
-        }
-        
-        return true;
+        return isset($_SESSION['usuario_id']) && isset($_SESSION['usuario_correo']);
     }
 
-    /**
-     * Crear noticia
-     */
+    // Obtener todas las noticias
+    private static function obtenerNoticias()
+    {
+        $noticias = NoticiasDao::listarNoticias();
+        $resultado = [];
+        
+        foreach ($noticias as $noticia) {
+            $resultado[] = $noticia->convertirAArray();
+        }
+        
+        echo json_encode([
+            'estado' => 'exito',
+            'exito' => true,
+            'mensaje' => 'Noticias obtenidas correctamente',
+            'resultado' => $resultado
+        ]);
+    }
+
+    // Obtener noticia por ID
+    private static function obtenerNoticiaPorId($id)
+    {
+        if (!$id) {
+            echo json_encode([
+                'estado' => 400,
+                'exito' => false,
+                'mensaje' => 'ID de noticia no proporcionado',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $noticia = NoticiasDao::obtenerNoticiaPorId($id);
+        
+        if ($noticia) {
+            echo json_encode([
+                'estado' => 'exito',
+                'exito' => true,
+                'mensaje' => 'Noticia obtenida correctamente',
+                'resultado' => $noticia->convertirAArray()
+            ]);
+        } else {
+            echo json_encode([
+                'estado' => 404,
+                'exito' => false,
+                'mensaje' => 'Noticia no encontrada',
+                'resultado' => null
+            ]);
+        }
+    }
+
+    // Obtener cantidad de páginas para paginación
+    private static function obtenerCantidadPaginacion()
+    {
+        $totalPaginas = NoticiasDao::contarNoticias();
+        
+        echo json_encode([
+            'estado' => 'exito',
+            'exito' => true,
+            'mensaje' => 'Total de páginas obtenido correctamente',
+            'resultado' => [
+                'total_paginas' => $totalPaginas
+            ]
+        ]);
+    }
+
+    // Crear noticia
     private static function crearNoticia($parametros)
     {
         // Validar campos obligatorios
@@ -68,8 +144,9 @@ class NoticiasController
         if (empty($asunto) || empty($descripcion)) {
             echo json_encode([
                 'estado' => 400,
-                'éxito' => false,
-                'mensaje' => 'Asunto y descripción son obligatorios'
+                'exito' => false,
+                'mensaje' => 'Asunto y descripción son obligatorios',
+                'resultado' => null
             ]);
             return;
         }
@@ -81,8 +158,9 @@ class NoticiasController
         if ($fotos && !LimpiarDatos::validarMultiplesArchivos($fotos, 'foto')) {
             echo json_encode([
                 'estado' => 400,
-                'éxito' => false,
-                'mensaje' => 'Una o más fotos no son válidas (solo imágenes JPG, PNG, GIF, WEBP - máx 10MB)'
+                'exito' => false,
+                'mensaje' => 'Una o más fotos no son válidas (solo imágenes JPG, PNG, GIF, WEBP - máx 10MB)',
+                'resultado' => null
             ]);
             return;
         }
@@ -98,8 +176,9 @@ class NoticiasController
         if (!$noticiaId) {
             echo json_encode([
                 'estado' => 500,
-                'éxito' => false,
-                'mensaje' => 'Error al crear la noticia en la base de datos'
+                'exito' => false,
+                'mensaje' => 'Error al crear la noticia en la base de datos',
+                'resultado' => null
             ]);
             return;
         }
@@ -117,16 +196,14 @@ class NoticiasController
         $noticiaCreada = NoticiasDao::obtenerNoticiaPorId($noticiaId);
 
         echo json_encode([
-            'estado' => 201,
-            'éxito' => true,
+            'estado' => 'exito',
+            'exito' => true,
             'mensaje' => 'Noticia creada exitosamente',
-            'datos' => $noticiaCreada
+            'resultado' => $noticiaCreada ? $noticiaCreada->convertirAArray() : ['id' => $noticiaId]
         ]);
     }
 
-    /**
-     * Actualizar noticia
-     */
+    // Actualizar noticia
     private static function actualizarNoticia($parametros)
     {
         $id = $parametros['id'] ?? null;
@@ -134,8 +211,9 @@ class NoticiasController
         if (!$id) {
             echo json_encode([
                 'estado' => 400,
-                'éxito' => false,
-                'mensaje' => 'ID de noticia no proporcionado'
+                'exito' => false,
+                'mensaje' => 'ID de noticia no proporcionado',
+                'resultado' => null
             ]);
             return;
         }
@@ -145,22 +223,24 @@ class NoticiasController
         if (!$noticiaExistente) {
             echo json_encode([
                 'estado' => 404,
-                'éxito' => false,
-                'mensaje' => 'Noticia no encontrada'
+                'exito' => false,
+                'mensaje' => 'Noticia no encontrada',
+                'resultado' => null
             ]);
             return;
         }
 
         // Preparar datos a actualizar
-        $asunto = $parametros['asunto'] ?? $parametros['titulo'] ?? $noticiaExistente['asunto'];
-        $descripcion = $parametros['descripcion'] ?? $parametros['contenido'] ?? $noticiaExistente['descripcion'];
-        $tipo = $parametros['tipo'] ?? $noticiaExistente['tipo'];
+        $asunto = $parametros['asunto'] ?? $parametros['titulo'] ?? $noticiaExistente->asunto;
+        $descripcion = $parametros['descripcion'] ?? $parametros['contenido'] ?? $noticiaExistente->descripcion;
+        $tipo = $parametros['tipo'] ?? $noticiaExistente->tipo;
 
         if (empty($asunto) || empty($descripcion)) {
             echo json_encode([
                 'estado' => 400,
-                'éxito' => false,
-                'mensaje' => 'Asunto y descripción son obligatorios'
+                'exito' => false,
+                'mensaje' => 'Asunto y descripción son obligatorios',
+                'resultado' => null
             ]);
             return;
         }
@@ -172,8 +252,9 @@ class NoticiasController
         if ($fotos && !LimpiarDatos::validarMultiplesArchivos($fotos, 'foto')) {
             echo json_encode([
                 'estado' => 400,
-                'éxito' => false,
-                'mensaje' => 'Una o más fotos no son válidas'
+                'exito' => false,
+                'mensaje' => 'Una o más fotos no son válidas',
+                'resultado' => null
             ]);
             return;
         }
@@ -188,8 +269,9 @@ class NoticiasController
         if (!$actualizado) {
             echo json_encode([
                 'estado' => 500,
-                'éxito' => false,
-                'mensaje' => 'Error al actualizar la noticia'
+                'exito' => false,
+                'mensaje' => 'Error al actualizar la noticia',
+                'resultado' => null
             ]);
             return;
         }
@@ -210,23 +292,22 @@ class NoticiasController
         $noticiaActualizada = NoticiasDao::obtenerNoticiaPorId($id);
 
         echo json_encode([
-            'estado' => 200,
-            'éxito' => true,
+            'estado' => 'exito',
+            'exito' => true,
             'mensaje' => 'Noticia actualizada exitosamente',
-            'datos' => $noticiaActualizada
+            'resultado' => $noticiaActualizada->convertirAArray()
         ]);
     }
 
-    /**
-     * Eliminar noticia
-     */
+    // Eliminar noticia
     private static function eliminarNoticia($id)
     {
         if (!$id) {
             echo json_encode([
                 'estado' => 400,
-                'éxito' => false,
-                'mensaje' => 'ID de noticia no proporcionado'
+                'exito' => false,
+                'mensaje' => 'ID de noticia no proporcionado',
+                'resultado' => null
             ]);
             return;
         }
@@ -236,8 +317,9 @@ class NoticiasController
         if (!$noticiaExistente) {
             echo json_encode([
                 'estado' => 404,
-                'éxito' => false,
-                'mensaje' => 'Noticia no encontrada'
+                'exito' => false,
+                'mensaje' => 'Noticia no encontrada',
+                'resultado' => null
             ]);
             return;
         }
@@ -247,15 +329,17 @@ class NoticiasController
 
         if ($eliminado) {
             echo json_encode([
-                'estado' => 200,
-                'éxito' => true,
-                'mensaje' => 'Noticia eliminada exitosamente'
+                'estado' => 'exito',
+                'exito' => true,
+                'mensaje' => 'Noticia eliminada exitosamente',
+                'resultado' => ['id' => $id]
             ]);
         } else {
             echo json_encode([
                 'estado' => 500,
-                'éxito' => false,
-                'mensaje' => 'Error al eliminar la noticia'
+                'exito' => false,
+                'mensaje' => 'Error al eliminar la noticia',
+                'resultado' => null
             ]);
         }
     }

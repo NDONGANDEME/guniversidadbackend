@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . "/../dao/d_sesion.php";
 require_once __DIR__ . "/../modelo/m_sesion.php";
-require_once __DIR__ . "/../utilidades/LimpiarDatos.php";
+require_once __DIR__ . "/../../utilidades/LimpiarDatos.php";
 require_once __DIR__ . "/../../utilidades/u_verificaciones.php";
 
 class SesionController
@@ -9,7 +9,7 @@ class SesionController
     public static function dispatch($accion, $parametros)
     {
         switch ($accion) {
-            case "iniciarSesion":
+            case "verificarCredenciales":
                 self::iniciarSesion($parametros);
                 break;
                 
@@ -51,7 +51,7 @@ class SesionController
     public static function iniciarSesion($parametros)
     {
         // Validar parámetros obligatorios
-        if (!VerificacionesUtil::validarSesion('iniciarSesion', $parametros)) {
+        if (!VerificacionesUtil::validarSesion('iniciarSesion', $parametros['nombreOCorreo'])) {
             echo json_encode([
                 'estado' => 400,
                 'exito' => false,
@@ -61,11 +61,11 @@ class SesionController
             return;
         }
 
-        $correo = LimpiarDatos::limpiarParametro($parametros['correo']);
-        $contrasena = $parametros['contrasena'];
+        $correoONombre = LimpiarDatos::limpiarParametro($parametros['nombreOCorreo']);
+        $contrasena = $parametros['contraseña'];
 
         // Buscar usuario por correo
-        $usuarioModel = D_Sesion::obtenerUsuarioPorCorreo($correo);
+        $usuarioModel = D_Sesion::obtenerUsuarioPorNombreUsuario($correoONombre);
 
         if (!$usuarioModel) {
             echo json_encode([
@@ -115,13 +115,12 @@ class SesionController
         $_SESSION['ultimo_acceso'] = time();
 
         echo json_encode([
-            'estado' => 200,
+            'estado' => 'exito',
             'exito' => true,
-            'mensaje' => 'Sesión iniciada correctamente',
-            'resultado' => [
-                'usuario' => $usuarioModel->convertirAArray(),
-                'sesion_id' => session_id()
-            ]
+            'mensaje' => 'Sesinn iniciada correctamente',
+            'resultado' => [$usuarioModel->convertirAArray()],
+            'sesion_id' => [session_id()]
+            
         ]);
     }
 

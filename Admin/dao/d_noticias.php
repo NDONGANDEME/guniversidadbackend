@@ -1,39 +1,163 @@
 <?php
-require_once __DIR__ . "/../utilidades/u_conexion.php";
+require_once __DIR__ . "/../../utilidades/u_conexion.php";
+require_once __DIR__ . "/../modelo/m_noticia.php";
 
 class NoticiasDao
 {
-    // FUNCIÓN: Obtener noticia por ID
+    // FUNCIÓN PARA OBTENER EL NÚMERO DE PÁGINAS (20 noticias por página)
+    public static function contarNoticias()
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+
+            $sql = "SELECT COUNT(*) as total FROM noticias";
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->execute();
+
+            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            return (int) ceil($resultado['total'] / 20);
+        } catch (PDOException $e) {
+            return 0;
+        }
+    }
+
+    // FUNCIÓN PARA OBTENER NOTICIAS A PAGINAR
+    public static function obtenerNoticiasAPaginar($pagina)
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+
+            $saltos = ($pagina - 1) * 20;
+            $lote = 20;
+
+            $sql = "SELECT * FROM noticias ORDER BY fechaPublicacion DESC LIMIT :lote OFFSET :saltos";
+            $stmt = $instanciaConexion->prepare($sql);
+
+            $stmt->bindParam(':lote', $lote, PDO::PARAM_INT);
+            $stmt->bindParam(':saltos', $saltos, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $noticias = [];
+            
+            // Crear modelos y obtener fotos para cada noticia
+            foreach ($resultados as $fila) {
+                $model = new NoticiaModel();
+                $model->hidratarDesdeArray($fila);
+                
+                // Obtener fotos asociadas
+                $fotos = self::obtenerFotosNoticia($model->idNoticia);
+                $model->establecerFotos($fotos);
+                
+                $noticias[] = $model;
+            }
+
+            return $noticias;
+        } catch (PDOException $e) {
+            return [];
+        }
+    }
+
+    // FUNCIÓN PARA OBTENER TODAS LAS NOTICIAS
+    public static function listarNoticias()
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+
+            $sql = "SELECT * FROM noticias ORDER BY fechaPublicacion DESC";
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->execute();
+
+            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $noticias = [];
+            
+            // Crear modelos y obtener fotos para cada noticia
+            foreach ($resultados as $fila) {
+                $model = new NoticiaModel();
+                $model->hidratarDesdeArray($fila);
+                
+                // Obtener fotos asociadas
+                $fotos = self::obtenerFotosNoticia($model->idNoticia);
+                $model->establecerFotos($fotos);
+                
+                $noticias[] = $model;
+            }
+
+            return $noticias;
+        } catch (PDOException $e) {
+            return [];
+        }
+    }
+
+    // FUNCIÓN PARA OBTENER LAS 5 NOTICIAS MÁS RECIENTES
+    public static function obtenerNoticiasRecientes()
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+
+            $sql = "SELECT * FROM noticias ORDER BY fechaPublicacion DESC LIMIT 5";
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->execute();
+
+            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $noticias = [];
+            
+            // Crear modelos y obtener fotos para cada noticia
+            foreach ($resultados as $fila) {
+                $model = new NoticiaModel();
+                $model->hidratarDesdeArray($fila);
+                
+                // Obtener fotos asociadas
+                $fotos = self::obtenerFotosNoticia($model->idNoticia);
+                $model->establecerFotos($fotos);
+                
+                $noticias[] = $model;
+            }
+
+            return $noticias;
+        } catch (PDOException $e) {
+            return [];
+        }
+    }
+
+    // FUNCIÓN: Obtener noticia por ID (devuelve modelo)
     public static function obtenerNoticiaPorId($id)
     {
         try {
             $instanciaConexion = ConexionUtil::conectar();
 
-            $sql = "SELECT * FROM noticia WHERE idNoticia = :id";
+            $sql = "SELECT * FROM noticias WHERE idNoticia = :id";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             $stmt->execute();
 
-            $noticia = $stmt->fetch(PDO::FETCH_ASSOC);
+            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            // Si existe la noticia, obtener sus fotos
-            if ($noticia) {
-                $noticia['fotos'] = self::obtenerFotosNoticia($id);
+            if ($resultado) {
+                $model = new NoticiaModel();
+                $model->hidratarDesdeArray($resultado);
+                
+                // Obtener fotos asociadas
+                $fotos = self::obtenerFotosNoticia($id);
+                $model->establecerFotos($fotos);
+                
+                return $model;
             }
 
-            return $noticia;
+            return null;
         } catch (PDOException $e) {
             return null;
         }
     }
 
-    // FUNCIÓN: Crear noticia
+    // FUNCIÓN: Crear noticia (devuelve ID)
     public static function crearNoticia($datos)
     {
         try {
             $instanciaConexion = ConexionUtil::conectar();
 
-            $sql = "INSERT INTO noticia (asunto, descripcion, tipo, fechaPublicacion) 
+            $sql = "INSERT INTO noticias (asunto, descripcion, tipo, fechaPublicacion) 
                     VALUES (:asunto, :descripcion, :tipo, :fechaPublicacion)";
             
             $stmt = $instanciaConexion->prepare($sql);
@@ -58,7 +182,7 @@ class NoticiasDao
         try {
             $instanciaConexion = ConexionUtil::conectar();
 
-            $sql = "UPDATE noticia 
+            $sql = "UPDATE noticias 
                     SET asunto = :asunto, 
                         descripcion = :descripcion, 
                         tipo = :tipo
@@ -86,7 +210,7 @@ class NoticiasDao
             self::eliminarFotosNoticia($id);
 
             // Luego eliminar la noticia
-            $sql = "DELETE FROM noticia WHERE idNoticia = :id";
+            $sql = "DELETE FROM noticias WHERE idNoticia = :id";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             
@@ -96,20 +220,22 @@ class NoticiasDao
         }
     }
 
-    // FUNCIÓN: Guardar fotos de una noticia (usando tabla foto)
+    // FUNCIÓN: Guardar fotos de una noticia
     public static function guardarFotosNoticia($noticiaId, $fotos)
     {
         try {
             $instanciaConexion = ConexionUtil::conectar();
 
-            $sql = "INSERT INTO foto (url, idReferencia, tablaReferencia) 
-                    VALUES (:url, :idReferencia, 'noticia')";
+            $sql = "INSERT INTO archivo (url, tipoArchivo, idReferencia, tablaReferencia) 
+                    VALUES (:url, :tipoArchivo, :idReferencia, 'noticia')";
             
             $stmt = $instanciaConexion->prepare($sql);
             
             foreach ($fotos as $foto) {
                 $stmt->bindParam(':url', $foto);
+                $stmt->bindParam(':tipoArchivo', 'foto');
                 $stmt->bindParam(':idReferencia', $noticiaId, PDO::PARAM_INT);
+
                 $stmt->execute();
             }
             
@@ -125,10 +251,10 @@ class NoticiasDao
         try {
             $instanciaConexion = ConexionUtil::conectar();
 
-            $sql = "SELECT idFoto, url FROM foto 
+            $sql = "SELECT idArchivo, url FROM archivos 
                     WHERE tablaReferencia = 'noticia' 
                     AND idReferencia = :noticiaId 
-                    ORDER BY idFoto ASC";
+                    ORDER BY idArchivo ASC";
             
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->bindParam(':noticiaId', $noticiaId, PDO::PARAM_INT);
@@ -146,7 +272,7 @@ class NoticiasDao
         try {
             $instanciaConexion = ConexionUtil::conectar();
 
-            $sql = "DELETE FROM foto 
+            $sql = "DELETE FROM archivos 
                     WHERE tablaReferencia = 'noticia' 
                     AND idReferencia = :noticiaId";
             

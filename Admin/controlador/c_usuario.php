@@ -1,7 +1,7 @@
 <?php
-require_once __DIR__ . "/../utilidades/u_verificaciones.php";
+require_once __DIR__ . "/../../utilidades/u_verificaciones.php";
 require_once __DIR__ . "/../dao/d_usuario.php";
-require_once __DIR__ . "/../utilidades/LimpiarDatos.php";
+require_once __DIR__ . "/../../utilidades/LimpiarDatos.php";
 require_once __DIR__ . "/../modelo/m_usuario.php";
 
 class UsuarioController
@@ -9,7 +9,7 @@ class UsuarioController
     public static function dispatch($accion, $parametros)
     {
         // Verificar que el actor sea admin para todas estas operaciones
-        if (!isset($parametros['actor']) || $parametros['actor'] !== 'admin') {
+        /*if (!isset($parametros['actor']) || $parametros['actor'] !== 'admin') {
             echo json_encode([
                 'estado' => 403,
                 'exito' => false,
@@ -17,7 +17,7 @@ class UsuarioController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         switch ($accion) {
             case "insertarUsuario":
@@ -67,7 +67,7 @@ class UsuarioController
     // Obtener todos los usuarios
     private static function obtenerUsuarios()
     {
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -75,7 +75,7 @@ class UsuarioController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         $usuarios = D_Usuario::obtenerUsuarios();
         $resultado = [];
@@ -95,7 +95,7 @@ class UsuarioController
     // Insertar nuevo usuario
     private static function insertarUsuario($parametros)
     {
-        if (!self::verificarSesionActiva()) {
+       /* if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -103,7 +103,7 @@ class UsuarioController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         // Validar campos obligatorios
         $nombreUsuario = $parametros['nombreUsuario'] ?? '';
@@ -181,12 +181,12 @@ class UsuarioController
         }
 
         // Encriptar contraseña
-        $contrasenaHash = password_hash($contrasena, PASSWORD_DEFAULT);
+        //$contrasenaHash = password_hash($contrasena, PASSWORD_DEFAULT);
 
         // Insertar usuario
         $usuarioId = D_Usuario::insertarUsuario([
             'nombreUsuario' => $nombreUsuario,
-            'contrasena' => $contrasenaHash,
+            'contrasena' => $contrasena,
             'correo' => $correo,
             'rol' => $rol,
             'estado' => 'activo',
@@ -219,7 +219,7 @@ class UsuarioController
     // Actualizar usuario existente
     private static function actualizarUsuario($parametros)
     {
-        if (!self::verificarSesionActiva()) {
+       /* if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -227,7 +227,7 @@ class UsuarioController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         $id = $parametros['id'] ?? null;
         
@@ -351,7 +351,7 @@ class UsuarioController
     // Cambiar estado del usuario (habilitar/deshabilitar)
     private static function cambiarEstadoUsuario($id, $estado)
     {
-        if (!self::verificarSesionActiva()) {
+        /* if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -359,7 +359,7 @@ class UsuarioController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         if (!$id) {
             echo json_encode([
@@ -407,7 +407,7 @@ class UsuarioController
     // Verificar contraseña existente
     private static function verificarContraseñaExistente($parametros)
     {
-        if (!self::verificarSesionActiva()) {
+        /* if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -415,7 +415,7 @@ class UsuarioController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         $id = $parametros['id'] ?? null;
         $contrasena = $parametros['contrasena'] ?? '';

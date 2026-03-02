@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . "/../utilidades/u_verificaciones.php";
+require_once __DIR__ . "/../../utilidades/u_verificaciones.php";
 require_once __DIR__ . "/../dao/d_asignatura.php";
 require_once __DIR__ . "/../modelo/m_asignatura.php";
 

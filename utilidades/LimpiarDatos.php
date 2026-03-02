@@ -128,8 +128,8 @@ class LimpiarDatos
     /**
      * CONSTANTES PARA CARPETAS
      */
-    const CARPETA_IMAGENES = "/../../htdocs/guniversidadfrontend/public/imagenes/";
-    const CARPETA_DOCUMENTOS = "/../../htdocs/guniversidadfrontend/public/documentos/";
+    const CARPETA_IMAGENES = "/../../../htdocs/guniversidadfrontend/public/imagenes/";
+    const CARPETA_DOCUMENTOS = "/../../../htdocs/guniversidadfrontend/public/documentos/";
 
     /**
      * Generar nombre único para archivo
@@ -170,10 +170,10 @@ class LimpiarDatos
             return null;
         }
 
-        // Crear carpeta si no existe
+        /*// Crear carpeta si no existe
         if (!file_exists($carpeta)) {
             mkdir($carpeta, 0777, true);
-        }
+        }*/
 
         // Obtener extensión
         $extension = strtolower(pathinfo($archivo['name'], PATHINFO_EXTENSION));

@@ -63,14 +63,14 @@ if (empty($actor)) {
 
 // 4. Construir archivo y clase
 
-$archivo = "../{$actor}/controlador/c_{$ruta}.php";
-if (!file_exists($archivo)) {
+$archivo = "/../{$actor}/controlador/c_{$ruta}.php";
+/*if (!file_exists($archivo)) {
     http_response_code(404);
     echo json_encode(['error' => 'Controlador no encontrado']);
     exit;
-}
+}*/
 
-require_once $archivo;
+require_once __DIR__ .$archivo;
 $className = ucfirst($ruta).'Controller';
 
 if (!class_exists($className)) {

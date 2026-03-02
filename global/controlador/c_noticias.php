@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . "/../utilidades/u_verificaciones.php";
+require_once __DIR__ . "/../../utilidades/u_verificaciones.php";
 require_once __DIR__ . "/../dao/d_noticias.php";
 require_once __DIR__ . "/../modelo/m_noticia.php";
 
@@ -18,7 +18,7 @@ class NoticiasController
                     self::obtenerNoticiaPorId($parametros['id'] ?? null);
                     break;
                     
-                case "listarNoticiasRecientes":
+                case "obtenerNoticiasRecientes":
                     self::listarNoticiasRecientes($parametros['tipo'] ?? null);
                     break;
                     
@@ -51,7 +51,7 @@ class NoticiasController
                     echo json_encode([
                         'estado' => 400,
                         'exito' => false,
-                        'mensaje' => "Acción '$accion' no válida en el controlador de noticias",
+                        'mensaje' => "Accion '$accion' no valida en el controlador de noticias",
                         'resultado' => null
                     ]);
             }

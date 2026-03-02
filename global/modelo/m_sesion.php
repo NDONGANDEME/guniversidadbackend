@@ -59,7 +59,10 @@ class SesionModel
     // Validar contraseña
     public function validarContrasena($password)
     {
-        return password_verify($password, $this->contrasena);
+        if ($password==$this->contrasena){
+            return true;
+        }else return false;
+        //return password_verify($password, $this->contrasena);
     }
 
     // Verificar si el usuario está activo
