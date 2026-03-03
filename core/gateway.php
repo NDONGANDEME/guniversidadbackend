@@ -3,6 +3,29 @@
 require_once __DIR__. "/../utilidades/LimpiarDatos.php";
 header('Content-Type: application/json; charset=utf-8');
 
+// ========== DEPURACIÓN DE ARCHIVOS ==========
+error_log("=== DEPURACIÓN DE GATEWAY ===");
+error_log("REQUEST_METHOD: " . $_SERVER['REQUEST_METHOD']);
+error_log("GET: " . print_r($_GET, true));
+error_log("POST: " . print_r($_POST, true));
+error_log("FILES: " . print_r($_FILES, true));
+error_log("CONTENT_TYPE: " . ($_SERVER['CONTENT_TYPE'] ?? 'no definido'));
+
+// Si quieres verlo en el navegador (solo para pruebas, NO en producción)
+if (isset($_GET['debug'])) {
+    echo "<pre>";
+    echo "GET:\n";
+    print_r($_GET);
+    echo "\nPOST:\n";
+    print_r($_POST);
+    echo "\nFILES:\n";
+    print_r($_FILES);
+    echo "</pre>";
+}
+// ===========================================
+
+// Resto del código...
+
 // 1. Sanitizar ruta y acción (vienen por GET)
 $ruta = LimpiarDatos::limpiarRuta($_GET['ruta'] ?? '');
 $accion = LimpiarDatos::limpiarParametro($_GET['accion'] ?? 'index');

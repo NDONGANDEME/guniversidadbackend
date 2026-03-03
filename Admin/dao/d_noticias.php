@@ -18,6 +18,7 @@ class NoticiasDao
 
             return (int) ceil($resultado['total'] / 20);
         } catch (PDOException $e) {
+            error_log("Error en contarNoticias: " . $e->getMessage());
             return 0;
         }
     }
@@ -55,6 +56,7 @@ class NoticiasDao
 
             return $noticias;
         } catch (PDOException $e) {
+            error_log("Error en obtenerNoticiasAPaginar: " . $e->getMessage());
             return [];
         }
     }
@@ -86,6 +88,7 @@ class NoticiasDao
 
             return $noticias;
         } catch (PDOException $e) {
+            error_log("Error en listarNoticias: " . $e->getMessage());
             return [];
         }
     }
@@ -117,6 +120,7 @@ class NoticiasDao
 
             return $noticias;
         } catch (PDOException $e) {
+            error_log("Error en obtenerNoticiasRecientes: " . $e->getMessage());
             return [];
         }
     }
@@ -147,6 +151,7 @@ class NoticiasDao
 
             return null;
         } catch (PDOException $e) {
+            error_log("Error en obtenerNoticiaPorId: " . $e->getMessage());
             return null;
         }
     }
@@ -172,6 +177,7 @@ class NoticiasDao
             
             return null;
         } catch (PDOException $e) {
+            error_log("Error en crearNoticia: " . $e->getMessage());
             return null;
         }
     }
@@ -196,6 +202,7 @@ class NoticiasDao
             
             return $stmt->execute();
         } catch (PDOException $e) {
+            error_log("Error en actualizarNoticia: " . $e->getMessage());
             return false;
         }
     }
@@ -216,6 +223,7 @@ class NoticiasDao
             
             return $stmt->execute();
         } catch (PDOException $e) {
+            error_log("Error en eliminarNoticia: " . $e->getMessage());
             return false;
         }
     }
@@ -226,21 +234,22 @@ class NoticiasDao
         try {
             $instanciaConexion = ConexionUtil::conectar();
 
-            $sql = "INSERT INTO archivo (url, tipoArchivo, idReferencia, tablaReferencia) 
-                    VALUES (:url, :tipoArchivo, :idReferencia, 'noticia')";
+            $sql = "INSERT INTO archivos (url, tipoArchivo, idReferencia, tablaReferencia) 
+                    VALUES (:url, :tipoArchivo, :idReferencia, 'noticias')";
             
             $stmt = $instanciaConexion->prepare($sql);
             
             foreach ($fotos as $foto) {
+                $tipoArchivo = 'foto';
                 $stmt->bindParam(':url', $foto);
-                $stmt->bindParam(':tipoArchivo', 'foto');
+                $stmt->bindParam(':tipoArchivo', $tipoArchivo);
                 $stmt->bindParam(':idReferencia', $noticiaId, PDO::PARAM_INT);
-
                 $stmt->execute();
             }
             
             return true;
         } catch (PDOException $e) {
+            error_log("Error en guardarFotosNoticia: " . $e->getMessage());
             return false;
         }
     }
@@ -252,7 +261,7 @@ class NoticiasDao
             $instanciaConexion = ConexionUtil::conectar();
 
             $sql = "SELECT idArchivo, url FROM archivos 
-                    WHERE tablaReferencia = 'noticia' 
+                    WHERE tablaReferencia = 'noticias' 
                     AND idReferencia = :noticiaId 
                     ORDER BY idArchivo ASC";
             
@@ -262,6 +271,7 @@ class NoticiasDao
 
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
+            error_log("Error en obtenerFotosNoticia: " . $e->getMessage());
             return [];
         }
     }
@@ -273,7 +283,7 @@ class NoticiasDao
             $instanciaConexion = ConexionUtil::conectar();
 
             $sql = "DELETE FROM archivos 
-                    WHERE tablaReferencia = 'noticia' 
+                    WHERE tablaReferencia = 'noticias' 
                     AND idReferencia = :noticiaId";
             
             $stmt = $instanciaConexion->prepare($sql);
@@ -281,7 +291,86 @@ class NoticiasDao
             
             return $stmt->execute();
         } catch (PDOException $e) {
+            error_log("Error en eliminarFotosNoticia: " . $e->getMessage());
             return false;
+        }
+    }
+
+    // FUNCIÓN: Buscar noticias por término
+    public static function buscarNoticias($termino)
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+            $termino = "%$termino%";
+
+            $sql = "SELECT * FROM noticias 
+                    WHERE asunto LIKE :termino 
+                       OR descripcion LIKE :termino 
+                       OR tipo LIKE :termino 
+                    ORDER BY fechaPublicacion DESC";
+            
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->bindParam(':termino', $termino);
+            $stmt->execute();
+
+            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $noticias = [];
+            
+            foreach ($resultados as $fila) {
+                $model = new NoticiaModel();
+                $model->hidratarDesdeArray($fila);
+                
+                $fotos = self::obtenerFotosNoticia($model->idNoticia);
+                $model->establecerFotos($fotos);
+                
+                $noticias[] = $model;
+            }
+
+            return $noticias;
+        } catch (PDOException $e) {
+            error_log("Error en buscarNoticias: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    // FUNCIÓN: Obtener noticias por tipo
+    public static function obtenerNoticiasPorTipo($tipo, $limite = null)
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+
+            $sql = "SELECT * FROM noticias WHERE tipo = :tipo ORDER BY fechaPublicacion DESC";
+            
+            if ($limite !== null) {
+                $sql .= " LIMIT :limite";
+            }
+            
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->bindParam(':tipo', $tipo);
+            
+            if ($limite !== null) {
+                $stmt->bindParam(':limite', $limite, PDO::PARAM_INT);
+            }
+            
+            $stmt->execute();
+
+            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $noticias = [];
+            
+            foreach ($resultados as $fila) {
+                $model = new NoticiaModel();
+                $model->hidratarDesdeArray($fila);
+                
+                $fotos = self::obtenerFotosNoticia($model->idNoticia);
+                $model->establecerFotos($fotos);
+                
+                $noticias[] = $model;
+            }
+
+            return $noticias;
+        } catch (PDOException $e) {
+            error_log("Error en obtenerNoticiasPorTipo: " . $e->getMessage());
+            return [];
         }
     }
 }
