@@ -150,5 +150,27 @@ class D_Facultad
             return false;
         }
     }
+
+    // OBTENER FACULTAD POR DEPARTAMENTO
+    public static function obtenerFacultadPorDepartamento($idDepartamento)
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+            
+            $sql = "SELECT f.idFacultad, f.nombreFacultad
+                    FROM facultad f
+                    INNER JOIN departamento d ON f.idFacultad = d.idFacultad
+                    WHERE d.idDepartamento = :idDepartamento";
+            
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->bindParam(':idDepartamento', $idDepartamento, PDO::PARAM_INT);
+            $stmt->execute();
+            
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            error_log("Error en obtenerFacultadPorDepartamento: " . $e->getMessage());
+            return null;
+        }
+    }
 }
 ?>

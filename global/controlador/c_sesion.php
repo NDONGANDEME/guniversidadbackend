@@ -1,5 +1,9 @@
 <?php
 require_once __DIR__ . "/../dao/d_sesion.php";
+require_once __DIR__ . "/../../Secretario/dao/d_estudiante.php";
+require_once __DIR__ . "/../../Secretario/dao/d_profesor.php";
+require_once __DIR__ . "/../../Admin/dao/d_administrativo.php";
+require_once __DIR__ . "/../../Admin/dao/d_facultad.php";
 require_once __DIR__ . "/../modelo/m_sesion.php";
 require_once __DIR__ . "/../../utilidades/LimpiarDatos.php";
 require_once __DIR__ . "/../../utilidades/u_verificaciones.php";
@@ -64,8 +68,13 @@ class SesionController
         $correoONombre = LimpiarDatos::limpiarParametro($parametros['nombreOCorreo']);
         $contrasena = $parametros['contraseña'];
 
-        // Buscar usuario por correo
+        // Buscar usuario por nombre de usuario (puede ser correo o nombreUsuario)
         $usuarioModel = D_Sesion::obtenerUsuarioPorNombreUsuario($correoONombre);
+        
+        // Si no encuentra por nombre, buscar por correo
+        if (!$usuarioModel && filter_var($correoONombre, FILTER_VALIDATE_EMAIL)) {
+            $usuarioModel = D_Sesion::obtenerUsuarioPorCorreo($correoONombre);
+        }
 
         if (!$usuarioModel) {
             echo json_encode([
@@ -114,14 +123,91 @@ class SesionController
         $_SESSION['usuario_foto'] = $usuarioModel->foto;
         $_SESSION['ultimo_acceso'] = time();
 
+        // Preparar resultado base con datos del usuario
+        $resultado = $usuarioModel->convertirAArray();
+        
+        // Obtener datos específicos según el rol
+        $datosRol = self::obtenerDatosPorRol($usuarioModel->idUsuario, $usuarioModel->rol);
+        if (!empty($datosRol)) {
+            $resultado['datos_rol'] = $datosRol;
+        }
+
         echo json_encode([
             'estado' => 'exito',
             'exito' => true,
-            'mensaje' => 'Sesinn iniciada correctamente',
-            'resultado' => [$usuarioModel->convertirAArray()],
-            'sesion_id' => [session_id()]
-            
+            'mensaje' => 'Sesión iniciada correctamente',
+            'resultado' => $resultado,
+            'sesion_id' => session_id()
         ]);
+    }
+
+    // Obtener datos específicos según el rol del usuario
+    private static function obtenerDatosPorRol($idUsuario, $rol)
+    {
+        $datos = [];
+        
+        switch ($rol) {
+            case 'estudiante':
+                $estudiante = D_Estudiante::obtenerEstudiantePorIdUsuario($idUsuario);
+                if ($estudiante) {
+                    $datos = $estudiante->convertirAArray();
+                    
+                    // Obtener facultad a través del DAO
+                    $facultad = D_Estudiante::obtenerFacultadEstudiante($estudiante->idEstudiante);
+                    if ($facultad) {
+                        $datos['idFacultad'] = $facultad['idFacultad'];
+                        $datos['nombreFacultad'] = $facultad['nombreFacultad'];
+                        $datos['idFacultad'] = $facultad['idFacultad'];
+                        $datos['idFacultad'] = $facultad['nombreFacultad'];
+                    }
+                }
+                break;
+                
+            case 'profesor':
+                $profesor = D_Profesor::obtenerProfesorPorIdUsuario($idUsuario);
+                if ($profesor) {
+                    $datos = $profesor->convertirAArray();
+                    
+                    // Obtener facultad a través del DAO
+                    if (isset($profesor->idDepartamento)) {
+                        $facultad = D_Facultad::obtenerFacultadPorDepartamento($profesor->idDepartamento);
+                        if ($facultad) {
+                            $datos['idFacultad'] = $facultad['idFacultad'];
+                            $datos['nombreFacultad'] = $facultad['nombreFacultad'];
+                            $datos['idFacultad'] = $facultad['idFacultad'];
+                            $datos['idFacultad'] = $facultad['nombreFacultad'];
+                        }
+                    }
+                }
+                break;
+                
+            case 'administrativo':
+                $administrativo = D_Administrativo::obtenerAdministrativoPorIdUsuario($idUsuario);
+                if ($administrativo) {
+                    $datos = $administrativo->convertirAArray();
+                    
+                    // Obtener nombre de la facultad si solo tenemos el ID
+                    if (isset($datos['idFacultad']) && !isset($datos['nombreFacultad'])) {
+                        $facultad = D_Facultad::obtenerFacultadPorId($datos['idFacultad']);
+                        if ($facultad) {
+                            $datos['nombreFacultad'] = $facultad['nombreFacultad'];
+                            $datos['idFacultad'] = $facultad['idFacultad'];
+                            $datos['idFacultad'] = $facultad['nombreFacultad'];
+                        }
+                    }
+                }
+                break;
+                
+            case 'admin':
+                // Admin no necesita datos adicionales específicos
+                $datos = [
+                    'tipo' => 'administrador',
+                    'nivel_acceso' => 'total'
+                ];
+                break;
+        }
+        
+        return $datos;
     }
 
     // Cerrar sesión
