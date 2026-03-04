@@ -4,7 +4,7 @@ require_once __DIR__ . "/../modelo/m_noticia.php";
 
 class D_Noticias
 {
-    // OBTENER EL NÚMERO DE PÁGINAS (20 noticias por página)
+    // OBTENER EL NÚMERO DE PÁGINAS (21 noticias por página)
     public static function contarNoticias($tipo = null)
     {
         try {
@@ -24,7 +24,7 @@ class D_Noticias
 
             $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
 
-            return (int) ceil($resultado['total'] / 20);
+            return (int) ceil($resultado['total'] / 21);
         } catch (PDOException $e) {
             error_log("Error en contarNoticias: " . $e->getMessage());
             return 0;

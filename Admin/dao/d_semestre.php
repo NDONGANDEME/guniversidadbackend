@@ -10,7 +10,10 @@ class D_Semestre
         try {
             $instanciaConexion = ConexionUtil::conectar();
 
-            $sql = "SELECT * FROM semestre ORDER BY numeroSemestre ASC";
+            $sql = "SELECT s.*, c.nombreCurso
+                    FROM semestre s
+                    LEFT JOIN curso c ON s.idCurso = c.idCurso
+                    ORDER BY s.numeroSemestre ASC";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
 
@@ -61,12 +64,13 @@ class D_Semestre
         try {
             $instanciaConexion = ConexionUtil::conectar();
 
-            $sql = "INSERT INTO semestre (numeroSemestre, tipoSemestre) 
-                    VALUES (:numeroSemestre, :tipoSemestre)";
+            $sql = "INSERT INTO semestre (numeroSemestre, tipoSemestre, idCurso) 
+                    VALUES (:numeroSemestre, :tipoSemestre, :idCurso)";
             
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->bindParam(':numeroSemestre', $datos['numeroSemestre']);
             $stmt->bindParam(':tipoSemestre', $datos['tipoSemestre']);
+            $stmt->bindParam(':idCurso', $datos['idCurso']);
             
             if ($stmt->execute()) {
                 return $instanciaConexion->lastInsertId();

@@ -144,6 +144,7 @@ class AulaController
         $nombreAula = $parametros['nombreAula'] ?? '';
         $capacidad = $parametros['capacidad'] ?? '';
         $idFacultad = $parametros['idFacultad'] ?? '';
+        $estado = $parametros['estado'] ?? '';
 
         $errores = [];
         
@@ -186,7 +187,8 @@ class AulaController
         $aulaId = D_Aula::insertarAula([
             'nombreAula' => $nombreAula,
             'capacidad' => $capacidad,
-            'idFacultad' => $idFacultad
+            'idFacultad' => $idFacultad,
+            'estado' => $estado
         ]);
 
         if (!$aulaId) {
@@ -220,14 +222,14 @@ class AulaController
             return;
         }
 
-        $id = $parametros['id'] ?? null;
+        $id = $parametros['idAula'] ?? null;
         
         if (!$id) {
             echo json_encode([
                 'estado' => 400,
                 'exito' => false,
                 'mensaje' => 'ID de aula no proporcionado',
-                'resultado' => null
+                'resultado' => $id
             ]);
             return;
         }

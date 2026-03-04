@@ -6,7 +6,7 @@ header('Content-Type: application/json; charset=utf-8');
 // 1. Sanitizar ruta y acción (vienen por GET)
 $ruta = LimpiarDatos::limpiarRuta($_GET['ruta'] ?? '');
 $accion = LimpiarDatos::limpiarParametro($_GET['accion'] ?? 'index');
-$actor = ucfirst(LimpiarDatos::limpiarParametro($_GET['actor'] ?? 'index'));
+$actor = LimpiarDatos::limpiarParametro($_GET['actor'] ?? 'index');
 
 // 2. RECUPERAR TODOS LOS PARÁMETROS DE LA URL Y ALMACENARLOS EN $parametros
 $parametros = [];
@@ -14,7 +14,7 @@ $parametros = [];
 // Agregar TODOS los parámetros GET (incluyendo ruta y acción, pero ya los tenemos)
 foreach ($_GET as $key => $value) {
     // No sobrescribir ruta y acción si ya existen, pero mantener el resto
-    if ($key !== 'ruta' && $key !== 'accion' && $key !== 'actor') {
+    if ($key !== 'ruta' && $key !== 'accion') {
         $parametros[$key] = LimpiarDatos::limpiarParametro($value);
     }
 }

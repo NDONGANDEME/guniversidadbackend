@@ -94,12 +94,13 @@ class D_Carrera
         try {
             $instanciaConexion = ConexionUtil::conectar();
 
-            $sql = "INSERT INTO carrera (nombreCarrera, idDepartamento) 
-                    VALUES (:nombreCarrera, :idDepartamento)";
+            $sql = "INSERT INTO carrera (nombreCarrera, idDepartamento, estado) 
+                    VALUES (:nombreCarrera, :idDepartamento, :estado)";
             
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->bindParam(':nombreCarrera', $datos['nombreCarrera']);
             $stmt->bindParam(':idDepartamento', $datos['idDepartamento'], PDO::PARAM_INT);
+            $stmt->bindParam(':estado', $datos['estado']);
             
             if ($stmt->execute()) {
                 return $instanciaConexion->lastInsertId();
@@ -124,7 +125,7 @@ class D_Carrera
                     WHERE idCarrera = :id";
             
             $stmt = $instanciaConexion->prepare($sql);
-            $stmt->bindParam(':id', $datos['id'], PDO::PARAM_INT);
+            $stmt->bindParam(':id', $datos['idCarrera'], PDO::PARAM_INT);
             $stmt->bindParam(':nombreCarrera', $datos['nombreCarrera']);
             $stmt->bindParam(':idDepartamento', $datos['idDepartamento'], PDO::PARAM_INT);
             

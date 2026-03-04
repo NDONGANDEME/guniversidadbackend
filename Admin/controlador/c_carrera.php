@@ -132,10 +132,7 @@ class CarreraController
         }
 
         // Insertar carrera
-        $carreraId = D_Carrera::insertarCarrera([
-            'nombreCarrera' => $nombreCarrera,
-            'idDepartamento' => $idDepartamento
-        ]);
+        $carreraId = D_Carrera::insertarCarrera($parametros);
 
         if (!$carreraId) {
             echo json_encode([
@@ -168,7 +165,7 @@ class CarreraController
             return;
         }
 
-        $id = $parametros['id'] ?? null;
+        $id = $parametros['idCarrera'] ?? null;
         
         if (!$id) {
             echo json_encode([
@@ -220,11 +217,7 @@ class CarreraController
         }
 
         // Actualizar carrera
-        $actualizado = D_Carrera::actualizarCarrera([
-            'id' => $id,
-            'nombreCarrera' => $nombreCarrera,
-            'idDepartamento' => $idDepartamento
-        ]);
+        $actualizado = D_Carrera::actualizarCarrera($parametros);
 
         if (!$actualizado) {
             echo json_encode([

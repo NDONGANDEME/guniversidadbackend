@@ -94,13 +94,14 @@ class D_Aula
         try {
             $instanciaConexion = ConexionUtil::conectar();
 
-            $sql = "INSERT INTO aulas (nombreAula, capacidad, idFacultad) 
-                    VALUES (:nombreAula, :capacidad, :idFacultad)";
+            $sql = "INSERT INTO aulas (nombreAula, capacidad, idFacultad, estado) 
+                    VALUES (:nombreAula, :capacidad, :idFacultad, :estado)";
             
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->bindParam(':nombreAula', $datos['nombreAula']);
             $stmt->bindParam(':capacidad', $datos['capacidad'], PDO::PARAM_INT);
             $stmt->bindParam(':idFacultad', $datos['idFacultad'], PDO::PARAM_INT);
+            $stmt->bindParam(':estado', $datos['estado']);
             
             if ($stmt->execute()) {
                 return $instanciaConexion->lastInsertId();

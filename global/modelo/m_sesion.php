@@ -24,7 +24,7 @@ class SesionModel
         if (isset($data['idUsuario'])) $this->idUsuario = $data['idUsuario'];
         if (isset($data['nombreUsuario'])) $this->nombreUsuario = $data['nombreUsuario'];
         if (isset($data['correo'])) $this->correo = $data['correo'];
-        if (isset($data['contrasena'])) $this->contrasena = $data['contrasena'];
+        if (isset($data['contrasena'])) $this->contrasena = $data['contrasena'];  //cambiado
         if (isset($data['foto'])) $this->foto = $data['foto'];
         if (isset($data['rol'])) $this->rol = $data['rol'];
         if (isset($data['estado'])) $this->estado = $data['estado'];

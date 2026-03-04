@@ -56,6 +56,8 @@ class FacultadController
         }
     }
 
+    
+
     // Verificar si hay sesión activa
     private static function verificarSesionActiva()
     {
@@ -110,7 +112,8 @@ class FacultadController
         // Validar campos obligatorios
         $nombreFacultad = $parametros['nombreFacultad'] ?? '';
         $direccionFacultad = $parametros['direccionFacultad'] ?? '';
-        $contacto = $parametros['contacto'] ?? '';
+        $correo = $parametros['correo'] ?? '';
+        $telefono = $parametros['telefono'] ?? '';
 
         $errores = [];
         
@@ -143,7 +146,8 @@ class FacultadController
         $facultadId = D_Facultad::insertarFacultad([
             'nombreFacultad' => $nombreFacultad,
             'direccionFacultad' => $direccionFacultad,
-            'contacto' => $contacto
+            'correo' => $correo,
+            'telefono' => $telefono
         ]);
 
         if (!$facultadId) {
@@ -180,7 +184,7 @@ class FacultadController
             return;
         }
 
-        $id = $parametros['id'] ?? null;
+        $id = $parametros['idFacultad'] ?? null;
         
         if (!$id) {
             echo json_encode([
@@ -206,8 +210,9 @@ class FacultadController
 
         // Datos a actualizar
         $nombreFacultad = $parametros['nombreFacultad'] ?? $facultadExistente->nombreFacultad;
-        $direccionFacultad = $parametros['direccionFacultad'] ?? $facultadExistente->direccionFacultad;
-        $contacto = $parametros['contacto'] ?? $facultadExistente->contacto;
+        //$direccionFacultad = $parametros['direccionFacultad'] ?? $facultadExistente->direccionFacultad;
+        //$correo = $parametros['correo'] ?? $facultadExistente->correo;
+        //$telefono = $parametros['telefono'] ?? $facultadExistente->telefono;
 
         // Validaciones
         $errores = [];
@@ -233,19 +238,20 @@ class FacultadController
         }
 
         // Actualizar facultad
-        $actualizado = D_Facultad::actualizarFacultad([
-            'id' => $id,
-            'nombreFacultad' => $nombreFacultad,
-            'direccionFacultad' => $direccionFacultad,
-            'contacto' => $contacto
-        ]);
+        $actualizado = D_Facultad::actualizarFacultad(
+            $parametros['idFacultad'],
+            $parametros['nombreFacultad'],
+            $parametros['direccionFacultad'],
+            $parametros['correo'],
+            $parametros['telefono']
+        );
 
         if (!$actualizado) {
             echo json_encode([
                 'estado' => 500,
                 'exito' => false,
                 'mensaje' => 'Error al actualizar la facultad',
-                'resultado' => null
+                'resultado' => $actualizado
             ]);
             return;
         }

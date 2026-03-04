@@ -10,7 +10,10 @@ class D_Asignatura
         try {
             $instanciaConexion = ConexionUtil::conectar();
 
-            $sql = "SELECT * FROM asignaturas ORDER BY nombreAsignatura ASC";
+            $sql = "SELECT a.*, f.nombreFacultad
+                    FROM asignaturas a
+                    LEFT JOIN facultad f ON a.idFacultad = f.idFacultad
+                    ORDER BY a.nombreAsignatura ASC";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
 
@@ -96,13 +99,14 @@ class D_Asignatura
         try {
             $instanciaConexion = ConexionUtil::conectar();
 
-            $sql = "INSERT INTO asignaturas (codigoAsignatura, nombreAsignatura, descripcion) 
-                    VALUES (:codigoAsignatura, :nombreAsignatura, :descripcion)";
+            $sql = "INSERT INTO asignaturas (codigoAsignatura, nombreAsignatura, descripcion, idFacultad) 
+                    VALUES (:codigoAsignatura, :nombreAsignatura, :descripcion, :idFacultad)";
             
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->bindParam(':codigoAsignatura', $datos['codigoAsignatura']);
             $stmt->bindParam(':nombreAsignatura', $datos['nombreAsignatura']);
             $stmt->bindParam(':descripcion', $datos['descripcion']);
+            $stmt->bindParam(':idFacultad', $datos['idFacultad']);
             
             if ($stmt->execute()) {
                 return $instanciaConexion->lastInsertId();

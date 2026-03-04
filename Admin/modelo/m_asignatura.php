@@ -5,12 +5,15 @@ class AsignaturaModel
     public $codigoAsignatura;
     public $nombreAsignatura;
     public $descripcion;
+    public $idFacultad;
+    public $nombreFacultad;
 
-    public function __construct($codigoAsignatura = null, $nombreAsignatura = null, $descripcion = null)
+    public function __construct($codigoAsignatura = null, $nombreAsignatura = null, $descripcion = null, $idFacultad = null)
     {
         $this->codigoAsignatura = $codigoAsignatura;
         $this->nombreAsignatura = $nombreAsignatura;
         $this->descripcion = $descripcion;
+        $this->idFacultad = $idFacultad;
     }
 
     // Hidratar modelo desde array de base de datos
@@ -20,6 +23,8 @@ class AsignaturaModel
         if (isset($data['codigoAsignatura'])) $this->codigoAsignatura = $data['codigoAsignatura'];
         if (isset($data['nombreAsignatura'])) $this->nombreAsignatura = $data['nombreAsignatura'];
         if (isset($data['descripcion'])) $this->descripcion = $data['descripcion'];
+        if (isset($data['idFacultad'])) $this->idFacultad = $data['idFacultad'];
+        if (isset($data['nombreFacultad'])) $this->nombreFacultad = $data['nombreFacultad'];
         
         return $this;
     }
@@ -31,7 +36,9 @@ class AsignaturaModel
             'idAsignatura' => $this->idAsignatura,
             'codigoAsignatura' => $this->codigoAsignatura,
             'nombreAsignatura' => $this->nombreAsignatura,
-            'descripcion' => $this->descripcion
+            'descripcion' => $this->descripcion,
+            'idFacultad' => $this->idFacultad,
+            'nombreFacultad' => $this->nombreFacultad
         ];
     }
 }

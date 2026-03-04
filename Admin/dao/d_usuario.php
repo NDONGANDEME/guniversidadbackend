@@ -149,21 +149,17 @@ class D_Usuario
 
             $sql = "INSERT INTO usuarios (
                         nombreUsuario, 
-                        contrasena, 
+                        contraseña, 
                         correo, 
                         rol, 
-                        estado, 
-                        preguntaRecuperacion, 
-                        respuestaRecuperacion,
+                        estado,
                         foto
                     ) VALUES (
                         :nombreUsuario, 
                         :contrasena, 
                         :correo, 
                         :rol, 
-                        :estado, 
-                        :preguntaRecuperacion, 
-                        :respuestaRecuperacion,
+                        :estado,
                         :foto
                     )";
             
@@ -173,8 +169,6 @@ class D_Usuario
             $stmt->bindParam(':correo', $datos['correo']);
             $stmt->bindParam(':rol', $datos['rol']);
             $stmt->bindParam(':estado', $datos['estado']);
-            $stmt->bindParam(':preguntaRecuperacion', $datos['preguntaRecuperacion']);
-            $stmt->bindParam(':respuestaRecuperacion', $datos['respuestaRecuperacion']);
             $stmt->bindParam(':foto', $datos['foto']);
             
             if ($stmt->execute()) {

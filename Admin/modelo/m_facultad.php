@@ -4,13 +4,15 @@ class FacultadModel
     public $idFacultad;
     public $nombreFacultad;
     public $direccionFacultad;
-    public $contacto;
+    public $correo;
+    public $telefono;
 
-    public function __construct($nombreFacultad = null, $direccionFacultad = null, $contacto = null)
+    public function __construct($nombreFacultad = null, $direccionFacultad = null, $correo = null, $telefono = null)
     {
         $this->nombreFacultad = $nombreFacultad;
         $this->direccionFacultad = $direccionFacultad;
-        $this->contacto = $contacto;
+        $this->correo = $correo;
+        $this->telefono = $telefono;
     }
 
     // Hidratar modelo desde array de base de datos
@@ -19,7 +21,8 @@ class FacultadModel
         if (isset($data['idFacultad'])) $this->idFacultad = $data['idFacultad'];
         if (isset($data['nombreFacultad'])) $this->nombreFacultad = $data['nombreFacultad'];
         if (isset($data['direccionFacultad'])) $this->direccionFacultad = $data['direccionFacultad'];
-        if (isset($data['contacto'])) $this->contacto = $data['contacto'];
+        if (isset($data['correo'])) $this->correo = $data['correo'];
+        if (isset($data['telefono'])) $this->telefono = $data['telefono'];
         
         return $this;
     }
@@ -31,7 +34,8 @@ class FacultadModel
             'idFacultad' => $this->idFacultad,
             'nombreFacultad' => $this->nombreFacultad,
             'direccionFacultad' => $this->direccionFacultad,
-            'contacto' => $this->contacto
+            'correo' => $this->correo,
+            'telefono' => $this->telefono
         ];
     }
 }

@@ -10,7 +10,7 @@ class D_Departamento
         try {
             $instanciaConexion = ConexionUtil::conectar();
 
-            $sql = "SELECT d.*, f.nombreFacultad 
+            $sql = "SELECT d.*, f.nombreFacultad
                     FROM departamento d
                     LEFT JOIN facultad f ON d.idFacultad = f.idFacultad
                     ORDER BY d.nombreDepartamento ASC";
@@ -18,19 +18,19 @@ class D_Departamento
             $stmt->execute();
 
             $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            $departamentos = [];
+            /*$departamentos = [];
             
             foreach ($resultados as $fila) {
                 $model = new DepartamentoModel();
                 $model->hidratarDesdeArray($fila);
                 // Añadir nombre de facultad si viene en la consulta
-                if (isset($fila['nombreFacultad'])) {
+                /*if (isset($fila['nombreFacultad'])) {
                     $model->nombreFacultad = $fila['nombreFacultad'];
-                }
+                }*
                 $departamentos[] = $model;
-            }
+            }*/
 
-            return $departamentos;
+            return $resultados;
         } catch (PDOException $e) {
             error_log("Error en obtenerDepartamentos: " . $e->getMessage());
             return [];

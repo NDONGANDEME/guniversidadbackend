@@ -69,60 +69,40 @@ class LimpiarDatos
             // Limpiar el nombre del campo
             $campoLimpio = self::limpiarParametro($campo);
             
-            // Si es un array de archivos (múltiples)
+            // Verificar si es un array de archivos (múltiples)
             if (is_array($archivo['name'])) {
                 $resultado[$campoLimpio] = [];
                 for ($i = 0; $i < count($archivo['name']); $i++) {
-                    // Crear array con TODAS las propiedades originales
-                    $archivoOriginal = [
-                        'name' => $archivo['name'][$i],
-                        'type' => $archivo['type'][$i],
-                        'tmp_name' => $archivo['tmp_name'][$i],
-                        'error' => $archivo['error'][$i],
-                        'size' => $archivo['size'][$i]
-                    ];
-                    
-                    // Validar tipo básico (imagen o pdf)
-                    if (self::validarTipoBasico($archivoOriginal)) {
+                    // Solo procesar si no hay error
+                    if ($archivo['error'][$i] === UPLOAD_ERR_OK) {
+                        $archivoOriginal = [
+                            'name' => $archivo['name'][$i],
+                            'type' => $archivo['type'][$i],
+                            'tmp_name' => $archivo['tmp_name'][$i],
+                            'error' => $archivo['error'][$i],
+                            'size' => $archivo['size'][$i]
+                        ];
+                        
                         $resultado[$campoLimpio][] = $archivoOriginal;
                     }
                 }
             } else {
-                // Archivo único - mantener TODAS las propiedades originales
-                $archivoOriginal = [
-                    'name' => $archivo['name'],
-                    'type' => $archivo['type'],
-                    'tmp_name' => $archivo['tmp_name'],
-                    'error' => $archivo['error'],
-                    'size' => $archivo['size']
-                ];
-                
-                // Validar tipo básico (imagen o pdf)
-                if (self::validarTipoBasico($archivoOriginal)) {
+                // Archivo único - solo procesar si no hay error
+                if ($archivo['error'] === UPLOAD_ERR_OK) {
+                    $archivoOriginal = [
+                        'name' => $archivo['name'],
+                        'type' => $archivo['type'],
+                        'tmp_name' => $archivo['tmp_name'],
+                        'error' => $archivo['error'],
+                        'size' => $archivo['size']
+                    ];
+                    
                     $resultado[$campoLimpio] = $archivoOriginal;
                 }
             }
         }
         
         return $resultado;
-    }
-
-    /**
-     * Validación básica: solo imágenes y PDFs
-     */
-    private static function validarTipoBasico($archivo)
-    {
-        // Si hay error, no validar tipo
-        if ($archivo['error'] !== UPLOAD_ERR_OK) {
-            return false;
-        }
-
-        $extension = strtolower(pathinfo($archivo['name'], PATHINFO_EXTENSION));
-        
-        // Extensiones permitidas
-        $extensionesPermitidas = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf'];
-        
-        return in_array($extension, $extensionesPermitidas);
     }
 
     /**
@@ -156,6 +136,7 @@ class LimpiarDatos
     {
         // Validar que el archivo se subió correctamente
         if ($archivo['error'] !== UPLOAD_ERR_OK) {
+            error_log("Error en archivo: código " . $archivo['error']);
             return null;
         }
 
@@ -167,13 +148,17 @@ class LimpiarDatos
             $carpeta = __DIR__ . self::CARPETA_DOCUMENTOS;
             $prefijo = 'Documento_';
         } else {
+            error_log("Tipo de archivo no válido: " . $tipo);
             return null;
         }
 
-        /*// Crear carpeta si no existe
+        // Crear carpeta si no existe
         if (!file_exists($carpeta)) {
-            mkdir($carpeta, 0777, true);
-        }*/
+            if (!mkdir($carpeta, 0777, true)) {
+                error_log("No se pudo crear la carpeta: " . $carpeta);
+                return null;
+            }
+        }
 
         // Obtener extensión
         $extension = strtolower(pathinfo($archivo['name'], PATHINFO_EXTENSION));
@@ -185,7 +170,10 @@ class LimpiarDatos
 
         // Mover el archivo
         if (move_uploaded_file($archivo['tmp_name'], $rutaCompleta)) {
+            error_log("Archivo guardado exitosamente: " . $nombreUnico);
             return $nombreUnico;
+        } else {
+            error_log("Error al mover el archivo a: " . $rutaCompleta);
         }
 
         return null;
@@ -193,7 +181,7 @@ class LimpiarDatos
 
     /**
      * Guardar múltiples archivos
-     * @param array $archivos Array de archivos
+     * @param array $archivos Array de archivos (puede ser un archivo único o múltiples)
      * @param string $tipo 'foto' o 'documento'
      * @param int $registroId ID del registro asociado
      * @return array Nombres de los archivos guardados
@@ -206,22 +194,49 @@ class LimpiarDatos
             return $archivosGuardados;
         }
 
-        // Si es un array de archivos (múltiples)
-        if (isset($archivos[0]) && is_array($archivos[0])) {
-            foreach ($archivos as $archivo) {
+        error_log("Iniciando guardarMultiplesArchivos - Tipo: " . $tipo . ", Registro ID: " . $registroId);
+
+        // Verificar la estructura de los archivos
+        if (isset($archivos['name']) && is_array($archivos['name'])) {
+            // Es un array de archivos múltiples en formato $_FILES
+            error_log("Formato: Múltiples archivos en estructura $_FILES");
+            for ($i = 0; $i < count($archivos['name']); $i++) {
+                if ($archivos['error'][$i] === UPLOAD_ERR_OK) {
+                    $archivoIndividual = [
+                        'name' => $archivos['name'][$i],
+                        'type' => $archivos['type'][$i],
+                        'tmp_name' => $archivos['tmp_name'][$i],
+                        'error' => $archivos['error'][$i],
+                        'size' => $archivos['size'][$i]
+                    ];
+                    
+                    $nombreGuardado = self::guardarArchivo($archivoIndividual, $tipo, $registroId);
+                    if ($nombreGuardado) {
+                        $archivosGuardados[] = $nombreGuardado;
+                    }
+                }
+            }
+        } else if (isset($archivos['name']) && !is_array($archivos['name'])) {
+            // Es un archivo único
+            error_log("Formato: Archivo único");
+            $nombreGuardado = self::guardarArchivo($archivos, $tipo, $registroId);
+            if ($nombreGuardado) {
+                $archivosGuardados[] = $nombreGuardado;
+            }
+        } else if (is_array($archivos) && isset($archivos[0])) {
+            // Ya es un array de archivos procesados individualmente
+            error_log("Formato: Array de archivos individuales");
+            foreach ($archivos as $index => $archivo) {
                 $nombreGuardado = self::guardarArchivo($archivo, $tipo, $registroId);
                 if ($nombreGuardado) {
                     $archivosGuardados[] = $nombreGuardado;
                 }
             }
         } else {
-            // Archivo único
-            $nombreGuardado = self::guardarArchivo($archivos, $tipo, $registroId);
-            if ($nombreGuardado) {
-                $archivosGuardados[] = $nombreGuardado;
-            }
+            error_log("Formato no reconocido: " . print_r($archivos, true));
         }
 
+        error_log("Archivos guardados: " . count($archivosGuardados));
         return $archivosGuardados;
     }
 
@@ -234,11 +249,13 @@ class LimpiarDatos
     public static function validarArchivo($archivo, $tipo)
     {
         if ($archivo['error'] !== UPLOAD_ERR_OK) {
+            error_log("Archivo con error: " . $archivo['error']);
             return false;
         }
 
         // Tamaño máximo 10MB
         if ($archivo['size'] > 10 * 1024 * 1024) {
+            error_log("Archivo demasiado grande: " . $archivo['size'] . " bytes");
             return false;
         }
 
@@ -246,10 +263,18 @@ class LimpiarDatos
         
         if ($tipo === 'foto') {
             $extensionesPermitidas = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-            return in_array($extension, $extensionesPermitidas);
+            $esValida = in_array($extension, $extensionesPermitidas);
+            if (!$esValida) {
+                error_log("Extensión no válida para foto: " . $extension);
+            }
+            return $esValida;
         } else if ($tipo === 'documento') {
             $extensionesPermitidas = ['pdf'];
-            return in_array($extension, $extensionesPermitidas);
+            $esValida = in_array($extension, $extensionesPermitidas);
+            if (!$esValida) {
+                error_log("Extensión no válida para documento: " . $extension);
+            }
+            return $esValida;
         }
 
         return false;
@@ -267,17 +292,47 @@ class LimpiarDatos
             return true;
         }
 
-        if (isset($archivos[0]) && is_array($archivos[0])) {
-            foreach ($archivos as $archivo) {
+        error_log("Iniciando validación de múltiples archivos - Tipo: " . $tipo);
+
+        // Verificar la estructura de los archivos
+        if (isset($archivos['name']) && is_array($archivos['name'])) {
+            // Es un array de archivos múltiples en formato $_FILES
+            error_log("Validando formato: Múltiples archivos en estructura $_FILES");
+            for ($i = 0; $i < count($archivos['name']); $i++) {
+                if ($archivos['error'][$i] === UPLOAD_ERR_OK) {
+                    $archivoIndividual = [
+                        'name' => $archivos['name'][$i],
+                        'type' => $archivos['type'][$i],
+                        'tmp_name' => $archivos['tmp_name'][$i],
+                        'error' => $archivos['error'][$i],
+                        'size' => $archivos['size'][$i]
+                    ];
+                    
+                    if (!self::validarArchivo($archivoIndividual, $tipo)) {
+                        error_log("Archivo no válido en posición: " . $i);
+                        return false;
+                    }
+                }
+            }
+            return true;
+        } else if (isset($archivos['name']) && !is_array($archivos['name'])) {
+            // Es un archivo único
+            error_log("Validando formato: Archivo único");
+            return self::validarArchivo($archivos, $tipo);
+        } else if (is_array($archivos)) {
+            // Ya es un array de archivos procesados individualmente
+            error_log("Validando formato: Array de archivos individuales");
+            foreach ($archivos as $index => $archivo) {
                 if (!self::validarArchivo($archivo, $tipo)) {
+                    error_log("Archivo no válido en índice: " . $index);
                     return false;
                 }
             }
-        } else {
-            return self::validarArchivo($archivos, $tipo);
+            return true;
         }
 
-        return true;
+        error_log("Formato no reconocido en validación");
+        return false;
     }
 }
 ?>

@@ -72,7 +72,7 @@ class SemestreController
         }
         
         echo json_encode([
-            'estado' => 200,
+            'estado' => 'exito',
             'exito' => true,
             'mensaje' => 'Semestres obtenidos correctamente',
             'resultado' => $resultado
@@ -128,23 +128,20 @@ class SemestreController
         }
 
         // Insertar semestre
-        $semestreId = D_Semestre::insertarSemestre([
-            'numeroSemestre' => $numeroSemestre,
-            'tipoSemestre' => $tipoSemestre
-        ]);
+        $semestreId = D_Semestre::insertarSemestre($parametros);
 
         if (!$semestreId) {
             echo json_encode([
                 'estado' => 500,
                 'exito' => false,
                 'mensaje' => 'Error al crear el semestre',
-                'resultado' => null
+                'resultado' => $semestreId
             ]);
             return;
         }
 
         echo json_encode([
-            'estado' => 200,
+            'estado' => 'exito',
             'exito' => true,
             'mensaje' => 'Semestre creado exitosamente',
             'resultado' => ['id' => $semestreId]
@@ -164,7 +161,7 @@ class SemestreController
             return;
         }
 
-        $id = $parametros['id'] ?? null;
+        $id = $parametros['idSemestre'] ?? null;
         
         if (!$id) {
             echo json_encode([
@@ -238,7 +235,7 @@ class SemestreController
         }
 
         echo json_encode([
-            'estado' => 200,
+            'estado' => 'exito',
             'exito' => true,
             'mensaje' => 'Semestre actualizado exitosamente',
             'resultado' => ['id' => $id]

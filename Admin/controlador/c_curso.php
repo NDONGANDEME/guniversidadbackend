@@ -164,7 +164,7 @@ class CursoController
             return;
         }
 
-        $id = $parametros['id'] ?? null;
+        $id = $parametros['idCurso'] ?? null;
         
         if (!$id) {
             echo json_encode([

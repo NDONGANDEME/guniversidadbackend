@@ -76,7 +76,7 @@ class AsignaturaController
         }
         
         echo json_encode([
-            'estado' => 200,
+            'estado' => 'exito',
             'exito' => true,
             'mensaje' => 'Asignaturas obtenidas correctamente',
             'resultado' => $resultado
@@ -184,11 +184,7 @@ class AsignaturaController
         }
 
         // Insertar asignatura
-        $asignaturaId = D_Asignatura::insertarAsignatura([
-            'codigoAsignatura' => $codigoAsignatura,
-            'nombreAsignatura' => $nombreAsignatura,
-            'descripcion' => $descripcion
-        ]);
+        $asignaturaId = D_Asignatura::insertarAsignatura($parametros);
 
         if (!$asignaturaId) {
             echo json_encode([
@@ -221,7 +217,7 @@ class AsignaturaController
             return;
         }
 
-        $id = $parametros['id'] ?? null;
+        $id = $parametros['idAsignatura'] ?? null;
         
         if (!$id) {
             echo json_encode([

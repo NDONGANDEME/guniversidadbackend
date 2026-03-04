@@ -6,12 +6,14 @@ class AulaModel
     public $capacidad;
     public $idFacultad;
     public $nombreFacultad;
+    public $estado;
 
-    public function __construct($nombreAula = null, $capacidad = null, $idFacultad = null)
+    public function __construct($nombreAula = null, $capacidad = null, $idFacultad = null, $estado = null)
     {
         $this->nombreAula = $nombreAula;
         $this->capacidad = $capacidad;
         $this->idFacultad = $idFacultad;
+        $this->estado = $estado;
     }
 
     // Hidratar modelo desde array de base de datos
@@ -21,6 +23,7 @@ class AulaModel
         if (isset($data['nombreAula'])) $this->nombreAula = $data['nombreAula'];
         if (isset($data['capacidad'])) $this->capacidad = $data['capacidad'];
         if (isset($data['idFacultad'])) $this->idFacultad = $data['idFacultad'];
+        if (isset($data['estado'])) $this->estado = $data['estado'];
         
         
         return $this;
@@ -34,6 +37,7 @@ class AulaModel
             'nombreAula' => $this->nombreAula,
             'capacidad' => $this->capacidad,
             'idFacultad' => $this->idFacultad,
+            'estado' => $this->estado,
         ];
     }
 }

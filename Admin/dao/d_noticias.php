@@ -172,7 +172,9 @@ class NoticiasDao
             $stmt->bindParam(':fechaPublicacion', $datos['fechaPublicacion']);
             
             if ($stmt->execute()) {
-                return $instanciaConexion->lastInsertId();
+                $id = $instanciaConexion->lastInsertId();
+                error_log("Noticia creada con ID: " . $id);
+                return $id;
             }
             
             return null;
@@ -200,7 +202,9 @@ class NoticiasDao
             $stmt->bindParam(':tipo', $datos['tipo']);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            error_log("Noticia actualizada ID: " . $id . " - Resultado: " . ($resultado ? "éxito" : "fallo"));
+            return $resultado;
         } catch (PDOException $e) {
             error_log("Error en actualizarNoticia: " . $e->getMessage());
             return false;
@@ -213,7 +217,7 @@ class NoticiasDao
         try {
             $instanciaConexion = ConexionUtil::conectar();
 
-            // Primero eliminar las fotos asociadas
+            // Primero eliminar las fotos asociadas (los registros de la BD)
             self::eliminarFotosNoticia($id);
 
             // Luego eliminar la noticia
@@ -221,7 +225,9 @@ class NoticiasDao
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            error_log("Noticia eliminada ID: " . $id . " - Resultado: " . ($resultado ? "éxito" : "fallo"));
+            return $resultado;
         } catch (PDOException $e) {
             error_log("Error en eliminarNoticia: " . $e->getMessage());
             return false;
@@ -234,20 +240,27 @@ class NoticiasDao
         try {
             $instanciaConexion = ConexionUtil::conectar();
 
+            // CORREGIDO: usar 'archivos' (con 's') que es el nombre correcto de la tabla
             $sql = "INSERT INTO archivos (url, tipoArchivo, idReferencia, tablaReferencia) 
-                    VALUES (:url, :tipoArchivo, :idReferencia, 'noticias')";
+                    VALUES (:url, :tipoArchivo, :idReferencia, 'noticia')";
             
             $stmt = $instanciaConexion->prepare($sql);
+            $contador = 0;
             
             foreach ($fotos as $foto) {
-                $tipoArchivo = 'foto';
                 $stmt->bindParam(':url', $foto);
-                $stmt->bindParam(':tipoArchivo', $tipoArchivo);
+                $stmt->bindValue(':tipoArchivo', 'foto');
                 $stmt->bindParam(':idReferencia', $noticiaId, PDO::PARAM_INT);
-                $stmt->execute();
+                
+                if ($stmt->execute()) {
+                    $contador++;
+                } else {
+                    error_log("Error al insertar foto: " . $foto);
+                }
             }
             
-            return true;
+            error_log("Guardadas $contador fotos para noticia ID: " . $noticiaId);
+            return $contador > 0;
         } catch (PDOException $e) {
             error_log("Error en guardarFotosNoticia: " . $e->getMessage());
             return false;
@@ -261,7 +274,7 @@ class NoticiasDao
             $instanciaConexion = ConexionUtil::conectar();
 
             $sql = "SELECT idArchivo, url FROM archivos 
-                    WHERE tablaReferencia = 'noticias' 
+                    WHERE tablaReferencia = 'noticia'
                     AND idReferencia = :noticiaId 
                     ORDER BY idArchivo ASC";
             
@@ -269,7 +282,9 @@ class NoticiasDao
             $stmt->bindParam(':noticiaId', $noticiaId, PDO::PARAM_INT);
             $stmt->execute();
 
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $fotos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            error_log("Obtenidas " . count($fotos) . " fotos para noticia ID: " . $noticiaId);
+            return $fotos;
         } catch (PDOException $e) {
             error_log("Error en obtenerFotosNoticia: " . $e->getMessage());
             return [];
@@ -283,94 +298,18 @@ class NoticiasDao
             $instanciaConexion = ConexionUtil::conectar();
 
             $sql = "DELETE FROM archivos 
-                    WHERE tablaReferencia = 'noticias' 
+                    WHERE tablaReferencia = 'noticia' 
                     AND idReferencia = :noticiaId";
             
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->bindParam(':noticiaId', $noticiaId, PDO::PARAM_INT);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            error_log("Eliminados registros de fotos para noticia ID: " . $noticiaId);
+            return $resultado;
         } catch (PDOException $e) {
             error_log("Error en eliminarFotosNoticia: " . $e->getMessage());
             return false;
-        }
-    }
-
-    // FUNCIÓN: Buscar noticias por término
-    public static function buscarNoticias($termino)
-    {
-        try {
-            $instanciaConexion = ConexionUtil::conectar();
-            $termino = "%$termino%";
-
-            $sql = "SELECT * FROM noticias 
-                    WHERE asunto LIKE :termino 
-                       OR descripcion LIKE :termino 
-                       OR tipo LIKE :termino 
-                    ORDER BY fechaPublicacion DESC";
-            
-            $stmt = $instanciaConexion->prepare($sql);
-            $stmt->bindParam(':termino', $termino);
-            $stmt->execute();
-
-            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            $noticias = [];
-            
-            foreach ($resultados as $fila) {
-                $model = new NoticiaModel();
-                $model->hidratarDesdeArray($fila);
-                
-                $fotos = self::obtenerFotosNoticia($model->idNoticia);
-                $model->establecerFotos($fotos);
-                
-                $noticias[] = $model;
-            }
-
-            return $noticias;
-        } catch (PDOException $e) {
-            error_log("Error en buscarNoticias: " . $e->getMessage());
-            return [];
-        }
-    }
-
-    // FUNCIÓN: Obtener noticias por tipo
-    public static function obtenerNoticiasPorTipo($tipo, $limite = null)
-    {
-        try {
-            $instanciaConexion = ConexionUtil::conectar();
-
-            $sql = "SELECT * FROM noticias WHERE tipo = :tipo ORDER BY fechaPublicacion DESC";
-            
-            if ($limite !== null) {
-                $sql .= " LIMIT :limite";
-            }
-            
-            $stmt = $instanciaConexion->prepare($sql);
-            $stmt->bindParam(':tipo', $tipo);
-            
-            if ($limite !== null) {
-                $stmt->bindParam(':limite', $limite, PDO::PARAM_INT);
-            }
-            
-            $stmt->execute();
-
-            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            $noticias = [];
-            
-            foreach ($resultados as $fila) {
-                $model = new NoticiaModel();
-                $model->hidratarDesdeArray($fila);
-                
-                $fotos = self::obtenerFotosNoticia($model->idNoticia);
-                $model->establecerFotos($fotos);
-                
-                $noticias[] = $model;
-            }
-
-            return $noticias;
-        } catch (PDOException $e) {
-            error_log("Error en obtenerNoticiasPorTipo: " . $e->getMessage());
-            return [];
         }
     }
 }

@@ -65,21 +65,22 @@ class DepartamentoController
         }
 
         $departamentos = D_Departamento::obtenerDepartamentos();
-        $resultado = [];
+        //echo json_encode(['error' => $departamentos]);
+        //$resultado = [];
         
-        foreach ($departamentos as $departamento) {
+        /*foreach ($departamentos as $departamento) {
             $arr = $departamento->convertirAArray();
             if (isset($departamento->nombreFacultad)) {
                 $arr['nombreFacultad'] = $departamento->nombreFacultad;
             }
             $resultado[] = $arr;
-        }
+        }*/
         
         echo json_encode([
             'estado' => 'exito',
             'exito' => true,
             'mensaje' => 'Departamentos obtenidos correctamente',
-            'resultado' => $resultado
+            'resultado' => $departamentos
         ]);
     }
 
@@ -168,7 +169,7 @@ class DepartamentoController
             return;
         }
 
-        $id = $parametros['id'] ?? null;
+        $id = $parametros['idDepartamento'] ?? null;
         
         if (!$id) {
             echo json_encode([

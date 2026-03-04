@@ -34,21 +34,6 @@ class NoticiaController
                     self::obtenerCantidadPaginacion();
                     break;
                     
-                case "obtenerNoticiasRecientes":
-                    self::obtenerNoticiasRecientes();
-                    break;
-                    
-                case "buscarNoticias":
-                    self::buscarNoticias($parametros['termino'] ?? '');
-                    break;
-                    
-                case "obtenerNoticiasPorTipo":
-                    self::obtenerNoticiasPorTipo(
-                        $parametros['tipo'] ?? '',
-                        $parametros['limite'] ?? null
-                    );
-                    break;
-                    
                 // Operaciones CRUD
                 case "insertarNoticia":
                     self::crearNoticia($parametros);
@@ -148,80 +133,6 @@ class NoticiaController
         ]);
     }
 
-    // Obtener noticias recientes (5)
-    private static function obtenerNoticiasRecientes()
-    {
-        $noticias = NoticiasDao::obtenerNoticiasRecientes();
-        $resultado = [];
-        
-        foreach ($noticias as $noticia) {
-            $resultado[] = $noticia->convertirAArray();
-        }
-        
-        echo json_encode([
-            'estado' => 'exito',
-            'exito' => true,
-            'mensaje' => 'Noticias recientes obtenidas correctamente',
-            'resultado' => $resultado
-        ]);
-    }
-
-    // Buscar noticias
-    private static function buscarNoticias($termino)
-    {
-        if (empty($termino)) {
-            echo json_encode([
-                'estado' => 400,
-                'exito' => false,
-                'mensaje' => 'Término de búsqueda no proporcionado',
-                'resultado' => null
-            ]);
-            return;
-        }
-
-        $noticias = NoticiasDao::buscarNoticias($termino);
-        $resultado = [];
-        
-        foreach ($noticias as $noticia) {
-            $resultado[] = $noticia->convertirAArray();
-        }
-        
-        echo json_encode([
-            'estado' => 'exito',
-            'exito' => true,
-            'mensaje' => 'Búsqueda realizada correctamente',
-            'resultado' => $resultado
-        ]);
-    }
-
-    // Obtener noticias por tipo
-    private static function obtenerNoticiasPorTipo($tipo, $limite = null)
-    {
-        if (empty($tipo)) {
-            echo json_encode([
-                'estado' => 400,
-                'exito' => false,
-                'mensaje' => 'Tipo de noticia no proporcionado',
-                'resultado' => null
-            ]);
-            return;
-        }
-
-        $noticias = NoticiasDao::obtenerNoticiasPorTipo($tipo, $limite);
-        $resultado = [];
-        
-        foreach ($noticias as $noticia) {
-            $resultado[] = $noticia->convertirAArray();
-        }
-        
-        echo json_encode([
-            'estado' => 'exito',
-            'exito' => true,
-            'mensaje' => 'Noticias por tipo obtenidas correctamente',
-            'resultado' => $resultado
-        ]);
-    }
-
     // Crear noticia
     private static function crearNoticia($parametros)
     {
@@ -240,8 +151,13 @@ class NoticiaController
             return;
         }
 
-        // Obtener archivos
+        // Obtener fotos del parámetro (ya vienen procesadas por el gateway)
         $fotos = $parametros['fotos'] ?? null;
+        
+        // DEBUG: Registrar qué estamos recibiendo (opcional, comentar en producción)
+        if ($fotos) {
+            error_log("Fotos recibidas en crearNoticia: " . print_r($fotos, true));
+        }
 
         // Validar fotos si existen
         if ($fotos && !LimpiarDatos::validarMultiplesArchivos($fotos, 'foto')) {
@@ -277,7 +193,10 @@ class NoticiaController
             $fotosGuardadas = LimpiarDatos::guardarMultiplesArchivos($fotos, 'foto', $noticiaId);
             
             if (!empty($fotosGuardadas)) {
-                NoticiasDao::guardarFotosNoticia($noticiaId, $fotosGuardadas);
+                $guardado = NoticiasDao::guardarFotosNoticia($noticiaId, $fotosGuardadas);
+                if (!$guardado) {
+                    error_log("Error al guardar fotos en BD para noticia ID: " . $noticiaId);
+                }
             }
         }
 
@@ -337,6 +256,11 @@ class NoticiaController
         // Obtener nuevas fotos si existen
         $fotos = $parametros['fotos'] ?? null;
 
+        // DEBUG: Registrar qué estamos recibiendo
+        if ($fotos) {
+            error_log("Fotos recibidas en actualizarNoticia: " . print_r($fotos, true));
+        }
+
         // Validar fotos si existen
         if ($fotos && !LimpiarDatos::validarMultiplesArchivos($fotos, 'foto')) {
             echo json_encode([
@@ -367,13 +291,26 @@ class NoticiaController
 
         // Si hay nuevas fotos, reemplazar las existentes
         if ($fotos) {
-            // Eliminar fotos antiguas
+            // Eliminar fotos antiguas (archivos físicos)
+            $fotosAntiguas = NoticiasDao::obtenerFotosNoticia($id);
+            foreach ($fotosAntiguas as $foto) {
+                $rutaArchivo = __DIR__ . "/../../htdocs/guniversidadfrontend/public/img/" . $foto['url'];
+                if (file_exists($rutaArchivo)) {
+                    unlink($rutaArchivo);
+                    error_log("Archivo eliminado: " . $rutaArchivo);
+                }
+            }
+            
+            // Eliminar registros de BD
             NoticiasDao::eliminarFotosNoticia($id);
             
             // Guardar nuevas fotos
             $fotosGuardadas = LimpiarDatos::guardarMultiplesArchivos($fotos, 'foto', $id);
             if (!empty($fotosGuardadas)) {
-                NoticiasDao::guardarFotosNoticia($id, $fotosGuardadas);
+                $guardado = NoticiasDao::guardarFotosNoticia($id, $fotosGuardadas);
+                if (!$guardado) {
+                    error_log("Error al guardar fotos en BD para noticia ID: " . $id);
+                }
             }
         }
 
@@ -413,7 +350,17 @@ class NoticiaController
             return;
         }
 
-        // Eliminar noticia
+        // Eliminar archivos físicos antes de eliminar la noticia
+        $fotos = NoticiasDao::obtenerFotosNoticia($id);
+        foreach ($fotos as $foto) {
+            $rutaArchivo = __DIR__ . "/../../htdocs/guniversidadfrontend/public/img/" . $foto['url'];
+            if (file_exists($rutaArchivo)) {
+                unlink($rutaArchivo);
+                error_log("Archivo eliminado al eliminar noticia: " . $rutaArchivo);
+            }
+        }
+
+        // Eliminar noticia (esto también eliminará los registros de fotos en BD por la FK)
         $eliminado = NoticiasDao::eliminarNoticia($id);
 
         if ($eliminado) {

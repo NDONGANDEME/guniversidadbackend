@@ -80,7 +80,7 @@ class SesionController
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
-                'mensaje' => 'Credenciales inválidas',
+                'mensaje' => 'Credenciales invalidas[correo]',
                 'resultado' => null
             ]);
             return;
@@ -102,7 +102,7 @@ class SesionController
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
-                'mensaje' => 'Credenciales inválidas',
+                'mensaje' => 'Credenciales invalidas [Contraseña]',
                 'resultado' => null
             ]);
             return;
@@ -135,7 +135,7 @@ class SesionController
         echo json_encode([
             'estado' => 'exito',
             'exito' => true,
-            'mensaje' => 'Sesión iniciada correctamente',
+            'mensaje' => 'Sesion iniciada correctamente',
             'resultado' => $resultado,
             'sesion_id' => session_id()
         ]);
@@ -174,8 +174,7 @@ class SesionController
                         if ($facultad) {
                             $datos['idFacultad'] = $facultad['idFacultad'];
                             $datos['nombreFacultad'] = $facultad['nombreFacultad'];
-                            $datos['idFacultad'] = $facultad['idFacultad'];
-                            $datos['idFacultad'] = $facultad['nombreFacultad'];
+                            
                         }
                     }
                 }
@@ -192,7 +191,7 @@ class SesionController
                         if ($facultad) {
                             $datos['nombreFacultad'] = $facultad['nombreFacultad'];
                             $datos['idFacultad'] = $facultad['idFacultad'];
-                            $datos['idFacultad'] = $facultad['nombreFacultad'];
+                            
                         }
                     }
                 }

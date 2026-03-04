@@ -5,11 +5,13 @@ class CarreraModel
     public $nombreCarrera;
     public $idDepartamento;
     public $nombreDepartamento;
+    public $estado;
 
-    public function __construct($nombreCarrera = null, $idDepartamento = null)
+    public function __construct($nombreCarrera = null, $idDepartamento = null, $estado = null)
     {
         $this->nombreCarrera = $nombreCarrera;
         $this->idDepartamento = $idDepartamento;
+        $this->estado = $estado;
     }
 
     // Hidratar modelo desde array de base de datos
@@ -19,6 +21,7 @@ class CarreraModel
         if (isset($data['nombreCarrera'])) $this->nombreCarrera = $data['nombreCarrera'];
         if (isset($data['idDepartamento'])) $this->idDepartamento = $data['idDepartamento'];
         if (isset($data['nombreDepartamento'])) $this->idDepartamento = $data['nombreDepartamento'];
+        if (isset($data['estado'])) $this->estado = $data['estado'];
         
         return $this;
     }
@@ -30,8 +33,8 @@ class CarreraModel
             'idCarrera' => $this->idCarrera,
             'nombreCarrera' => $this->nombreCarrera,
             'idDepartamento' => $this->idDepartamento,
-            'nombreDepartamento' => $this->nombreDepartamento
-
+            'nombreDepartamento' => $this->nombreDepartamento,
+            'estado' => $this->estado
         ];
     }
 }
