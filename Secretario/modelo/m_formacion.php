@@ -7,6 +7,8 @@ class FormacionModel
     public $titulo;
     public $nivel;
     public $idProfesor;
+    public $apellidosProfesor;
+    public $nombreProfesor;
 
     public function __construct($institucion = null, $titulo = null, $idProfesor = null)
     {
