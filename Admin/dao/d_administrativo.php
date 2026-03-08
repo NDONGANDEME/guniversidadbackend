@@ -208,14 +208,14 @@ class D_Administrativo
                         nombreAdministrativo, 
                         apellidosAdministrativo, 
                         idFacultad,
-                        contacto,
+                        telefono,
                         correo
                     ) VALUES (
                         :idUsuario, 
                         :nombreAdministrativo, 
                         :apellidosAdministrativo, 
                         :idFacultad,
-                        :contacto,
+                        :telefono,
                         :correo
                     )";
             
@@ -224,7 +224,7 @@ class D_Administrativo
             $stmt->bindParam(':nombreAdministrativo', $datos['nombreAdministrativo']);
             $stmt->bindParam(':apellidosAdministrativo', $datos['apellidosAdministrativo']);
             $stmt->bindParam(':idFacultad', $datos['idFacultad'], PDO::PARAM_INT);
-            $stmt->bindParam(':contacto', $datos['contacto']);
+            $stmt->bindParam(':telefono', $datos['telefono']);
             $stmt->bindParam(':correo', $datos['correo']);
             
             if ($stmt->execute()) {
@@ -248,7 +248,7 @@ class D_Administrativo
                         nombreAdministrativo = :nombreAdministrativo,
                         apellidosAdministrativo = :apellidosAdministrativo,
                         idFacultad = :idFacultad,
-                        contacto = :contacto,
+                        telefono = :telefono,
                         correo = :correo
                     WHERE idAdministrativos = :id";
             
@@ -257,7 +257,7 @@ class D_Administrativo
             $stmt->bindParam(':nombreAdministrativo', $datos['nombreAdministrativo']);
             $stmt->bindParam(':apellidosAdministrativo', $datos['apellidosAdministrativo']);
             $stmt->bindParam(':idFacultad', $datos['idFacultad'], PDO::PARAM_INT);
-            $stmt->bindParam(':contacto', $datos['contacto']);
+            $stmt->bindParam(':telefono', $datos['telefono']);
             $stmt->bindParam(':correo', $datos['correo']);
             
             return $stmt->execute();

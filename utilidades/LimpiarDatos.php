@@ -132,7 +132,7 @@ class LimpiarDatos
      * @param int $registroId ID del registro asociado
      * @return string|null Nombre del archivo guardado o null si falla
      */
-    public static function guardarArchivo($archivo, $tipo, $registroId)
+    public static function guardarArchivo($archivo, $tipo, $registroId=null)
     {
         // Validar que el archivo se subió correctamente
         if ($archivo['error'] !== UPLOAD_ERR_OK) {

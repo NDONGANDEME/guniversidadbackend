@@ -214,7 +214,7 @@ class NoticiaController
     // Actualizar noticia
     private static function actualizarNoticia($parametros)
     {
-        $id = $parametros['id'] ?? null;
+        $id = $parametros['idNoticia'] ?? null;
         
         if (!$id) {
             echo json_encode([

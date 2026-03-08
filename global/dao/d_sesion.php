@@ -61,14 +61,15 @@ class D_Sesion
     }
 
     // OBTENER USUARIO POR NOMBRE DE USUARIO
-    public static function obtenerUsuarioPorNombreUsuario($correo)
+    public static function obtenerUsuarioPorNombreUsuario($nombreUsuario)
     {
         try {
             $instanciaConexion = ConexionUtil::conectar();
 
-            $sql = "SELECT * FROM usuarios WHERE correo = :correo";
+            //======================NUEVO CAMBIO APLICADO=================================
+            $sql = "SELECT * FROM usuarios WHERE nombreUsuario = :nombreUsuario";
             $stmt = $instanciaConexion->prepare($sql);
-            $stmt->bindParam(':nombreUsuario', $correo);
+            $stmt->bindParam(':nombreUsuario', $nombreUsuario);
             $stmt->execute();
 
             $resultado = $stmt->fetch(PDO::FETCH_ASSOC);

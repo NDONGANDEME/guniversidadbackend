@@ -97,7 +97,7 @@ class AsignaturaController
         }
 
         $idFacultad = $parametros['idFacultad'] ?? null;
-        
+
         if (!$idFacultad) {
             echo json_encode([
                 'estado' => 400,

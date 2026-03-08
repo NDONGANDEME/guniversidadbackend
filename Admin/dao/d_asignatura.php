@@ -64,14 +64,7 @@ class D_Asignatura
         try {
             $instanciaConexion = ConexionUtil::conectar();
 
-            $sql = "SELECT DISTINCT a.* 
-                    FROM asignaturas a
-                    INNER JOIN plan_curso_asignatura pca ON a.idAsignatura = pca.idAsignatura
-                    INNER JOIN planestudio pe ON pca.idPlanEstudio = pe.idPlanEstudio
-                    INNER JOIN carrera c ON pe.idCarrera = c.idCarrera
-                    INNER JOIN departamento d ON c.idDepartamento = d.idDepartamento
-                    WHERE d.idFacultad = :idFacultad
-                    ORDER BY a.nombreAsignatura ASC";
+            $sql = "SELECT DISTINCT a.* FROM asignaturas a WHERE a.idFacultad = :idFacultad ORDER BY a.nombreAsignatura ASC";
             
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->bindParam(':idFacultad', $idFacultad, PDO::PARAM_INT);

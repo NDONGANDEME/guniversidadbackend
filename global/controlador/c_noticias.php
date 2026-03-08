@@ -119,7 +119,7 @@ class NoticiasController
         }
         
         echo json_encode([
-            'estado' => 200,
+            'estado' => 'exito',
             'exito' => true,
             'mensaje' => 'Noticias recientes obtenidas correctamente',
             'resultado' => $resultado

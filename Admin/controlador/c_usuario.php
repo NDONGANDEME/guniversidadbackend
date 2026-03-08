@@ -165,6 +165,7 @@ class UsuarioController
 
         // Procesar foto si existe
         $foto = null;
+
         if (isset($parametros['foto']) && !empty($parametros['foto'])) {
             if (!LimpiarDatos::validarArchivo($parametros['foto'], 'foto')) {
                 echo json_encode([
@@ -177,30 +178,22 @@ class UsuarioController
             }
             
             // Aquí iría la lógica para guardar la foto y obtener la URL
-            $foto = $parametros['foto']; // Simplificado
+            $parametros['foto'] = LimpiarDatos::guardarArchivo($parametros['foto'], 'foto');
         }
 
         // Encriptar contraseña
         //$contrasenaHash = password_hash($contrasena, PASSWORD_DEFAULT);
 
+        //==================NUEVO CAMBIO==================
         // Insertar usuario
-        $usuarioId = D_Usuario::insertarUsuario([
-            'nombreUsuario' => $nombreUsuario,
-            'contrasena' => $contrasena,
-            'correo' => $correo,
-            'rol' => $rol,
-            'estado' => 'activo',
-            'preguntaRecuperacion' => $preguntaRecuperacion,
-            'respuestaRecuperacion' => $respuestaRecuperacion,
-            'foto' => $foto
-        ]);
+        $usuarioId = D_Usuario::insertarUsuario($parametros);
 
         if (!$usuarioId) {
             echo json_encode([
                 'estado' => 500,
                 'exito' => false,
                 'mensaje' => 'Error al crear el usuario',
-                'resultado' => null
+                'resultado' => $parametros['foto'], $usuarioId
             ]);
             return;
         }
@@ -229,14 +222,14 @@ class UsuarioController
             return;
         }
 
-        $id = $parametros['id'] ?? null;
+        $id = $parametros['idUsuario'] ?? null;
         
         if (!$id) {
             echo json_encode([
                 'estado' => 400,
                 'exito' => false,
                 'mensaje' => 'ID de usuario no proporcionado',
-                'resultado' => null
+                'resultado' => $parametros
             ]);
             return;
         }
@@ -307,7 +300,7 @@ class UsuarioController
                 ]);
                 return;
             }
-            $foto = $parametros['foto']; // Simplificado
+            $foto = LimpiarDatos::guardarArchivo($parametros['foto'], 'foto', $id);  // Simplificado
         }
 
         // Preparar datos para actualizar
@@ -323,7 +316,7 @@ class UsuarioController
         if ($foto !== null) {
             $datosActualizar['foto'] = $foto;
         }
-
+        
         // Actualizar usuario
         $actualizado = D_Usuario::actualizarUsuario($datosActualizar);
 

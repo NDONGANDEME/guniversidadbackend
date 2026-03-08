@@ -127,7 +127,7 @@ class D_Noticias
     // OBTENER LAS 5 NOTICIAS MÁS RECIENTES
     public static function obtenerNoticiasRecientes($tipo = null)
     {
-        try {
+        try {       //========TAMBIEN NECESITOS LAS FOTOS DE LAS NOTICIAS======
             $instanciaConexion = ConexionUtil::conectar();
 
             $sql = "SELECT * FROM noticias";

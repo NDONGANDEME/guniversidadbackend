@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . "/../../utilidades/u_conexion.php";
-require_once __DIR__ . "/../modelo/m_plan_semestre_asignatura.php";
+require_once __DIR__ . "/../modelo/m_plansemestreasignatura.php";
 
 class D_PlanSemestreAsignatura
 {
@@ -199,6 +199,24 @@ class D_PlanSemestreAsignatura
             return $resultado['total'] > 0;
         } catch (PDOException $e) {
             error_log("Error en existeAsignacion: " . $e->getMessage());
+            return false;
+        }
+    }
+
+
+    // Añadir al final de d_plansemestreasignatura.php
+    public static function eliminarPlanSemestreAsignatura($id)
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+
+            $sql = "DELETE FROM plan_semestre_asignatura WHERE idPlanCursoAsignatura = :id";
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+            
+            return $stmt->execute();
+        } catch (PDOException $e) {
+            error_log("Error en eliminarPlanSemestreAsignatura: " . $e->getMessage());
             return false;
         }
     }

@@ -121,13 +121,15 @@ class D_Carrera
 
             $sql = "UPDATE carrera SET 
                         nombreCarrera = :nombreCarrera,
-                        idDepartamento = :idDepartamento
+                        idDepartamento = :idDepartamento,
+                        estado = :estado
                     WHERE idCarrera = :id";
             
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->bindParam(':id', $datos['idCarrera'], PDO::PARAM_INT);
             $stmt->bindParam(':nombreCarrera', $datos['nombreCarrera']);
             $stmt->bindParam(':idDepartamento', $datos['idDepartamento'], PDO::PARAM_INT);
+            $stmt->bindParam(':estado', $datos['estado']);
             
             return $stmt->execute();
         } catch (PDOException $e) {

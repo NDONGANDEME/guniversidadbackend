@@ -255,6 +255,7 @@ class AdministrativoController
         $apellidosAdministrativo = $parametros['apellidosAdministrativo'] ?? '';
         $idFacultad = $parametros['idFacultad'] ?? '';
         $correo = $parametros['correo'] ?? '';
+        $telefono = $parametros['telefono'] ?? '';
         
         if (empty($idUsuario) || empty($nombreAdministrativo) || empty($apellidosAdministrativo) || empty($idFacultad) || empty($correo)) {
             echo json_encode([
@@ -267,14 +268,7 @@ class AdministrativoController
         }
 
         // Insertar administrativo
-        $administrativoId = D_Administrativo::insertarAdministrativo([
-            'idUsuario' => $idUsuario,
-            'nombreAdministrativo' => $nombreAdministrativo,
-            'apellidosAdministrativo' => $apellidosAdministrativo,
-            'idFacultad' => $idFacultad,
-            'contacto' => $parametros['contacto'] ?? '',
-            'correo' => $correo
-        ]);
+        $administrativoId = D_Administrativo::insertarAdministrativo($parametros);
 
         if (!$administrativoId) {
             echo json_encode([
@@ -297,7 +291,7 @@ class AdministrativoController
     // Actualizar administrativo
     private static function actualizarAdministrativo($parametros)
     {
-        $id = $parametros['id'] ?? null;
+        $id = $parametros['idAdministrativo'] ?? null;
         
         if (!$id) {
             echo json_encode([
@@ -326,7 +320,7 @@ class AdministrativoController
             'nombreAdministrativo' => $parametros['nombreAdministrativo'] ?? $adminExistente->nombreAdministrativo,
             'apellidosAdministrativo' => $parametros['apellidosAdministrativo'] ?? $adminExistente->apellidosAdministrativo,
             'idFacultad' => $parametros['idFacultad'] ?? $adminExistente->idFacultad,
-            'contacto' => $parametros['contacto'] ?? $adminExistente->telefono,
+            'telefono' => $parametros['telefono'] ?? $adminExistente->telefono,
             'correo' => $parametros['correo'] ?? $adminExistente->correo
         ]);
 

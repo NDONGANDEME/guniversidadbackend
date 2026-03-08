@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . "/../../utilidades/u_conexion.php";
 require_once __DIR__ . "/../modelo/m_matricula.php";
-require_once __DIR__ . "/../modelo/m_matricula_asignatura.php";
+require_once __DIR__ . "/../modelo/m_matriculaasignatura.php";
 
 class D_Matricula
 {

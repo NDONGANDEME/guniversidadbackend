@@ -149,7 +149,7 @@ class D_Usuario
 
             $sql = "INSERT INTO usuarios (
                         nombreUsuario, 
-                        contraseña, 
+                        contrasena, 
                         correo, 
                         rol, 
                         estado,

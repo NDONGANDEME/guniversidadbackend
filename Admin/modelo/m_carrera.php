@@ -20,7 +20,7 @@ class CarreraModel
         if (isset($data['idCarrera'])) $this->idCarrera = $data['idCarrera'];
         if (isset($data['nombreCarrera'])) $this->nombreCarrera = $data['nombreCarrera'];
         if (isset($data['idDepartamento'])) $this->idDepartamento = $data['idDepartamento'];
-        if (isset($data['nombreDepartamento'])) $this->idDepartamento = $data['nombreDepartamento'];
+        if (isset($data['nombreDepartamento'])) $this->nombreDepartamento = $data['nombreDepartamento'];
         if (isset($data['estado'])) $this->estado = $data['estado'];
         
         return $this;

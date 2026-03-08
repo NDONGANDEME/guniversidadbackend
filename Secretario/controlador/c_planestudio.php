@@ -1,14 +1,14 @@
 <?php
-require_once __DIR__ . "/../dao/d_plan_estudio.php";
+require_once __DIR__ . "/../dao/d_planestudio.php";
 require_once __DIR__ . "/../../utilidades/u_verificaciones.php";
-require_once __DIR__ . "/../modelo/m_plan_estudio.php";
+require_once __DIR__ . "/../modelo/m_planestudio.php";
 
 class PlanEstudioController
 {
     public static function dispatch($accion, $parametros)
     {
         // Verificar que el actor sea admin
-        if (!isset($parametros['actor']) || $parametros['actor'] !== 'admin') {
+        if (!isset($parametros['actor']) || $parametros['actor'] !== 'secretario') {
             echo json_encode([
                 'estado' => 403,
                 'exito' => false,
@@ -185,14 +185,14 @@ class PlanEstudioController
     // Actualizar plan de estudio
     private static function actualizarPlanEstudio($parametros)
     {
-        $id = $parametros['id'] ?? null;
+        $id = $parametros['idPlanEstudio'] ?? null;
         
         if (!$id) {
             echo json_encode([
                 'estado' => 400,
                 'exito' => false,
                 'mensaje' => 'ID de plan de estudio no proporcionado',
-                'resultado' => null
+                'resultado' => $parametros
             ]);
             return;
         }

@@ -54,15 +54,18 @@ class SesionController
     // Iniciar sesión con correo y contraseña
     public static function iniciarSesion($parametros)
     {
+        //======================NUEVO CAMBIO APLICADO=================================
         // Validar parámetros obligatorios
-        if (!VerificacionesUtil::validarSesion('iniciarSesion', $parametros['nombreOCorreo'])) {
-            echo json_encode([
-                'estado' => 400,
-                'exito' => false,
-                'mensaje' => 'Correo y contraseña son obligatorios',
-                'resultado' => null
-            ]);
-            return;
+        if (strpos($parametros['nombreOCorreo'], '@')) {
+            if (!VerificacionesUtil::validarSesion('verificarCredenciales', $parametros['nombreOCorreo'])) {
+                echo json_encode([
+                    'estado' => 400,
+                    'exito' => false,
+                    'mensaje' => 'Correo y contraseña son obligatorios',
+                    'resultado' => null
+                ]);
+                return;
+            }
         }
 
         $correoONombre = LimpiarDatos::limpiarParametro($parametros['nombreOCorreo']);
@@ -147,7 +150,7 @@ class SesionController
         $datos = [];
         
         switch ($rol) {
-            case 'estudiante':
+            case 'Estudiante':
                 $estudiante = D_Estudiante::obtenerEstudiantePorIdUsuario($idUsuario);
                 if ($estudiante) {
                     $datos = $estudiante->convertirAArray();
@@ -163,7 +166,7 @@ class SesionController
                 }
                 break;
                 
-            case 'profesor':
+            case 'Profesor':
                 $profesor = D_Profesor::obtenerProfesorPorIdUsuario($idUsuario);
                 if ($profesor) {
                     $datos = $profesor->convertirAArray();
@@ -180,7 +183,7 @@ class SesionController
                 }
                 break;
                 
-            case 'administrativo':
+            case 'Secretario':
                 $administrativo = D_Administrativo::obtenerAdministrativoPorIdUsuario($idUsuario);
                 if ($administrativo) {
                     $datos = $administrativo->convertirAArray();
@@ -197,7 +200,7 @@ class SesionController
                 }
                 break;
                 
-            case 'admin':
+            case 'administrador':
                 // Admin no necesita datos adicionales específicos
                 $datos = [
                     'tipo' => 'administrador',

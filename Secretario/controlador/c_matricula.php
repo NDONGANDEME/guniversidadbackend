@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . "/../dao/d_matricula.php";
-require_once __DIR__ . "/../dao/d_matricula_asignatura.php";
+require_once __DIR__ . "/../dao/d_matriculaasignatura.php";
 require_once __DIR__ . "/../../utilidades/u_verificaciones.php";
 require_once __DIR__ . "/../modelo/m_matricula.php";
 
@@ -9,7 +9,7 @@ class MatriculaController
     public static function dispatch($accion, $parametros)
     {
         // Verificar que el actor sea admin
-        if (!isset($parametros['actor']) || $parametros['actor'] !== 'admin') {
+        if (!isset($parametros['actor']) || $parametros['actor'] !== 'secretario') {
             echo json_encode([
                 'estado' => 403,
                 'exito' => false,
