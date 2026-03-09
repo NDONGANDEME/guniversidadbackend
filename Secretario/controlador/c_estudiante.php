@@ -10,7 +10,7 @@ class EstudianteController
     public static function dispatch($accion, $parametros)
     {
         // Verificar que el actor sea admin
-        if (!isset($parametros['actor']) || $parametros['actor'] !== 'admin') {
+        if (!isset($parametros['actor']) || $parametros['actor'] !== 'secretario') {
             echo json_encode([
                 'estado' => 403,
                 'exito' => false,
@@ -217,7 +217,7 @@ class EstudianteController
         }
 
         // Primero crear usuario asociado si se proporcionan datos de usuario
-        $idUsuario = null;
+        /*$idUsuario = null;
         if (!empty($parametros['nombreUsuario']) && !empty($parametros['contrasena'])) {
             // Verificar si el usuario ya existe
             if (D_Usuario::existeNombreUsuario($parametros['nombreUsuario'])) {
@@ -243,11 +243,11 @@ class EstudianteController
                 ]);
                 return;
             }
-        }
+        }*/
 
         // Preparar datos del estudiante
         $datos = [
-            'idUsuario' => $idUsuario,
+            'idUsuario' => $parametros['idUsuario'],
             'codigoEstudiante' => $codigoEstudiante,
             'nombre' => $nombre,
             'apellidos' => $apellidos,
@@ -263,7 +263,7 @@ class EstudianteController
             'correoEstudiante' => $correoEstudiante,
             'centroProcedencia' => $parametros['centroProcedencia'] ?? '',
             'universidadProcedencia' => $parametros['universidadProcedencia'] ?? '',
-            'esBecado' => isset($parametros['esBecado']) ? (int)$parametros['esBecado'] : 0
+            'esBecado' => $parametros['esBecado']
         ];
 
         // Insertar estudiante

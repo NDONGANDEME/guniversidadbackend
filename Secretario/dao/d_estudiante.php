@@ -255,7 +255,7 @@ class D_Estudiante
             $stmt->bindParam(':correoEstudiante', $datos['correoEstudiante']);
             $stmt->bindParam(':centroProcedencia', $datos['centroProcedencia']);
             $stmt->bindParam(':universidadProcedencia', $datos['universidadProcedencia']);
-            $stmt->bindParam(':esBecado', $datos['esBecado'], PDO::PARAM_INT);
+            $stmt->bindParam(':esBecado', $datos['esBecado']);
             
             if ($stmt->execute()) {
                 return $instanciaConexion->lastInsertId();

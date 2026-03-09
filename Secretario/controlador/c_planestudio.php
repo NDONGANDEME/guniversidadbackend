@@ -158,7 +158,7 @@ class PlanEstudioController
             'idCarrera' => $idCarrera,
             'fechaElaboracion' => $parametros['fechaElaboracion'] ?? date('Y-m-d'),
             'periodoPlanEstudio' => $periodoPlanEstudio,
-            'vigente' => $parametros['vigente'] ?? 1
+            'vigente' => $parametros['vigente']
         ];
 
         // Insertar

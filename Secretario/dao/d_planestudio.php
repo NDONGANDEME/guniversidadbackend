@@ -110,7 +110,7 @@ class D_PlanEstudio
             $stmt->bindParam(':idCarrera', $datos['idCarrera'], PDO::PARAM_INT);
             $stmt->bindParam(':fechaElaboracion', $datos['fechaElaboracion']);
             $stmt->bindParam(':periodoPlanEstudio', $datos['periodoPlanEstudio']);
-            $stmt->bindParam(':vigente', $datos['vigente'], PDO::PARAM_INT);
+            $stmt->bindParam(':vigente', $datos['vigente']);
             
             if ($stmt->execute()) {
                 return $instanciaConexion->lastInsertId();

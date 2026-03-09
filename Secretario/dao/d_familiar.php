@@ -137,8 +137,8 @@ class D_Familiar
             $stmt->bindParam(':correoFamiliar', $datos['correoFamiliar']);
             $stmt->bindParam(':direccion', $datos['direccion']);
             $stmt->bindParam(':parentesco', $datos['parentesco']);
-            $stmt->bindParam(':esContactoIncidentes', $datos['esContactoIncidentes'], PDO::PARAM_INT);
-            $stmt->bindParam(':esResponsablePago', $datos['esResponsablePago'], PDO::PARAM_INT);
+            $stmt->bindParam(':esContactoIncidentes', $datos['esContactoIncidentes']);
+            $stmt->bindParam(':esResponsablePago', $datos['esResponsablePago']);
             $stmt->bindParam(':idEstudiante', $datos['idEstudiante'], PDO::PARAM_INT);
             
             if ($stmt->execute()) {
@@ -180,8 +180,8 @@ class D_Familiar
             $stmt->bindParam(':correoFamiliar', $datos['correoFamiliar']);
             $stmt->bindParam(':direccion', $datos['direccion']);
             $stmt->bindParam(':parentesco', $datos['parentesco']);
-            $stmt->bindParam(':esContactoIncidentes', $datos['esContactoIncidentes'], PDO::PARAM_INT);
-            $stmt->bindParam(':esResponsablePago', $datos['esResponsablePago'], PDO::PARAM_INT);
+            $stmt->bindParam(':esContactoIncidentes', $datos['esContactoIncidentes']);
+            $stmt->bindParam(':esResponsablePago', $datos['esResponsablePago']);
             $stmt->bindParam(':idEstudiante', $datos['idEstudiante'], PDO::PARAM_INT);
             
             return $stmt->execute();

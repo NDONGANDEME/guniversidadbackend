@@ -8,7 +8,7 @@ class FormacionController
     public static function dispatch($accion, $parametros)
     {
         // Verificar que el actor sea admin
-        if (!isset($parametros['actor']) || $parametros['actor'] !== 'admin') {
+        if (!isset($parametros['actor']) || $parametros['actor'] !== 'secretario') {
             echo json_encode([
                 'estado' => 403,
                 'exito' => false,

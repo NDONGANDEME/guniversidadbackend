@@ -8,7 +8,7 @@ class FamiliarController
     public static function dispatch($accion, $parametros)
     {
         // Verificar que el actor sea admin
-        if (!isset($parametros['actor']) || $parametros['actor'] !== 'admin') {
+        if (!isset($parametros['actor']) || $parametros['actor'] !== 'secretario') {
             echo json_encode([
                 'estado' => 403,
                 'exito' => false,
@@ -185,8 +185,8 @@ class FamiliarController
             'correoFamiliar' => $parametros['correoFamiliar'] ?? '',
             'direccion' => $parametros['direccion'] ?? '',
             'parentesco' => $parametros['parentesco'] ?? '',
-            'esContactoIncidentes' => isset($parametros['esContactoIncidentes']) ? (int)$parametros['esContactoIncidentes'] : 0,
-            'esResponsablePago' => isset($parametros['esResponsablePago']) ? (int)$parametros['esResponsablePago'] : 0,
+            'esContactoIncidentes' => $parametros['esContactoIncidentes'],
+            'esResponsablePago' => $parametros['esResponsablePago'],
             'idEstudiante' => $idEstudiante
         ];
 

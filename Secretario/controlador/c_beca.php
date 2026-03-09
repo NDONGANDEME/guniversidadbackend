@@ -8,7 +8,7 @@ class BecaController
     public static function dispatch($accion, $parametros)
     {
         // Verificar que el actor sea admin para todas estas operaciones
-        if (!isset($parametros['actor']) || $parametros['actor'] !== 'admin') {
+        if (!isset($parametros['actor']) || $parametros['actor'] !== 'secretario') {
             echo json_encode([
                 'estado' => 403,
                 'exito' => false,
