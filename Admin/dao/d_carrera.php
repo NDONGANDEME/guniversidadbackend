@@ -161,6 +161,86 @@ class D_Carrera
         }
     }
 
+    // CAMBIAR ESTADO DE CARRERA CON TRANSACCIÓN
+    public static function cambiarEstadoCarrera($id, $nuevoEstado)
+    {
+        $pdo = null;
+        try {
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
+
+            $sql = "UPDATE carrera SET estado = :estado WHERE idCarrera = :id";
+            
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmt->bindParam(':estado', $nuevoEstado);
+            
+            $resultado = $stmt->execute();
+            
+            if ($resultado && $stmt->rowCount() > 0) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
+        } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
+            error_log("Error en cambiarEstadoCarrera: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    // ELIMINAR CARRERA CON TRANSACCIÓN
+    public static function eliminarCarrera($id)
+    {
+        $pdo = null;
+        try {
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
+
+            // Verificar si la carrera tiene asignaturas asociadas
+            $sqlVerificar = "SELECT COUNT(*) as total FROM asignatura WHERE idCarrera = :id";
+            $stmtVerificar = $pdo->prepare($sqlVerificar);
+            $stmtVerificar->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmtVerificar->execute();
+            $resultado = $stmtVerificar->fetch(PDO::FETCH_ASSOC);
+            
+            if ($resultado['total'] > 0) {
+                $pdo->rollBack();
+                return false; // No se puede eliminar porque tiene asignaturas asociadas
+            }
+
+            // Si no tiene asignaturas, proceder a eliminar
+            $sql = "DELETE FROM carrera WHERE idCarrera = :id";
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+            
+            if ($stmt->execute()) {
+                if ($stmt->rowCount() > 0) {
+                    $pdo->commit();
+                    return true;
+                } else {
+                    $pdo->rollBack();
+                    return false;
+                }
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
+        } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
+            error_log("Error en eliminarCarrera: " . $e->getMessage());
+            return false;
+        }
+    }
+
     // VERIFICAR SI EXISTE CARRERA (solo lectura)
     public static function existeCarrera($nombreCarrera, $excluirId = null)
     {
@@ -186,6 +266,25 @@ class D_Carrera
             return $resultado['total'] > 0;
         } catch (PDOException $e) {
             error_log("Error en existeCarrera: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    // VERIFICAR SI LA CARRERA TIENE ASIGNATURAS ASOCIADAS
+    public static function tieneAsignaturasAsociadas($id)
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+
+            $sql = "SELECT COUNT(*) as total FROM asignatura WHERE idCarrera = :id";
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $resultado['total'] > 0;
+        } catch (PDOException $e) {
+            error_log("Error en tieneAsignaturasAsociadas: " . $e->getMessage());
             return false;
         }
     }

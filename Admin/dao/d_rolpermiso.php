@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . "/../../utilidades/u_conexion.php";
-require_once __DIR__ . "/../modelo/m_rol_permiso.php";
+require_once __DIR__ . "/../modelo/m_rolpermiso.php";
 
 class D_RolPermiso
 {

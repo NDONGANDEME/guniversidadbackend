@@ -1,15 +1,15 @@
 <?php
 require_once __DIR__ . "/../../utilidades/u_verificaciones.php";
-require_once __DIR__ . "/../../utilidades/u_permisos_controlador.php";
-require_once __DIR__ . "/../dao/d_rol_permiso.php";
-require_once __DIR__ . "/../modelo/m_rol_permiso.php";
+require_once __DIR__ . "/../../utilidades/u_permisos.php";
+require_once __DIR__ . "/../dao/d_rolpermiso.php";
+require_once __DIR__ . "/../modelo/m_rolpermiso.php";
 
 class RolPermisoController
 {
     public static function dispatch($accion, $parametros)
     {
         // Verificar sesión activa
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -17,7 +17,7 @@ class RolPermisoController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         switch ($accion) {
             case "obtenerRolPermisos":
@@ -36,11 +36,11 @@ class RolPermisoController
                 self::obtenerRolesPorPermiso($parametros['idPermiso'] ?? null);
                 break;
                 
-            case "insertarPermisRol":
+            case "insertarRolPermiso":
                 self::asignarPermisoARol($parametros);
                 break;
                 
-            case "eliminarPermisoRol":
+            case "eliminarRolPermiso":
                 self::quitarPermisoDeRol($parametros);
                 break;
                 

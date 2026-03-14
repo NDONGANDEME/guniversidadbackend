@@ -18,6 +18,17 @@ class FacultadController
             return;
         }
 
+        // Verificar sesión activa
+        if (!self::verificarSesionActiva()) {
+            echo json_encode([
+                'estado' => 401,
+                'exito' => false,
+                'mensaje' => 'No hay sesión activa',
+                'resultado' => null
+            ]);
+            return;
+        }
+
         switch ($accion) {
             case "obtenerFacultades":
                 self::obtenerFacultades();
@@ -31,19 +42,8 @@ class FacultadController
                 self::actualizarFacultad($parametros);
                 break;
                 
-            case "deshabilitarFacultad":
-                // Como facultad no tiene campo estado, esto elimina físicamente
-                self::eliminarFacultad($parametros['valor'] ?? null);
-                break;
-                
-            case "habilitarFacultad":
-                // Para facultad, habilitar no aplica, se responde con error
-                echo json_encode([
-                    'estado' => 400,
-                    'exito' => false,
-                    'mensaje' => 'Las facultades no tienen estado que habilitar',
-                    'resultado' => null
-                ]);
+            case "eliminarFacultad":
+                self::eliminarFacultad($parametros['idFacultad']);
                 break;
                 
             default:
@@ -55,8 +55,6 @@ class FacultadController
                 ]);
         }
     }
-
-    
 
     // Verificar si hay sesión activa
     private static function verificarSesionActiva()
@@ -71,16 +69,6 @@ class FacultadController
     // Obtener todas las facultades
     private static function obtenerFacultades()
     {
-        if (!self::verificarSesionActiva()) {
-            echo json_encode([
-                'estado' => 401,
-                'exito' => false,
-                'mensaje' => 'No hay sesión activa',
-                'resultado' => null
-            ]);
-            return;
-        }
-
         $facultades = D_Facultad::obtenerFacultades();
         $resultado = [];
         
@@ -99,16 +87,6 @@ class FacultadController
     // Insertar nueva facultad
     private static function insertarFacultad($parametros)
     {
-        if (!self::verificarSesionActiva()) {
-            echo json_encode([
-                'estado' => 401,
-                'exito' => false,
-                'mensaje' => 'No hay sesión activa',
-                'resultado' => null
-            ]);
-            return;
-        }
-
         // Validar campos obligatorios
         $nombreFacultad = $parametros['nombreFacultad'] ?? '';
         $direccionFacultad = $parametros['direccionFacultad'] ?? '';
@@ -174,16 +152,6 @@ class FacultadController
     // Actualizar facultad existente
     private static function actualizarFacultad($parametros)
     {
-        if (!self::verificarSesionActiva()) {
-            echo json_encode([
-                'estado' => 401,
-                'exito' => false,
-                'mensaje' => 'No hay sesión activa',
-                'resultado' => null
-            ]);
-            return;
-        }
-
         $id = $parametros['idFacultad'] ?? null;
         
         if (!$id) {
@@ -210,9 +178,9 @@ class FacultadController
 
         // Datos a actualizar
         $nombreFacultad = $parametros['nombreFacultad'] ?? $facultadExistente->nombreFacultad;
-        //$direccionFacultad = $parametros['direccionFacultad'] ?? $facultadExistente->direccionFacultad;
-        //$correo = $parametros['correo'] ?? $facultadExistente->correo;
-        //$telefono = $parametros['telefono'] ?? $facultadExistente->telefono;
+        $direccionFacultad = $parametros['direccionFacultad'] ?? $facultadExistente->direccionFacultad;
+        $correo = $parametros['correo'] ?? $facultadExistente->correo;
+        $telefono = $parametros['telefono'] ?? $facultadExistente->telefono;
 
         // Validaciones
         $errores = [];
@@ -239,11 +207,11 @@ class FacultadController
 
         // Actualizar facultad
         $actualizado = D_Facultad::actualizarFacultad(
-            $parametros['idFacultad'],
-            $parametros['nombreFacultad'],
-            $parametros['direccionFacultad'],
-            $parametros['correo'],
-            $parametros['telefono']
+            $id,
+            $nombreFacultad,
+            $direccionFacultad,
+            $correo,
+            $telefono
         );
 
         if (!$actualizado) {
@@ -251,7 +219,7 @@ class FacultadController
                 'estado' => 500,
                 'exito' => false,
                 'mensaje' => 'Error al actualizar la facultad',
-                'resultado' => $actualizado
+                'resultado' => null
             ]);
             return;
         }
@@ -270,16 +238,6 @@ class FacultadController
     // Eliminar facultad (físicamente)
     private static function eliminarFacultad($id)
     {
-        if (!self::verificarSesionActiva()) {
-            echo json_encode([
-                'estado' => 401,
-                'exito' => false,
-                'mensaje' => 'No hay sesión activa',
-                'resultado' => null
-            ]);
-            return;
-        }
-
         if (!$id) {
             echo json_encode([
                 'estado' => 400,

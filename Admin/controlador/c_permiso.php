@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . "/../../utilidades/u_verificaciones.php";
-require_once __DIR__ . "/../../utilidades/u_permisos_controlador.php";
+require_once __DIR__ . "/../../utilidades/u_permisos.php";
 require_once __DIR__ . "/../dao/d_permiso.php";
 require_once __DIR__ . "/../modelo/m_permiso.php";
 
@@ -9,7 +9,7 @@ class PermisoController
     public static function dispatch($accion, $parametros)
     {
         // Verificar sesión activa
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -17,7 +17,7 @@ class PermisoController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         switch ($accion) {
             case "obtenerPermisos":
@@ -147,7 +147,7 @@ class PermisoController
         $permisoId = D_Permiso::insertarPermiso([
             'nombrePermiso' => $nombrePermiso,
             'tabla' => $tabla,
-            'accion' => $accion
+            'accionPermiso' => $accion
         ]);
 
         if (!$permisoId) {
@@ -164,7 +164,7 @@ class PermisoController
             'estado' => 'exito',
             'exito' => true,
             'mensaje' => 'Permiso creado exitosamente',
-            'resultado' => ['id' => $permisoId]
+            'resultado' => ['idPermiso' => $permisoId]
         ]);
     }
 

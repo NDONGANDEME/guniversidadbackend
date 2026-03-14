@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . "/../../utilidades/u_verificaciones.php";
-require_once __DIR__ . "/../../utilidades/u_permisos_controlador.php";
+require_once __DIR__ . "/../../utilidades/u_permisos.php";
 require_once __DIR__ . "/../dao/d_rol.php";
 require_once __DIR__ . "/../modelo/m_rol.php";
 
@@ -9,7 +9,7 @@ class RolController
     public static function dispatch($accion, $parametros)
     {
         // Verificar sesión activa
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -17,7 +17,7 @@ class RolController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         switch ($accion) {
             case "obtenerRoles":
@@ -37,7 +37,7 @@ class RolController
                 break;
                 
             case "eliminarRol":
-                self::eliminarRol($parametros['id'] ?? null);
+                self::eliminarRol($parametros['idRol'] ?? null);
                 break;
                 
             default:
@@ -153,7 +153,7 @@ class RolController
             'estado' => 'exito',
             'exito' => true,
             'mensaje' => 'Rol creado exitosamente',
-            'resultado' => ['id' => $rolId, 'nombreRol' => $nombreRol]
+            'resultado' => ['idRol' => $rolId, 'nombreRol' => $nombreRol]
         ]);
     }
 

@@ -12,7 +12,7 @@ class DepartamentoController
             echo json_encode([
                 'estado' => 403,
                 'exito' => false,
-                'mensaje' => 'Acceso denegado. Se requiere rol de administrador.',
+                'mensaje' => 'Acceso denegado. Se requiere el rol de administrador.',
                 'resultado' => null
             ]);
             return;
@@ -29,6 +29,10 @@ class DepartamentoController
                 
             case "actualizarDepartamento":
                 self::actualizarDepartamento($parametros);
+                break;
+                
+            case "eliminarDepartamento":
+                self::eliminarDepartamento($parametros);
                 break;
                 
             default:
@@ -65,16 +69,6 @@ class DepartamentoController
         }
 
         $departamentos = D_Departamento::obtenerDepartamentos();
-        //echo json_encode(['error' => $departamentos]);
-        //$resultado = [];
-        
-        /*foreach ($departamentos as $departamento) {
-            $arr = $departamento->convertirAArray();
-            if (isset($departamento->nombreFacultad)) {
-                $arr['nombreFacultad'] = $departamento->nombreFacultad;
-            }
-            $resultado[] = $arr;
-        }*/
         
         echo json_encode([
             'estado' => 'exito',
@@ -241,6 +235,75 @@ class DepartamentoController
             'estado' => 'exito',
             'exito' => true,
             'mensaje' => 'Departamento actualizado exitosamente',
+            'resultado' => ['id' => $id]
+        ]);
+    }
+
+    // Eliminar departamento
+    private static function eliminarDepartamento($parametros)
+    {
+        if (!self::verificarSesionActiva()) {
+            echo json_encode([
+                'estado' => 401,
+                'exito' => false,
+                'mensaje' => 'No hay sesión activa',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $id = $parametros['idDepartamento'] ?? null;
+        
+        if (!$id) {
+            echo json_encode([
+                'estado' => 400,
+                'exito' => false,
+                'mensaje' => 'ID de departamento no proporcionado',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        // Verificar que el departamento existe
+        $departamentoExistente = D_Departamento::obtenerDepartamentoPorId($id);
+        if (!$departamentoExistente) {
+            echo json_encode([
+                'estado' => 404,
+                'exito' => false,
+                'mensaje' => 'Departamento no encontrado',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        // Verificar si tiene carreras asociadas
+        if (D_Departamento::tieneCarrerasAsociadas($id)) {
+            echo json_encode([
+                'estado' => 400,
+                'exito' => false,
+                'mensaje' => 'No se puede eliminar el departamento porque tiene carreras asociadas',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        // Eliminar departamento
+        $eliminado = D_Departamento::eliminarDepartamento($id);
+
+        if (!$eliminado) {
+            echo json_encode([
+                'estado' => 500,
+                'exito' => false,
+                'mensaje' => 'Error al eliminar el departamento',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        echo json_encode([
+            'estado' => 'exito',
+            'exito' => true,
+            'mensaje' => 'Departamento eliminado exitosamente',
             'resultado' => ['id' => $id]
         ]);
     }

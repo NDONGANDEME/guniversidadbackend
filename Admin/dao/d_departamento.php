@@ -147,6 +147,53 @@ class D_Departamento
         }
     }
 
+    // ELIMINAR DEPARTAMENTO CON TRANSACCIÓN
+    public static function eliminarDepartamento($id)
+    {
+        $pdo = null;
+        try {
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
+
+            // Verificar si el departamento tiene carreras asociadas
+            $sqlVerificar = "SELECT COUNT(*) as total FROM carrera WHERE idDepartamento = :id";
+            $stmtVerificar = $pdo->prepare($sqlVerificar);
+            $stmtVerificar->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmtVerificar->execute();
+            $resultado = $stmtVerificar->fetch(PDO::FETCH_ASSOC);
+            
+            if ($resultado['total'] > 0) {
+                $pdo->rollBack();
+                return false; // No se puede eliminar porque tiene carreras asociadas
+            }
+
+            // Si no tiene carreras, proceder a eliminar
+            $sql = "DELETE FROM departamento WHERE idDepartamento = :id";
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+            
+            if ($stmt->execute()) {
+                if ($stmt->rowCount() > 0) {
+                    $pdo->commit();
+                    return true;
+                } else {
+                    $pdo->rollBack();
+                    return false;
+                }
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
+        } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
+            error_log("Error en eliminarDepartamento: " . $e->getMessage());
+            return false;
+        }
+    }
+
     // VERIFICAR SI EXISTE DEPARTAMENTO (solo lectura)
     public static function existeDepartamento($nombreDepartamento, $excluirId = null)
     {
@@ -172,6 +219,25 @@ class D_Departamento
             return $resultado['total'] > 0;
         } catch (PDOException $e) {
             error_log("Error en existeDepartamento: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    // VERIFICAR SI EL DEPARTAMENTO TIENE CARRERAS ASOCIADAS
+    public static function tieneCarrerasAsociadas($id)
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+
+            $sql = "SELECT COUNT(*) as total FROM carrera WHERE idDepartamento = :id";
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $resultado['total'] > 0;
+        } catch (PDOException $e) {
+            error_log("Error en tieneCarrerasAsociadas: " . $e->getMessage());
             return false;
         }
     }

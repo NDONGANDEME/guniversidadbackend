@@ -31,6 +31,14 @@ class CarreraController
                 self::actualizarCarrera($parametros);
                 break;
                 
+            case "cambioEstadoCarrera":
+                self::cambiarEstadoCarrera($parametros);
+                break;
+                
+            case "eliminarCarrera":
+                self::eliminarCarrera($parametros);
+                break;
+                
             default:
                 echo json_encode([
                     'estado' => 400,
@@ -233,6 +241,156 @@ class CarreraController
             'estado' => 'exito',
             'exito' => true,
             'mensaje' => 'Carrera actualizada exitosamente',
+            'resultado' => ['id' => $id]
+        ]);
+    }
+
+    // Cambiar estado de carrera
+    private static function cambiarEstadoCarrera($parametros)
+    {
+        if (!self::verificarSesionActiva()) {
+            echo json_encode([
+                'estado' => 401,
+                'exito' => false,
+                'mensaje' => 'No hay sesión activa',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $id = $parametros['id'] ?? null;
+        $nuevoEstado = $parametros['nuevoEstado'] ?? null;
+        
+        if (!$id) {
+            echo json_encode([
+                'estado' => 400,
+                'exito' => false,
+                'mensaje' => 'ID de carrera no proporcionado',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        if ($nuevoEstado === null) {
+            echo json_encode([
+                'estado' => 400,
+                'exito' => false,
+                'mensaje' => 'Nuevo estado no proporcionado',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        // Validar que el estado sea válido (1: activo, 0: inactivo)
+        if (!in_array($nuevoEstado, ['1', '0', 1, 0])) {
+            echo json_encode([
+                'estado' => 400,
+                'exito' => false,
+                'mensaje' => 'Estado no válido. Debe ser 1 (activo) o 0 (inactivo)',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        // Verificar que la carrera existe
+        $carreraExistente = D_Carrera::obtenerCarreraPorId($id);
+        if (!$carreraExistente) {
+            echo json_encode([
+                'estado' => 404,
+                'exito' => false,
+                'mensaje' => 'Carrera no encontrada',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        // Cambiar estado
+        $cambiado = D_Carrera::cambiarEstadoCarrera($id, $nuevoEstado);
+
+        if (!$cambiado) {
+            echo json_encode([
+                'estado' => 500,
+                'exito' => false,
+                'mensaje' => 'Error al cambiar el estado de la carrera',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $estadoTexto = $nuevoEstado == 1 ? 'activada' : 'desactivada';
+        echo json_encode([
+            'estado' => 'exito',
+            'exito' => true,
+            'mensaje' => "Carrera $estadoTexto exitosamente",
+            'resultado' => ['id' => $id, 'nuevoEstado' => $nuevoEstado]
+        ]);
+    }
+
+    // Eliminar carrera
+    private static function eliminarCarrera($parametros)
+    {
+        if (!self::verificarSesionActiva()) {
+            echo json_encode([
+                'estado' => 401,
+                'exito' => false,
+                'mensaje' => 'No hay sesión activa',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $id = $parametros['id'] ?? null;
+        
+        if (!$id) {
+            echo json_encode([
+                'estado' => 400,
+                'exito' => false,
+                'mensaje' => 'ID de carrera no proporcionado',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        // Verificar que la carrera existe
+        $carreraExistente = D_Carrera::obtenerCarreraPorId($id);
+        if (!$carreraExistente) {
+            echo json_encode([
+                'estado' => 404,
+                'exito' => false,
+                'mensaje' => 'Carrera no encontrada',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        // Verificar si tiene asignaturas asociadas
+        if (D_Carrera::tieneAsignaturasAsociadas($id)) {
+            echo json_encode([
+                'estado' => 400,
+                'exito' => false,
+                'mensaje' => 'No se puede eliminar la carrera porque tiene asignaturas asociadas',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        // Eliminar carrera
+        $eliminado = D_Carrera::eliminarCarrera($id);
+
+        if (!$eliminado) {
+            echo json_encode([
+                'estado' => 500,
+                'exito' => false,
+                'mensaje' => 'Error al eliminar la carrera',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        echo json_encode([
+            'estado' => 'exito',
+            'exito' => true,
+            'mensaje' => 'Carrera eliminada exitosamente',
             'resultado' => ['id' => $id]
         ]);
     }

@@ -25,8 +25,9 @@ class AsignaturaController
                 break;
                 
             case "insertarAsignatura":
-                if (PermisosUtil::usuarioTienePermiso($parametros['idUsuario'],$parametros['accion'])){
-                     self::insertarAsignatura($parametros);
+                self::insertarAsignatura($parametros);
+                /*if (PermisosUtil::usuarioTienePermiso($parametros['idUsuario'],$parametros['accion'])){
+                     
                     break;
                 }else{
                     echo json_encode([
@@ -35,7 +36,7 @@ class AsignaturaController
                     'mensaje' => 'Acceso denegado. No tienes los permisos necesrios.',
                     'resultado' => null
                     ]);
-                }
+                }*/
                
             case "actualizarAsignatura":
                 self::actualizarAsignatura($parametros);
@@ -68,7 +69,7 @@ class AsignaturaController
     // Obtener todas las asignaturas
     private static function obtenerAsignaturas()
     {
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -76,7 +77,7 @@ class AsignaturaController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         $asignaturas = D_Asignatura::obtenerAsignaturas();
         $resultado = [];
@@ -96,7 +97,7 @@ class AsignaturaController
     // Obtener asignaturas por facultad
     private static function obtenerAsignaturasPorFacultad($parametros)
     {
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -104,7 +105,7 @@ class AsignaturaController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         $idFacultad = $parametros['idFacultad'] ?? null;
 
@@ -136,7 +137,7 @@ class AsignaturaController
     // Insertar nueva asignatura
     private static function insertarAsignatura($parametros)
     {
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -144,7 +145,7 @@ class AsignaturaController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         // Validar campos obligatorios
         $codigoAsignatura = $parametros['codigoAsignatura'] ?? '';
@@ -217,7 +218,7 @@ class AsignaturaController
     // Actualizar asignatura existente
     private static function actualizarAsignatura($parametros)
     {
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -225,7 +226,7 @@ class AsignaturaController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         $id = $parametros['idAsignatura'] ?? null;
         

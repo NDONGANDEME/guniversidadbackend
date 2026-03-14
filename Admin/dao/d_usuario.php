@@ -155,7 +155,7 @@ class D_Usuario
                         nombreUsuario, 
                         contrasena, 
                         correo, 
-                        rol, 
+                        idRol, 
                         estado,
                         foto
                     ) VALUES (

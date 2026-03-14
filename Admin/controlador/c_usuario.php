@@ -67,7 +67,7 @@ class UsuarioController
     // Obtener todos los usuarios
     private static function obtenerUsuarios()
     {
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -75,7 +75,7 @@ class UsuarioController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         $usuarios = D_Usuario::obtenerUsuarios();
         $resultado = [];
@@ -95,7 +95,7 @@ class UsuarioController
     // Insertar nuevo usuario
     private static function insertarUsuario($parametros)
     {
-       if (!self::verificarSesionActiva()) {
+       /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -103,7 +103,7 @@ class UsuarioController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         // Validar campos obligatorios
         $nombreUsuario = $parametros['nombreUsuario'] ?? '';
@@ -136,7 +136,7 @@ class UsuarioController
                 'estado' => 400,
                 'exito' => false,
                 'mensaje' => 'Errores de validación',
-                'resultado' => ['errores' => $errores]
+                'resultado' => ['errores' => $parametros]
             ]);
             return;
         }
