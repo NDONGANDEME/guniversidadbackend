@@ -4,7 +4,7 @@ require_once __DIR__ . "/../modelo/m_beca.php";
 
 class D_Beca
 {
-    // OBTENER TODAS LAS BECAS (incluyendo inactivas)
+    // OBTENER TODAS LAS BECAS (solo lectura)
     public static function obtenerBecas()
     {
         try {
@@ -30,7 +30,7 @@ class D_Beca
         }
     }
 
-    // OBTENER SOLO BECAS ACTIVAS
+    // OBTENER SOLO BECAS ACTIVAS (solo lectura)
     public static function obtenerBecasActivas()
     {
         try {
@@ -56,7 +56,7 @@ class D_Beca
         }
     }
 
-    // OBTENER BECA POR ID
+    // OBTENER BECA POR ID (solo lectura)
     public static function obtenerBecaPorId($id)
     {
         try {
@@ -81,75 +81,113 @@ class D_Beca
         }
     }
 
-    // INSERTAR BECA
+    // INSERTAR BECA CON TRANSACCIÓN
     public static function insertarBeca($datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "INSERT INTO becas (institucionBeca, tipoBeca, estado) 
                     VALUES (:institucionBeca, :tipoBeca, :estado)";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':institucionBeca', $datos['institucionBeca']);
             $stmt->bindParam(':tipoBeca', $datos['tipoBeca']);
             $stmt->bindParam(':estado', $datos['estado']);
             
             if ($stmt->execute()) {
-                return $instanciaConexion->lastInsertId();
+                $id = $pdo->lastInsertId();
+                $pdo->commit();
+                return $id;
+            } else {
+                $pdo->rollBack();
+                return null;
             }
             
-            return null;
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en insertarBeca: " . $e->getMessage());
             return null;
         }
     }
 
-    // ACTUALIZAR BECA
+    // ACTUALIZAR BECA CON TRANSACCIÓN
     public static function actualizarBeca($id, $datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "UPDATE becas SET 
                         institucionBeca = :institucionBeca,
                         tipoBeca = :tipoBeca
                     WHERE idBeca = :id";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             $stmt->bindParam(':institucionBeca', $datos['institucionBeca']);
             $stmt->bindParam(':tipoBeca', $datos['tipoBeca']);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en actualizarBeca: " . $e->getMessage());
             return false;
         }
     }
 
-    // ELIMINAR BECA (soft delete - cambiar estado a 'inactivo')
+    // ELIMINAR BECA (soft delete) CON TRANSACCIÓN
     public static function eliminarBeca($id)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
+            
             $estadoInactivo = 'inactivo';
 
             $sql = "UPDATE becas SET estado = :estado WHERE idBeca = :id";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             $stmt->bindParam(':estado', $estadoInactivo);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en eliminarBeca: " . $e->getMessage());
             return false;
         }
     }
 
-    // VERIFICAR SI EXISTE BECA
+    // VERIFICAR SI EXISTE BECA (solo lectura)
     public static function existeBeca($institucionBeca, $tipoBeca, $excluirId = null)
     {
         try {

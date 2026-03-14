@@ -4,7 +4,7 @@ require_once __DIR__ . "/../modelo/m_estudiante.php";
 
 class D_Estudiante
 {
-    // OBTENER TODOS LOS ESTUDIANTES
+    // OBTENER TODOS LOS ESTUDIANTES (solo lectura)
     public static function obtenerEstudiantes()
     {
         try {
@@ -36,7 +36,7 @@ class D_Estudiante
         }
     }
 
-    // OBTENER ESTUDIANTES POR ASIGNATURA
+    // OBTENER ESTUDIANTES POR ASIGNATURA (solo lectura)
     public static function obtenerEstudiantesPorAsignatura($idAsignatura)
     {
         try {
@@ -70,7 +70,7 @@ class D_Estudiante
         }
     }
 
-    // OBTENER ESTUDIANTES POR FACULTAD
+    // OBTENER ESTUDIANTES POR FACULTAD (solo lectura)
     public static function obtenerEstudiantesPorFacultad($idFacultad)
     {
         try {
@@ -105,7 +105,7 @@ class D_Estudiante
         }
     }
 
-    // OBTENER DATOS ESPECÍFICOS DE ESTUDIANTES MATRICULADOS EN AÑO ACADÉMICO CORRIENTE
+    // OBTENER DATOS ESPECÍFICOS DE ESTUDIANTES (solo lectura)
     public static function obtenerDatosEspecificosEstudiantes($anioAcademico = null)
     {
         try {
@@ -142,7 +142,7 @@ class D_Estudiante
         }
     }
 
-    // OBTENER ESTUDIANTE POR ID
+    // OBTENER ESTUDIANTE POR ID (solo lectura)
     public static function obtenerEstudiantePorId($id)
     {
         try {
@@ -170,7 +170,7 @@ class D_Estudiante
         }
     }
 
-    // OBTENER ESTUDIANTE POR CÓDIGO
+    // OBTENER ESTUDIANTE POR CÓDIGO (solo lectura)
     public static function obtenerEstudiantePorCodigo($codigoEstudiante)
     {
         try {
@@ -195,7 +195,7 @@ class D_Estudiante
         }
     }
 
-    // OBTENER ESTUDIANTE POR ID USUARIO
+    // OBTENER ESTUDIANTE POR ID USUARIO (solo lectura)
     public static function obtenerEstudiantePorIdUsuario($idUsuario)
     {
         try {
@@ -220,11 +220,13 @@ class D_Estudiante
         }
     }
 
-    // INSERTAR ESTUDIANTE
+    // INSERTAR ESTUDIANTE CON TRANSACCIÓN
     public static function insertarEstudiante($datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "INSERT INTO estudiantes (
                         idUsuario, codigoEstudiante, nombre, apellidos, dipEstudiante,
@@ -238,7 +240,7 @@ class D_Estudiante
                         :universidadProcedencia, :esBecado
                     )";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':idUsuario', $datos['idUsuario'], PDO::PARAM_INT);
             $stmt->bindParam(':codigoEstudiante', $datos['codigoEstudiante']);
             $stmt->bindParam(':nombre', $datos['nombre']);
@@ -258,21 +260,30 @@ class D_Estudiante
             $stmt->bindParam(':esBecado', $datos['esBecado']);
             
             if ($stmt->execute()) {
-                return $instanciaConexion->lastInsertId();
+                $id = $pdo->lastInsertId();
+                $pdo->commit();
+                return $id;
+            } else {
+                $pdo->rollBack();
+                return null;
             }
             
-            return null;
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en insertarEstudiante: " . $e->getMessage());
             return null;
         }
     }
 
-    // ACTUALIZAR ESTUDIANTE
+    // ACTUALIZAR ESTUDIANTE CON TRANSACCIÓN
     public static function actualizarEstudiante($id, $datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "UPDATE estudiantes SET 
                         codigoEstudiante = :codigoEstudiante,
@@ -293,7 +304,7 @@ class D_Estudiante
                         esBecado = :esBecado
                     WHERE idEstudiante = :id";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             $stmt->bindParam(':codigoEstudiante', $datos['codigoEstudiante']);
             $stmt->bindParam(':nombre', $datos['nombre']);
@@ -312,39 +323,66 @@ class D_Estudiante
             $stmt->bindParam(':universidadProcedencia', $datos['universidadProcedencia']);
             $stmt->bindParam(':esBecado', $datos['esBecado'], PDO::PARAM_INT);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en actualizarEstudiante: " . $e->getMessage());
             return false;
         }
     }
 
-    // CAMBIAR ESTADO (habilitar/deshabilitar) - soft delete a través de usuario asociado
+    // CAMBIAR ESTADO (habilitar/deshabilitar) CON TRANSACCIÓN
     public static function cambiarEstadoEstudiante($id, $estado)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             // Primero obtener el idUsuario del estudiante
             $estudiante = self::obtenerEstudiantePorId($id);
             if (!$estudiante || !$estudiante->idUsuario) {
+                $pdo->rollBack();
                 return false;
             }
 
             // Cambiar estado en tabla usuarios
             $sql = "UPDATE usuarios SET estado = :estado WHERE idUsuario = :idUsuario";
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':idUsuario', $estudiante->idUsuario, PDO::PARAM_INT);
             $stmt->bindParam(':estado', $estado);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en cambiarEstadoEstudiante: " . $e->getMessage());
             return false;
         }
     }
 
-    // VERIFICAR SI EXISTE CÓDIGO DE ESTUDIANTE
+    // VERIFICAR SI EXISTE CÓDIGO DE ESTUDIANTE (solo lectura)
     public static function existeCodigoEstudiante($codigoEstudiante, $excluirId = null)
     {
         try {
@@ -373,7 +411,7 @@ class D_Estudiante
         }
     }
 
-    // VERIFICAR SI EXISTE DIP DE ESTUDIANTE
+    // VERIFICAR SI EXISTE DIP DE ESTUDIANTE (solo lectura)
     public static function existeDipEstudiante($dipEstudiante, $excluirId = null)
     {
         try {
@@ -402,8 +440,7 @@ class D_Estudiante
         }
     }
 
-
-    // OBTENER FACULTAD DEL ESTUDIANTE A TRAVÉS DE MATRÍCULA ACTIVA
+    // OBTENER FACULTAD DEL ESTUDIANTE (solo lectura)
     public static function obtenerFacultadEstudiante($idEstudiante)
     {
         try {

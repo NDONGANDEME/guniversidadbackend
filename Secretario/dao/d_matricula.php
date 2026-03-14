@@ -5,7 +5,7 @@ require_once __DIR__ . "/../modelo/m_matriculaasignatura.php";
 
 class D_Matricula
 {
-    // OBTENER TODAS LAS MATRÍCULAS
+    // OBTENER TODAS LAS MATRÍCULAS (solo lectura)
     public static function obtenerMatriculas()
     {
         try {
@@ -49,7 +49,7 @@ class D_Matricula
         }
     }
 
-    // OBTENER MATRÍCULA POR ID
+    // OBTENER MATRÍCULA POR ID (solo lectura)
     public static function obtenerMatriculaPorId($id)
     {
         try {
@@ -74,7 +74,7 @@ class D_Matricula
         }
     }
 
-    // OBTENER MATRÍCULAS POR ESTUDIANTE
+    // OBTENER MATRÍCULAS POR ESTUDIANTE (solo lectura)
     public static function obtenerMatriculasPorEstudiante($idEstudiante)
     {
         try {
@@ -113,7 +113,7 @@ class D_Matricula
         }
     }
 
-    // OBTENER MATRÍCULAS POR PLAN DE ESTUDIO
+    // OBTENER MATRÍCULAS POR PLAN DE ESTUDIO (solo lectura)
     public static function obtenerMatriculasPorPlanEstudio($idPlanEstudio)
     {
         try {
@@ -147,7 +147,7 @@ class D_Matricula
         }
     }
 
-    // OBTENER MATRÍCULAS POR AÑO ACADÉMICO
+    // OBTENER MATRÍCULAS POR AÑO ACADÉMICO (solo lectura)
     public static function obtenerMatriculasPorAnioAcademico($anioAcademico)
     {
         try {
@@ -191,11 +191,13 @@ class D_Matricula
         }
     }
 
-    // INSERTAR MATRÍCULA
+    // INSERTAR MATRÍCULA CON TRANSACCIÓN
     public static function insertarMatricula($datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "INSERT INTO matriculas (
                         idEstudiante, idPlanEstudio, idSemestre, cursoAcademico,
@@ -205,7 +207,7 @@ class D_Matricula
                         :fechaMatricula, :modalidadMatricula, :totalCreditos, :estado
                     )";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':idEstudiante', $datos['idEstudiante'], PDO::PARAM_INT);
             $stmt->bindParam(':idPlanEstudio', $datos['idPlanEstudio'], PDO::PARAM_INT);
             $stmt->bindParam(':idSemestre', $datos['idSemestre'], PDO::PARAM_INT);
@@ -216,21 +218,30 @@ class D_Matricula
             $stmt->bindParam(':estado', $datos['estado']);
             
             if ($stmt->execute()) {
-                return $instanciaConexion->lastInsertId();
+                $id = $pdo->lastInsertId();
+                $pdo->commit();
+                return $id;
+            } else {
+                $pdo->rollBack();
+                return null;
             }
             
-            return null;
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en insertarMatricula: " . $e->getMessage());
             return null;
         }
     }
 
-    // ACTUALIZAR MATRÍCULA
+    // ACTUALIZAR MATRÍCULA CON TRANSACCIÓN
     public static function actualizarMatricula($id, $datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "UPDATE matriculas SET 
                         idPlanEstudio = :idPlanEstudio,
@@ -240,7 +251,7 @@ class D_Matricula
                         estado = :estado
                     WHERE idMatricula = :id";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             $stmt->bindParam(':idPlanEstudio', $datos['idPlanEstudio'], PDO::PARAM_INT);
             $stmt->bindParam(':idSemestre', $datos['idSemestre'], PDO::PARAM_INT);
@@ -248,39 +259,65 @@ class D_Matricula
             $stmt->bindParam(':totalCreditos', $datos['totalCreditos'], PDO::PARAM_INT);
             $stmt->bindParam(':estado', $datos['estado']);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en actualizarMatricula: " . $e->getMessage());
             return false;
         }
     }
 
-    // CAMBIAR ESTADO DE MATRÍCULA
+    // CAMBIAR ESTADO DE MATRÍCULA CON TRANSACCIÓN
     public static function cambiarEstadoMatricula($id, $estado)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "UPDATE matriculas SET estado = :estado WHERE idMatricula = :id";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             $stmt->bindParam(':estado', $estado);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en cambiarEstadoMatricula: " . $e->getMessage());
             return false;
         }
     }
 
-    // ELIMINAR MATRÍCULA (soft delete)
+    // ELIMINAR MATRÍCULA (soft delete) CON TRANSACCIÓN
     public static function eliminarMatricula($id)
     {
         return self::cambiarEstadoMatricula($id, 'anulada');
     }
 
-    // VERIFICAR SI EXISTE MATRÍCULA ACTIVA PARA ESTUDIANTE EN SEMESTRE
+    // VERIFICAR SI EXISTE MATRÍCULA ACTIVA (solo lectura)
     public static function existeMatriculaActiva($idEstudiante, $idSemestre, $cursoAcademico)
     {
         try {

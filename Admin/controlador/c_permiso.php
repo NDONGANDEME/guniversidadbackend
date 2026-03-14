@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . "/../../utilidades/u_verificaciones.php";
-require_once __DIR__ . "/../../utilidades/u_permisos_controlador.php";
+require_once __DIR__ . "/../../utilidades/u_permisos.php";
 require_once __DIR__ . "/../dao/d_permiso.php";
 require_once __DIR__ . "/../modelo/m_permiso.php";
 

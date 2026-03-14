@@ -4,7 +4,7 @@ require_once __DIR__ . "/../modelo/m_estudiante_beca.php";
 
 class D_EstudianteBeca
 {
-    // OBTENER TODOS LOS REGISTROS DE ESTUDIANTES BECADOS
+    // OBTENER TODOS LOS REGISTROS DE ESTUDIANTES BECADOS (solo lectura)
     public static function obtenerEstudiantesBeca()
     {
         try {
@@ -43,7 +43,7 @@ class D_EstudianteBeca
         }
     }
 
-    // OBTENER ESTUDIANTES BECA POR ID
+    // OBTENER ESTUDIANTES BECA POR ID (solo lectura)
     public static function obtenerEstudianteBecaPorId($id)
     {
         try {
@@ -74,7 +74,7 @@ class D_EstudianteBeca
         }
     }
 
-    // OBTENER ESTUDIANTES BECA POR ESTUDIANTE
+    // OBTENER ESTUDIANTES BECA POR ESTUDIANTE (solo lectura)
     public static function obtenerEstudiantesBecaPorEstudiante($idEstudiante)
     {
         try {
@@ -109,11 +109,13 @@ class D_EstudianteBeca
         }
     }
 
-    // INSERTAR ESTUDIANTE BECADO
+    // INSERTAR ESTUDIANTE BECADO CON TRANSACCIÓN
     public static function insertarEstudianteBecado($datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "INSERT INTO estudiante_beca (
                         idEstudiante, idBeca, fechaInicio, fechaFinal, estado, observaciones
@@ -121,7 +123,7 @@ class D_EstudianteBeca
                         :idEstudiante, :idBeca, :fechaInicio, :fechaFinal, :estado, :observaciones
                     )";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':idEstudiante', $datos['idEstudiante'], PDO::PARAM_INT);
             $stmt->bindParam(':idBeca', $datos['idBeca'], PDO::PARAM_INT);
             $stmt->bindParam(':fechaInicio', $datos['fechaInicio']);
@@ -130,21 +132,30 @@ class D_EstudianteBeca
             $stmt->bindParam(':observaciones', $datos['observaciones']);
             
             if ($stmt->execute()) {
-                return $instanciaConexion->lastInsertId();
+                $id = $pdo->lastInsertId();
+                $pdo->commit();
+                return $id;
+            } else {
+                $pdo->rollBack();
+                return null;
             }
             
-            return null;
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en insertarEstudianteBecado: " . $e->getMessage());
             return null;
         }
     }
 
-    // ACTUALIZAR ESTUDIANTE BECADO
+    // ACTUALIZAR ESTUDIANTE BECADO CON TRANSACCIÓN
     public static function actualizarEstudianteBecado($id, $datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "UPDATE estudiante_beca SET 
                         idBeca = :idBeca,
@@ -153,40 +164,66 @@ class D_EstudianteBeca
                         observaciones = :observaciones
                     WHERE idEstudianteBecario = :id";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             $stmt->bindParam(':idBeca', $datos['idBeca'], PDO::PARAM_INT);
             $stmt->bindParam(':fechaInicio', $datos['fechaInicio']);
             $stmt->bindParam(':fechaFinal', $datos['fechaFinal']);
             $stmt->bindParam(':observaciones', $datos['observaciones']);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en actualizarEstudianteBecado: " . $e->getMessage());
             return false;
         }
     }
 
-    // CAMBIAR ESTADO ESTUDIANTE BECADO (habilitar/deshabilitar)
+    // CAMBIAR ESTADO ESTUDIANTE BECADO CON TRANSACCIÓN
     public static function cambiarEstadoEstudianteBecado($id, $estado)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "UPDATE estudiante_beca SET estado = :estado WHERE idEstudianteBecario = :id";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             $stmt->bindParam(':estado', $estado);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en cambiarEstadoEstudianteBecado: " . $e->getMessage());
             return false;
         }
     }
 
-    // VERIFICAR SI EXISTE ASIGNACIÓN DE BECA ACTIVA PARA ESTUDIANTE
+    // VERIFICAR SI EXISTE ASIGNACIÓN DE BECA ACTIVA PARA ESTUDIANTE (solo lectura)
     public static function existeBecaActivaParaEstudiante($idEstudiante, $excluirId = null)
     {
         try {

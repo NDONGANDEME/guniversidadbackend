@@ -4,7 +4,7 @@ require_once __DIR__ . "/../modelo/m_horario.php";
 
 class D_Horario
 {
-    // OBTENER TODOS LOS HORARIOS
+    // OBTENER TODOS LOS HORARIOS (solo lectura)
     public static function obtenerHorarios()
     {
         try {
@@ -30,7 +30,7 @@ class D_Horario
         }
     }
 
-    // OBTENER HORARIO POR ID
+    // OBTENER HORARIO POR ID (solo lectura)
     public static function obtenerHorarioPorId($id)
     {
         try {
@@ -55,65 +55,102 @@ class D_Horario
         }
     }
 
-    // INSERTAR HORARIO
+    // INSERTAR HORARIO CON TRANSACCIÓN
     public static function insertarHorario($datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "INSERT INTO horario (nombre) VALUES (:nombre)";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':nombre', $datos['nombre']);
             
             if ($stmt->execute()) {
-                return $instanciaConexion->lastInsertId();
+                $id = $pdo->lastInsertId();
+                $pdo->commit();
+                return $id;
+            } else {
+                $pdo->rollBack();
+                return null;
             }
             
-            return null;
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en insertarHorario: " . $e->getMessage());
             return null;
         }
     }
 
-    // ACTUALIZAR HORARIO
+    // ACTUALIZAR HORARIO CON TRANSACCIÓN
     public static function actualizarHorario($id, $datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "UPDATE horario SET nombre = :nombre WHERE idHorario = :id";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             $stmt->bindParam(':nombre', $datos['nombre']);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en actualizarHorario: " . $e->getMessage());
             return false;
         }
     }
 
-    // ELIMINAR HORARIO
+    // ELIMINAR HORARIO CON TRANSACCIÓN
     public static function eliminarHorario($id)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "DELETE FROM horario WHERE idHorario = :id";
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en eliminarHorario: " . $e->getMessage());
             return false;
         }
     }
 
-    // VERIFICAR SI EXISTE HORARIO POR NOMBRE
+    // VERIFICAR SI EXISTE HORARIO POR NOMBRE (solo lectura)
     public static function existeHorarioPorNombre($nombre, $excluirId = null)
     {
         try {

@@ -4,7 +4,7 @@ require_once __DIR__ . "/../modelo/m_matriculaasignatura.php";
 
 class D_MatriculaAsignatura
 {
-    // OBTENER TODAS LAS MATRÍCULAS DE ASIGNATURAS
+    // OBTENER TODAS LAS MATRÍCULAS DE ASIGNATURAS (solo lectura)
     public static function obtenerMatriculasAsignaturas()
     {
         try {
@@ -48,7 +48,7 @@ class D_MatriculaAsignatura
         }
     }
 
-    // OBTENER MATRÍCULAS DE ASIGNATURAS POR MATRÍCULA
+    // OBTENER MATRÍCULAS DE ASIGNATURAS POR MATRÍCULA (solo lectura)
     public static function obtenerMatriculasAsignaturasPorMatricula($idMatricula)
     {
         try {
@@ -85,7 +85,7 @@ class D_MatriculaAsignatura
         }
     }
 
-    // OBTENER MATRÍCULA DE ASIGNATURA POR ID
+    // OBTENER MATRÍCULA DE ASIGNATURA POR ID (solo lectura)
     public static function obtenerMatriculaAsignaturaPorId($id)
     {
         try {
@@ -110,11 +110,13 @@ class D_MatriculaAsignatura
         }
     }
 
-    // INSERTAR MATRÍCULA DE ASIGNATURA
+    // INSERTAR MATRÍCULA DE ASIGNATURA CON TRANSACCIÓN
     public static function insertarMatriculaAsignatura($datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "INSERT INTO matricula_asignatura (
                         idMatricula, idPlanCursoAsignatura, convocatoria, notaFinal, estado, numeroVecesMatriculado
@@ -122,7 +124,7 @@ class D_MatriculaAsignatura
                         :idMatricula, :idPlanCursoAsignatura, :convocatoria, :notaFinal, :estado, :numeroVecesMatriculado
                     )";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':idMatricula', $datos['idMatricula'], PDO::PARAM_INT);
             $stmt->bindParam(':idPlanCursoAsignatura', $datos['idPlanCursoAsignatura'], PDO::PARAM_INT);
             $stmt->bindParam(':convocatoria', $datos['convocatoria'], PDO::PARAM_INT);
@@ -131,21 +133,30 @@ class D_MatriculaAsignatura
             $stmt->bindParam(':numeroVecesMatriculado', $datos['numeroVecesMatriculado'], PDO::PARAM_INT);
             
             if ($stmt->execute()) {
-                return $instanciaConexion->lastInsertId();
+                $id = $pdo->lastInsertId();
+                $pdo->commit();
+                return $id;
+            } else {
+                $pdo->rollBack();
+                return null;
             }
             
-            return null;
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en insertarMatriculaAsignatura: " . $e->getMessage());
             return null;
         }
     }
 
-    // ACTUALIZAR MATRÍCULA DE ASIGNATURA
+    // ACTUALIZAR MATRÍCULA DE ASIGNATURA CON TRANSACCIÓN
     public static function actualizarMatriculaAsignatura($id, $datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "UPDATE matricula_asignatura SET 
                         convocatoria = :convocatoria,
@@ -154,25 +165,39 @@ class D_MatriculaAsignatura
                         numeroVecesMatriculado = :numeroVecesMatriculado
                     WHERE idMatriculaAsignatura = :id";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             $stmt->bindParam(':convocatoria', $datos['convocatoria'], PDO::PARAM_INT);
             $stmt->bindParam(':notaFinal', $datos['notaFinal']);
             $stmt->bindParam(':estado', $datos['estado']);
             $stmt->bindParam(':numeroVecesMatriculado', $datos['numeroVecesMatriculado'], PDO::PARAM_INT);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en actualizarMatriculaAsignatura: " . $e->getMessage());
             return false;
         }
     }
 
-    // REGISTRAR NOTA
+    // REGISTRAR NOTA CON TRANSACCIÓN
     public static function registrarNota($id, $nota)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "UPDATE matricula_asignatura SET 
                         notaFinal = :notaFinal,
@@ -182,37 +207,63 @@ class D_MatriculaAsignatura
                         END
                     WHERE idMatriculaAsignatura = :id";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             $stmt->bindParam(':notaFinal', $nota);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en registrarNota: " . $e->getMessage());
             return false;
         }
     }
 
-    // CAMBIAR ESTADO
+    // CAMBIAR ESTADO CON TRANSACCIÓN
     public static function cambiarEstado($id, $estado)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "UPDATE matricula_asignatura SET estado = :estado WHERE idMatriculaAsignatura = :id";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             $stmt->bindParam(':estado', $estado);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en cambiarEstado: " . $e->getMessage());
             return false;
         }
     }
 
-    // VERIFICAR SI YA ESTÁ MATRICULADA LA ASIGNATURA
+    // VERIFICAR SI YA ESTÁ MATRICULADA LA ASIGNATURA (solo lectura)
     public static function existeAsignaturaMatriculada($idMatricula, $idPlanCursoAsignatura)
     {
         try {

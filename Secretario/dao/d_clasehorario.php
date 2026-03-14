@@ -4,7 +4,7 @@ require_once __DIR__ . "/../modelo/m_clase_horario.php";
 
 class D_ClaseHorario
 {
-    // OBTENER TODOS LOS CLASE HORARIOS
+    // OBTENER TODOS LOS CLASE HORARIOS (solo lectura)
     public static function obtenerClaseHorarios()
     {
         try {
@@ -36,7 +36,7 @@ class D_ClaseHorario
         }
     }
 
-    // OBTENER HORARIOS POR CLASE
+    // OBTENER HORARIOS POR CLASE (solo lectura)
     public static function obtenerHorariosPorClase($idClase)
     {
         try {
@@ -70,7 +70,7 @@ class D_ClaseHorario
         }
     }
 
-    // OBTENER CLASE HORARIO POR ID
+    // OBTENER CLASE HORARIO POR ID (solo lectura)
     public static function obtenerClaseHorarioPorId($id)
     {
         try {
@@ -102,86 +102,137 @@ class D_ClaseHorario
         }
     }
 
-    // INSERTAR CLASE HORARIO
+    // INSERTAR CLASE HORARIO CON TRANSACCIÓN
     public static function insertarClaseHorario($datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "INSERT INTO clase_horario (idClase, idHorario) 
                     VALUES (:idClase, :idHorario)";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':idClase', $datos['idClase'], PDO::PARAM_INT);
             $stmt->bindParam(':idHorario', $datos['idHorario'], PDO::PARAM_INT);
             
             if ($stmt->execute()) {
-                return $instanciaConexion->lastInsertId();
+                $id = $pdo->lastInsertId();
+                $pdo->commit();
+                return $id;
+            } else {
+                $pdo->rollBack();
+                return null;
             }
             
-            return null;
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en insertarClaseHorario: " . $e->getMessage());
             return null;
         }
     }
 
-    // ACTUALIZAR CLASE HORARIO
+    // ACTUALIZAR CLASE HORARIO CON TRANSACCIÓN
     public static function actualizarClaseHorario($id, $datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "UPDATE clase_horario SET 
                         idHorario = :idHorario
                     WHERE idClaseHorario = :id";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             $stmt->bindParam(':idHorario', $datos['idHorario'], PDO::PARAM_INT);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en actualizarClaseHorario: " . $e->getMessage());
             return false;
         }
     }
 
-    // ELIMINAR CLASE HORARIO
+    // ELIMINAR CLASE HORARIO CON TRANSACCIÓN
     public static function eliminarClaseHorario($id)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "DELETE FROM clase_horario WHERE idClaseHorario = :id";
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en eliminarClaseHorario: " . $e->getMessage());
             return false;
         }
     }
 
-    // ELIMINAR HORARIOS POR CLASE
+    // ELIMINAR HORARIOS POR CLASE CON TRANSACCIÓN
     public static function eliminarHorariosPorClase($idClase)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "DELETE FROM clase_horario WHERE idClase = :idClase";
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':idClase', $idClase, PDO::PARAM_INT);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en eliminarHorariosPorClase: " . $e->getMessage());
             return false;
         }
     }
 
-    // VERIFICAR SI EXISTE ASIGNACIÓN
+    // VERIFICAR SI EXISTE ASIGNACIÓN (solo lectura)
     public static function existeAsignacion($idClase, $idHorario, $excluirId = null)
     {
         try {
