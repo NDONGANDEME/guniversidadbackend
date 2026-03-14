@@ -51,39 +51,34 @@ class SesionController
         }
     }
 
-    // Iniciar sesión con correo y contraseña
+    /**
+     * Iniciar sesión con nombre/correo y contraseña
+     * TODO EN resultado (usuario + rol + permisos + datos específicos)
+     */
     public static function iniciarSesion($parametros)
     {
-        //======================NUEVO CAMBIO APLICADO=================================
         // Validar parámetros obligatorios
-        if (strpos($parametros['nombreOCorreo'], '@')) {
-            if (!VerificacionesUtil::validarSesion('verificarCredenciales', $parametros['nombreOCorreo'])) {
-                echo json_encode([
-                    'estado' => 400,
-                    'exito' => false,
-                    'mensaje' => 'Correo y contraseña son obligatorios',
-                    'resultado' => null
-                ]);
-                return;
-            }
+        if (!isset($parametros['nombreOCorreo']) || !isset($parametros['contraseña'])) {
+            echo json_encode([
+                'estado' => 400,
+                'exito' => false,
+                'mensaje' => 'Correo/Usuario y contraseña son obligatorios',
+                'resultado' => null
+            ]);
+            return;
         }
 
         $correoONombre = LimpiarDatos::limpiarParametro($parametros['nombreOCorreo']);
         $contrasena = $parametros['contraseña'];
 
-        // Buscar usuario por nombre de usuario (puede ser correo o nombreUsuario)
-        $usuarioModel = D_Sesion::obtenerUsuarioPorNombreUsuario($correoONombre);
-        
-        // Si no encuentra por nombre, buscar por correo
-        if (!$usuarioModel && filter_var($correoONombre, FILTER_VALIDATE_EMAIL)) {
-            $usuarioModel = D_Sesion::obtenerUsuarioPorCorreo($correoONombre);
-        }
+        // Buscar usuario completo con rol y permisos (directos por usuario)
+        $usuarioModel = D_Sesion::obtenerUsuarioCompleto($correoONombre);
 
         if (!$usuarioModel) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
-                'mensaje' => 'Credenciales invalidas[correo]',
+                'mensaje' => 'Credenciales inválidas',
                 'resultado' => null
             ]);
             return;
@@ -105,14 +100,17 @@ class SesionController
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
-                'mensaje' => 'Credenciales invalidas [Contraseña]',
+                'mensaje' => 'Credenciales inválidas',
                 'resultado' => null
             ]);
             return;
         }
 
-        // Actualizar último acceso
-        D_Sesion::actualizarUltimoAcceso($usuarioModel->idUsuario);
+        // Actualizar último acceso (con transacción)
+        $actualizado = D_Sesion::actualizarUltimoAcceso($usuarioModel->idUsuario);
+        if (!$actualizado) {
+            error_log("No se pudo actualizar el último acceso del usuario: " . $usuarioModel->idUsuario);
+        }
 
         // Iniciar sesión en PHP
         if (session_status() === PHP_SESSION_NONE) {
@@ -122,34 +120,44 @@ class SesionController
         $_SESSION['usuario_id'] = $usuarioModel->idUsuario;
         $_SESSION['usuario_nombre'] = $usuarioModel->nombreUsuario;
         $_SESSION['usuario_correo'] = $usuarioModel->correo;
-        $_SESSION['usuario_rol'] = $usuarioModel->rol;
+        $_SESSION['usuario_rol'] = $usuarioModel->nombreRol;
+        $_SESSION['usuario_idRol'] = $usuarioModel->idRol;
         $_SESSION['usuario_foto'] = $usuarioModel->foto;
+        $_SESSION['usuario_permisos'] = $usuarioModel->permisos;
         $_SESSION['ultimo_acceso'] = time();
 
-        // Preparar resultado base con datos del usuario
+        // Preparar resultado UNIFICADO
         $resultado = $usuarioModel->convertirAArray();
         
-        // Obtener datos específicos según el rol
-        $datosRol = self::obtenerDatosPorRol($usuarioModel->idUsuario, $usuarioModel->rol);
+        // AÑADIR sesion_id al mismo objeto resultado
+        $resultado['sesion_id'] = session_id();
+        
+        // Obtener datos específicos según el rol y añadirlos al mismo objeto
+        $datosRol = self::obtenerDatosPorRol($usuarioModel->idUsuario, $usuarioModel->nombreRol);
         if (!empty($datosRol)) {
-            $resultado['datos_rol'] = $datosRol;
+            // Añadir cada dato del rol al objeto resultado principal
+            foreach ($datosRol as $key => $value) {
+                $resultado[$key] = $value;
+            }
         }
 
+        // ENVIAR RESPUESTA AL FRONTEND - TODO DENTRO DE resultado
         echo json_encode([
             'estado' => 'exito',
             'exito' => true,
-            'mensaje' => 'Sesion iniciada correctamente',
-            'resultado' => $resultado,
-            'sesion_id' => session_id()
+            'mensaje' => 'Sesión iniciada correctamente',
+            'resultado' => $resultado  // ÚNICO OBJETO CON TODOS LOS DATOS
         ]);
     }
 
-    // Obtener datos específicos según el rol del usuario
-    private static function obtenerDatosPorRol($idUsuario, $rol)
+    /**
+     * Obtener datos específicos según el rol del usuario
+     */
+    private static function obtenerDatosPorRol($idUsuario, $nombreRol)
     {
         $datos = [];
         
-        switch ($rol) {
+        switch ($nombreRol) {
             case 'Estudiante':
                 $estudiante = D_Estudiante::obtenerEstudiantePorIdUsuario($idUsuario);
                 if ($estudiante) {
@@ -160,8 +168,6 @@ class SesionController
                     if ($facultad) {
                         $datos['idFacultad'] = $facultad['idFacultad'];
                         $datos['nombreFacultad'] = $facultad['nombreFacultad'];
-                        $datos['idFacultad'] = $facultad['idFacultad'];
-                        $datos['idFacultad'] = $facultad['nombreFacultad'];
                     }
                 }
                 break;
@@ -177,7 +183,6 @@ class SesionController
                         if ($facultad) {
                             $datos['idFacultad'] = $facultad['idFacultad'];
                             $datos['nombreFacultad'] = $facultad['nombreFacultad'];
-                            
                         }
                     }
                 }
@@ -193,8 +198,6 @@ class SesionController
                         $facultad = D_Facultad::obtenerFacultadPorId($datos['idFacultad']);
                         if ($facultad) {
                             $datos['nombreFacultad'] = $facultad['nombreFacultad'];
-                            $datos['idFacultad'] = $facultad['idFacultad'];
-                            
                         }
                     }
                 }
@@ -212,7 +215,9 @@ class SesionController
         return $datos;
     }
 
-    // Cerrar sesión
+    /**
+     * Cerrar sesión
+     */
     public static function cerrarSesion($parametros)
     {
         if (session_status() === PHP_SESSION_NONE) {
@@ -240,7 +245,9 @@ class SesionController
         ]);
     }
 
-    // Validar si hay una sesión activa
+    /**
+     * Validar si hay una sesión activa - TODO EN resultado
+     */
     public static function validarSesionActiva($parametros)
     {
         if (session_status() === PHP_SESSION_NONE) {
@@ -248,17 +255,22 @@ class SesionController
         }
 
         if (isset($_SESSION['usuario_id']) && isset($_SESSION['usuario_correo'])) {
+            // Crear objeto resultado UNIFICADO
+            $resultado = [
+                'idUsuario' => $_SESSION['usuario_id'],
+                'nombreUsuario' => $_SESSION['usuario_nombre'],
+                'correo' => $_SESSION['usuario_correo'],
+                'rol' => $_SESSION['usuario_rol'],
+                'idRol' => $_SESSION['usuario_idRol'] ?? null,
+                'foto' => $_SESSION['usuario_foto'] ?? null,
+                'permisos' => $_SESSION['usuario_permisos'] ?? []
+            ];
+            
             echo json_encode([
                 'estado' => 200,
                 'exito' => true,
                 'mensaje' => 'Sesión activa',
-                'resultado' => [
-                    'id' => $_SESSION['usuario_id'],
-                    'nombre' => $_SESSION['usuario_nombre'],
-                    'correo' => $_SESSION['usuario_correo'],
-                    'rol' => $_SESSION['usuario_rol'],
-                    'foto' => $_SESSION['usuario_foto'] ?? null
-                ]
+                'resultado' => $resultado  // ÚNICO OBJETO CON TODOS LOS DATOS
             ]);
         } else {
             echo json_encode([
@@ -270,7 +282,9 @@ class SesionController
         }
     }
 
-    // Obtener pregunta de recuperación por correo
+    /**
+     * Obtener pregunta de recuperación por correo
+     */
     public static function obtenerPreguntaRecuperacion($parametros)
     {
         $correo = $parametros['correo'] ?? '';
@@ -310,18 +324,22 @@ class SesionController
             return;
         }
 
+        $resultado = [
+            'id' => $usuarioModel->idUsuario,
+            'pregunta' => $usuarioModel->preguntaRecuperacion
+        ];
+
         echo json_encode([
             'estado' => 200,
             'exito' => true,
             'mensaje' => 'Pregunta de recuperación obtenida',
-            'resultado' => [
-                'id' => $usuarioModel->idUsuario,
-                'pregunta' => $usuarioModel->preguntaRecuperacion
-            ]
+            'resultado' => $resultado
         ]);
     }
 
-    // Verificar respuesta de recuperación
+    /**
+     * Verificar respuesta de recuperación
+     */
     public static function verificarRespuestaRecuperacion($parametros)
     {
         $id = $parametros['id'] ?? null;
@@ -384,18 +402,22 @@ class SesionController
         $_SESSION['reset_user_id'] = $id;
         $_SESSION['reset_expira'] = time() + 300; // 5 minutos
 
+        $resultado = [
+            'token' => $token,
+            'expira' => 300
+        ];
+
         echo json_encode([
             'estado' => 200,
             'exito' => true,
             'mensaje' => 'Respuesta correcta',
-            'resultado' => [
-                'token' => $token,
-                'expira' => 300
-            ]
+            'resultado' => $resultado
         ]);
     }
 
-    // Cambiar contraseña después de recuperación
+    /**
+     * Cambiar contraseña después de recuperación
+     */
     public static function cambiarContrasenaRecuperacion($parametros)
     {
         $id = $parametros['id'] ?? null;
@@ -464,6 +486,7 @@ class SesionController
         // Encriptar nueva contraseña
         $contrasenaHash = password_hash($nuevaContrasena, PASSWORD_DEFAULT);
 
+        // Actualizar contraseña (con transacción)
         $actualizado = D_Sesion::actualizarContrasena($id, $contrasenaHash);
 
         if ($actualizado) {
@@ -488,7 +511,9 @@ class SesionController
         }
     }
 
-    // Obtener usuario por correo
+    /**
+     * Obtener usuario por correo
+     */
     public static function obtenerUsuarioPorCorreo($parametros)
     {
         $correo = $parametros['correo'] ?? '';
@@ -507,11 +532,13 @@ class SesionController
         $usuarioModel = D_Sesion::obtenerUsuarioPorCorreo($correo);
 
         if ($usuarioModel) {
+            $resultado = $usuarioModel->convertirAArray();
+            
             echo json_encode([
                 'estado' => 200,
                 'exito' => true,
                 'mensaje' => 'Usuario encontrado',
-                'resultado' => $usuarioModel->convertirAArray()
+                'resultado' => $resultado
             ]);
         } else {
             echo json_encode([

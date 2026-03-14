@@ -4,7 +4,7 @@ require_once __DIR__ . "/../modelo/m_aula.php";
 
 class D_Aula
 {
-    // OBTENER TODAS LAS AULAS
+    // OBTENER TODAS LAS AULAS (solo lectura)
     public static function obtenerAulas()
     {
         try {
@@ -36,7 +36,7 @@ class D_Aula
         }
     }
 
-    // OBTENER AULA POR ID
+    // OBTENER AULA POR ID (solo lectura)
     public static function obtenerAulaPorId($id)
     {
         try {
@@ -61,7 +61,7 @@ class D_Aula
         }
     }
 
-    // OBTENER AULAS POR FACULTAD
+    // OBTENER AULAS POR FACULTAD (solo lectura)
     public static function obtenerAulasPorFacultad($idFacultad)
     {
         try {
@@ -88,37 +88,48 @@ class D_Aula
         }
     }
 
-    // INSERTAR AULA
+    // INSERTAR AULA CON TRANSACCIÓN
     public static function insertarAula($datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "INSERT INTO aulas (nombreAula, capacidad, idFacultad, estado) 
                     VALUES (:nombreAula, :capacidad, :idFacultad, :estado)";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':nombreAula', $datos['nombreAula']);
             $stmt->bindParam(':capacidad', $datos['capacidad'], PDO::PARAM_INT);
             $stmt->bindParam(':idFacultad', $datos['idFacultad'], PDO::PARAM_INT);
             $stmt->bindParam(':estado', $datos['estado']);
             
             if ($stmt->execute()) {
-                return $instanciaConexion->lastInsertId();
+                $id = $pdo->lastInsertId();
+                $pdo->commit();
+                return $id;
+            } else {
+                $pdo->rollBack();
+                return null;
             }
             
-            return null;
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en insertarAula: " . $e->getMessage());
             return null;
         }
     }
 
-    // ACTUALIZAR AULA
+    // ACTUALIZAR AULA CON TRANSACCIÓN
     public static function actualizarAula($datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "UPDATE aulas SET 
                         nombreAula = :nombreAula,
@@ -126,20 +137,32 @@ class D_Aula
                         idFacultad = :idFacultad
                     WHERE idAula = :id";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $datos['id'], PDO::PARAM_INT);
             $stmt->bindParam(':nombreAula', $datos['nombreAula']);
             $stmt->bindParam(':capacidad', $datos['capacidad'], PDO::PARAM_INT);
             $stmt->bindParam(':idFacultad', $datos['idFacultad'], PDO::PARAM_INT);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en actualizarAula: " . $e->getMessage());
             return false;
         }
     }
 
-    // VERIFICAR SI EXISTE AULA
+    // VERIFICAR SI EXISTE AULA (solo lectura)
     public static function existeAula($nombreAula, $idFacultad, $excluirId = null)
     {
         try {

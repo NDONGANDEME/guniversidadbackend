@@ -4,7 +4,7 @@ require_once __DIR__ . "/../modelo/m_asignatura.php";
 
 class D_Asignatura
 {
-    // OBTENER TODAS LAS ASIGNATURAS
+    // OBTENER TODAS LAS ASIGNATURAS (solo lectura)
     public static function obtenerAsignaturas()
     {
         try {
@@ -33,7 +33,7 @@ class D_Asignatura
         }
     }
 
-    // OBTENER ASIGNATURA POR ID
+    // OBTENER ASIGNATURA POR ID (solo lectura)
     public static function obtenerAsignaturaPorId($id)
     {
         try {
@@ -58,7 +58,7 @@ class D_Asignatura
         }
     }
 
-    // OBTENER ASIGNATURAS POR FACULTAD (a través de plan_curso_asignatura)
+    // OBTENER ASIGNATURAS POR FACULTAD (solo lectura)
     public static function obtenerAsignaturasPorFacultad($idFacultad)
     {
         try {
@@ -86,37 +86,48 @@ class D_Asignatura
         }
     }
 
-    // INSERTAR ASIGNATURA
+    // INSERTAR ASIGNATURA CON TRANSACCIÓN
     public static function insertarAsignatura($datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "INSERT INTO asignaturas (codigoAsignatura, nombreAsignatura, descripcion, idFacultad) 
                     VALUES (:codigoAsignatura, :nombreAsignatura, :descripcion, :idFacultad)";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':codigoAsignatura', $datos['codigoAsignatura']);
             $stmt->bindParam(':nombreAsignatura', $datos['nombreAsignatura']);
             $stmt->bindParam(':descripcion', $datos['descripcion']);
             $stmt->bindParam(':idFacultad', $datos['idFacultad']);
             
             if ($stmt->execute()) {
-                return $instanciaConexion->lastInsertId();
+                $id = $pdo->lastInsertId();
+                $pdo->commit();
+                return $id;
+            } else {
+                $pdo->rollBack();
+                return null;
             }
             
-            return null;
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en insertarAsignatura: " . $e->getMessage());
             return null;
         }
     }
 
-    // ACTUALIZAR ASIGNATURA
+    // ACTUALIZAR ASIGNATURA CON TRANSACCIÓN
     public static function actualizarAsignatura($datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "UPDATE asignaturas SET 
                         codigoAsignatura = :codigoAsignatura,
@@ -124,20 +135,32 @@ class D_Asignatura
                         descripcion = :descripcion
                     WHERE idAsignatura = :id";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $datos['id'], PDO::PARAM_INT);
             $stmt->bindParam(':codigoAsignatura', $datos['codigoAsignatura']);
             $stmt->bindParam(':nombreAsignatura', $datos['nombreAsignatura']);
             $stmt->bindParam(':descripcion', $datos['descripcion']);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en actualizarAsignatura: " . $e->getMessage());
             return false;
         }
     }
 
-    // VERIFICAR SI EXISTE ASIGNATURA POR CÓDIGO
+    // VERIFICAR SI EXISTE ASIGNATURA POR CÓDIGO (solo lectura)
     public static function existeAsignaturaPorCodigo($codigoAsignatura, $excluirId = null)
     {
         try {
@@ -166,7 +189,7 @@ class D_Asignatura
         }
     }
 
-    // VERIFICAR SI EXISTE ASIGNATURA POR NOMBRE
+    // VERIFICAR SI EXISTE ASIGNATURA POR NOMBRE (solo lectura)
     public static function existeAsignaturaPorNombre($nombreAsignatura, $excluirId = null)
     {
         try {

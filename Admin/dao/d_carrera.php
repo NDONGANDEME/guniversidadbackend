@@ -4,7 +4,7 @@ require_once __DIR__ . "/../modelo/m_carrera.php";
 
 class D_Carrera
 {
-    // OBTENER TODAS LAS CARRERAS
+    // OBTENER TODAS LAS CARRERAS (solo lectura)
     public static function obtenerCarreras()
     {
         try {
@@ -36,7 +36,7 @@ class D_Carrera
         }
     }
 
-    // OBTENER CARRERA POR ID
+    // OBTENER CARRERA POR ID (solo lectura)
     public static function obtenerCarreraPorId($id)
     {
         try {
@@ -61,7 +61,7 @@ class D_Carrera
         }
     }
 
-    // OBTENER CARRERAS POR DEPARTAMENTO
+    // OBTENER CARRERAS POR DEPARTAMENTO (solo lectura)
     public static function obtenerCarrerasPorDepartamento($idDepartamento)
     {
         try {
@@ -88,36 +88,47 @@ class D_Carrera
         }
     }
 
-    // INSERTAR CARRERA
+    // INSERTAR CARRERA CON TRANSACCIÓN
     public static function insertarCarrera($datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "INSERT INTO carrera (nombreCarrera, idDepartamento, estado) 
                     VALUES (:nombreCarrera, :idDepartamento, :estado)";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':nombreCarrera', $datos['nombreCarrera']);
             $stmt->bindParam(':idDepartamento', $datos['idDepartamento'], PDO::PARAM_INT);
             $stmt->bindParam(':estado', $datos['estado']);
             
             if ($stmt->execute()) {
-                return $instanciaConexion->lastInsertId();
+                $id = $pdo->lastInsertId();
+                $pdo->commit();
+                return $id;
+            } else {
+                $pdo->rollBack();
+                return null;
             }
             
-            return null;
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en insertarCarrera: " . $e->getMessage());
             return null;
         }
     }
 
-    // ACTUALIZAR CARRERA
+    // ACTUALIZAR CARRERA CON TRANSACCIÓN
     public static function actualizarCarrera($datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "UPDATE carrera SET 
                         nombreCarrera = :nombreCarrera,
@@ -125,20 +136,32 @@ class D_Carrera
                         estado = :estado
                     WHERE idCarrera = :id";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $datos['idCarrera'], PDO::PARAM_INT);
             $stmt->bindParam(':nombreCarrera', $datos['nombreCarrera']);
             $stmt->bindParam(':idDepartamento', $datos['idDepartamento'], PDO::PARAM_INT);
             $stmt->bindParam(':estado', $datos['estado']);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en actualizarCarrera: " . $e->getMessage());
             return false;
         }
     }
 
-    // VERIFICAR SI EXISTE CARRERA
+    // VERIFICAR SI EXISTE CARRERA (solo lectura)
     public static function existeCarrera($nombreCarrera, $excluirId = null)
     {
         try {

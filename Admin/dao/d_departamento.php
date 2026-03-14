@@ -4,7 +4,7 @@ require_once __DIR__ . "/../modelo/m_departamento.php";
 
 class D_Departamento
 {
-    // OBTENER TODOS LOS DEPARTAMENTOS
+    // OBTENER TODOS LOS DEPARTAMENTOS (solo lectura)
     public static function obtenerDepartamentos()
     {
         try {
@@ -18,18 +18,6 @@ class D_Departamento
             $stmt->execute();
 
             $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            /*$departamentos = [];
-            
-            foreach ($resultados as $fila) {
-                $model = new DepartamentoModel();
-                $model->hidratarDesdeArray($fila);
-                // Añadir nombre de facultad si viene en la consulta
-                /*if (isset($fila['nombreFacultad'])) {
-                    $model->nombreFacultad = $fila['nombreFacultad'];
-                }*
-                $departamentos[] = $model;
-            }*/
-
             return $resultados;
         } catch (PDOException $e) {
             error_log("Error en obtenerDepartamentos: " . $e->getMessage());
@@ -37,7 +25,7 @@ class D_Departamento
         }
     }
 
-    // OBTENER DEPARTAMENTO POR ID
+    // OBTENER DEPARTAMENTO POR ID (solo lectura)
     public static function obtenerDepartamentoPorId($id)
     {
         try {
@@ -62,7 +50,7 @@ class D_Departamento
         }
     }
 
-    // OBTENER DEPARTAMENTOS POR FACULTAD
+    // OBTENER DEPARTAMENTOS POR FACULTAD (solo lectura)
     public static function obtenerDepartamentosPorFacultad($idFacultad)
     {
         try {
@@ -89,54 +77,77 @@ class D_Departamento
         }
     }
 
-    // INSERTAR DEPARTAMENTO
+    // INSERTAR DEPARTAMENTO CON TRANSACCIÓN
     public static function insertarDepartamento($datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "INSERT INTO departamento (nombreDepartamento, idFacultad) 
                     VALUES (:nombreDepartamento, :idFacultad)";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':nombreDepartamento', $datos['nombreDepartamento']);
             $stmt->bindParam(':idFacultad', $datos['idFacultad'], PDO::PARAM_INT);
             
             if ($stmt->execute()) {
-                return $instanciaConexion->lastInsertId();
+                $id = $pdo->lastInsertId();
+                $pdo->commit();
+                return $id;
+            } else {
+                $pdo->rollBack();
+                return null;
             }
             
-            return null;
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en insertarDepartamento: " . $e->getMessage());
             return null;
         }
     }
 
-    // ACTUALIZAR DEPARTAMENTO
+    // ACTUALIZAR DEPARTAMENTO CON TRANSACCIÓN
     public static function actualizarDepartamento($datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "UPDATE departamento SET 
                         nombreDepartamento = :nombreDepartamento,
                         idFacultad = :idFacultad
                     WHERE idDepartamento = :id";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $datos['id'], PDO::PARAM_INT);
             $stmt->bindParam(':nombreDepartamento', $datos['nombreDepartamento']);
             $stmt->bindParam(':idFacultad', $datos['idFacultad'], PDO::PARAM_INT);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en actualizarDepartamento: " . $e->getMessage());
             return false;
         }
     }
 
-    // VERIFICAR SI EXISTE DEPARTAMENTO
+    // VERIFICAR SI EXISTE DEPARTAMENTO (solo lectura)
     public static function existeDepartamento($nombreDepartamento, $excluirId = null)
     {
         try {

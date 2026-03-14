@@ -4,7 +4,7 @@ require_once __DIR__ . "/../modelo/m_facultad.php";
 
 class D_Facultad
 {
-    // OBTENER TODAS LAS FACULTADES
+    // OBTENER TODAS LAS FACULTADES (solo lectura)
     public static function obtenerFacultades()
     {
         try {
@@ -30,7 +30,7 @@ class D_Facultad
         }
     }
 
-    // OBTENER FACULTAD POR ID
+    // OBTENER FACULTAD POR ID (solo lectura)
     public static function obtenerFacultadPorId($id)
     {
         try {
@@ -55,8 +55,7 @@ class D_Facultad
         }
     }
 
-    // ========== NUEVA FUNCIÓN ==========
-    // OBTENER FACULTAD POR DEPARTAMENTO
+    // OBTENER FACULTAD POR DEPARTAMENTO (solo lectura)
     public static function obtenerFacultadPorDepartamento($idDepartamento)
     {
         try {
@@ -85,39 +84,49 @@ class D_Facultad
             return null;
         }
     }
-    // ===================================
 
-    // INSERTAR FACULTAD
+    // INSERTAR FACULTAD CON TRANSACCIÓN
     public static function insertarFacultad($datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "INSERT INTO facultad (nombreFacultad, direccionFacultad, correo, telefono) 
                     VALUES (:nombreFacultad, :direccionFacultad, :correo, :telefono)";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':nombreFacultad', $datos['nombreFacultad']);
             $stmt->bindParam(':direccionFacultad', $datos['direccionFacultad']);
             $stmt->bindParam(':correo', $datos['correo']);
             $stmt->bindParam(':telefono', $datos['telefono']);
             
             if ($stmt->execute()) {
-                return $instanciaConexion->lastInsertId();
+                $id = $pdo->lastInsertId();
+                $pdo->commit();
+                return $id;
+            } else {
+                $pdo->rollBack();
+                return null;
             }
             
-            return null;
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en insertarFacultad: " . $e->getMessage());
             return null;
         }
     }
 
-    // ACTUALIZAR FACULTAD
+    // ACTUALIZAR FACULTAD CON TRANSACCIÓN
     public static function actualizarFacultad($id, $nombre, $direccion, $correo, $telefono)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "UPDATE facultad SET 
                         nombreFacultad = :nombreFacultad,
@@ -126,38 +135,64 @@ class D_Facultad
                         telefono = :telefono
                     WHERE idFacultad = :id";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             $stmt->bindParam(':nombreFacultad', $nombre);
             $stmt->bindParam(':direccionFacultad', $direccion);
             $stmt->bindParam(':correo', $correo);
             $stmt->bindParam(':telefono', $telefono);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en actualizarFacultad: " . $e->getMessage());
             return false;
         }
     }
 
-    // ELIMINAR FACULTAD (físicamente ya que no tiene campo estado)
+    // ELIMINAR FACULTAD CON TRANSACCIÓN
     public static function eliminarFacultad($id)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "DELETE FROM facultad WHERE idFacultad = :id";
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en eliminarFacultad: " . $e->getMessage());
             return false;
         }
     }
 
-    // VERIFICAR SI EXISTE NOMBRE DE FACULTAD
+    // VERIFICAR SI EXISTE NOMBRE DE FACULTAD (solo lectura)
     public static function existeNombreFacultad($nombreFacultad, $excluirId = null)
     {
         try {

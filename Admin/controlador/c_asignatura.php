@@ -2,6 +2,7 @@
 require_once __DIR__ . "/../../utilidades/u_verificaciones.php";
 require_once __DIR__ . "/../dao/d_asignatura.php";
 require_once __DIR__ . "/../modelo/m_asignatura.php";
+require_once __DIR__ . "/../../utilidades/u_permisos.php";
 
 class AsignaturaController
 {
@@ -24,9 +25,18 @@ class AsignaturaController
                 break;
                 
             case "insertarAsignatura":
-                self::insertarAsignatura($parametros);
-                break;
-                
+                if (PermisosUtil::usuarioTienePermiso($parametros['idUsuario'],$parametros['accion'])){
+                     self::insertarAsignatura($parametros);
+                    break;
+                }else{
+                    echo json_encode([
+                    'estado' => 403,
+                    'exito' => false,
+                    'mensaje' => 'Acceso denegado. No tienes los permisos necesrios.',
+                    'resultado' => null
+                    ]);
+                }
+               
             case "actualizarAsignatura":
                 self::actualizarAsignatura($parametros);
                 break;

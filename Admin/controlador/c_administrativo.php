@@ -5,11 +5,23 @@ require_once __DIR__ . "/../dao/d_facultad.php";
 require_once __DIR__ . "/../../utilidades/LimpiarDatos.php";
 require_once __DIR__ . "/../../utilidades/u_verificaciones.php";
 require_once __DIR__ . "/../modelo/m_administrativo.php";
+require_once __DIR__ . "../../../utilidades/u_permisos.php";
 
 class AdministrativoController
 {
     public static function dispatch($accion, $parametros)
     {
+        // Verificar sesión activa
+        if (!self::verificarSesionActiva()) {
+            echo json_encode([
+                'estado' => 401,
+                'exito' => false,
+                'mensaje' => 'No hay sesión activa',
+                'resultado' => null
+            ]);
+            return;
+        }
+        
         // Verificar que el actor sea admin para todas estas operaciones
         if (!isset($parametros['actor']) || $parametros['actor'] !== 'admin') {
             echo json_encode([
@@ -21,12 +33,12 @@ class AdministrativoController
             return;
         }
 
-        // Verificar sesión activa
-        if (!self::verificarSesionActiva()) {
+        // Verificar que que el usuario en cuestion tenga los permisos necesarios
+        if (!PermisosUtil::usuarioTienePermiso($parametros['idUsuario'], $accion)) {
             echo json_encode([
-                'estado' => 401,
+                'estado' => 403,
                 'exito' => false,
-                'mensaje' => 'No hay sesión activa',
+                'mensaje' => 'Acceso denegado. No cuentas con los permiso adecuados.',
                 'resultado' => null
             ]);
             return;

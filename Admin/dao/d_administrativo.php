@@ -5,7 +5,7 @@ require_once __DIR__ . "/../modelo/m_administrativo.php";
 class D_Administrativo
 {
     // ============================================
-    // FUNCIONES DE OBTENCIÓN (SELECT)
+    // FUNCIONES DE OBTENCIÓN (SELECT) - SIN TRANSACCIÓN
     // ============================================
 
     // OBTENER TODOS LOS ADMINISTRATIVOS
@@ -161,7 +161,7 @@ class D_Administrativo
     }
 
     // ============================================
-    // FUNCIONES DE VERIFICACIÓN
+    // FUNCIONES DE VERIFICACIÓN - SIN TRANSACCIÓN
     // ============================================
 
     // VERIFICAR SI EXISTE ADMINISTRATIVO POR ID DE USUARIO
@@ -194,14 +194,16 @@ class D_Administrativo
     }
 
     // ============================================
-    // FUNCIONES CRUD
+    // FUNCIONES CRUD CON TRANSACCIÓN
     // ============================================
 
-    // INSERTAR ADMINISTRATIVO
+    // INSERTAR ADMINISTRATIVO CON TRANSACCIÓN
     public static function insertarAdministrativo($datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "INSERT INTO administrativos (
                         idUsuario, 
@@ -219,7 +221,7 @@ class D_Administrativo
                         :correo
                     )";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':idUsuario', $datos['idUsuario'], PDO::PARAM_INT);
             $stmt->bindParam(':nombreAdministrativo', $datos['nombreAdministrativo']);
             $stmt->bindParam(':apellidosAdministrativo', $datos['apellidosAdministrativo']);
@@ -228,21 +230,30 @@ class D_Administrativo
             $stmt->bindParam(':correo', $datos['correo']);
             
             if ($stmt->execute()) {
-                return $instanciaConexion->lastInsertId();
+                $id = $pdo->lastInsertId();
+                $pdo->commit();
+                return $id;
+            } else {
+                $pdo->rollBack();
+                return null;
             }
             
-            return null;
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en insertarAdministrativo: " . $e->getMessage());
             return null;
         }
     }
 
-    // ACTUALIZAR ADMINISTRATIVO
+    // ACTUALIZAR ADMINISTRATIVO CON TRANSACCIÓN
     public static function actualizarAdministrativo($id, $datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "UPDATE administrativos SET 
                         nombreAdministrativo = :nombreAdministrativo,
@@ -252,7 +263,7 @@ class D_Administrativo
                         correo = :correo
                     WHERE idAdministrativos = :id";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             $stmt->bindParam(':nombreAdministrativo', $datos['nombreAdministrativo']);
             $stmt->bindParam(':apellidosAdministrativo', $datos['apellidosAdministrativo']);
@@ -260,59 +271,75 @@ class D_Administrativo
             $stmt->bindParam(':telefono', $datos['telefono']);
             $stmt->bindParam(':correo', $datos['correo']);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en actualizarAdministrativo: " . $e->getMessage());
             return false;
         }
     }
 
-    // ELIMINAR ADMINISTRATIVO
+    // ELIMINAR ADMINISTRATIVO CON TRANSACCIÓN
     public static function eliminarAdministrativo($id)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             // Primero obtener el idUsuario antes de eliminar
             $administrativo = self::obtenerAdministrativoPorId($id);
             
             // Eliminar el registro de administrativos
             $sql = "DELETE FROM administrativos WHERE idAdministrativos = :id";
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-            $resultado = $stmt->execute();
+            $resultadoAdmin = $stmt->execute();
 
-            // Si se eliminó correctamente y tiene usuario asociado, eliminar también el usuario
-            if ($resultado && $administrativo && $administrativo->idUsuario) {
-                self::eliminarUsuarioAsociado($administrativo->idUsuario);
+            if ($resultadoAdmin && $administrativo && $administrativo->idUsuario) {
+                // Eliminar usuario asociado
+                $sqlUser = "DELETE FROM usuarios WHERE idUsuario = :idUsuario";
+                $stmtUser = $pdo->prepare($sqlUser);
+                $stmtUser->bindParam(':idUsuario', $administrativo->idUsuario, PDO::PARAM_INT);
+                $resultadoUser = $stmtUser->execute();
+                
+                if ($resultadoUser) {
+                    $pdo->commit();
+                    return true;
+                } else {
+                    $pdo->rollBack();
+                    return false;
+                }
+            } else if ($resultadoAdmin) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
             }
             
-            return $resultado;
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en eliminarAdministrativo: " . $e->getMessage());
             return false;
         }
     }
 
-    // ELIMINAR USUARIO ASOCIADO (función auxiliar)
-    private static function eliminarUsuarioAsociado($idUsuario)
-    {
-        try {
-            $instanciaConexion = ConexionUtil::conectar();
-
-            $sql = "DELETE FROM usuarios WHERE idUsuario = :idUsuario";
-            $stmt = $instanciaConexion->prepare($sql);
-            $stmt->bindParam(':idUsuario', $idUsuario, PDO::PARAM_INT);
-            
-            return $stmt->execute();
-        } catch (PDOException $e) {
-            error_log("Error en eliminarUsuarioAsociado: " . $e->getMessage());
-            return false;
-        }
-    }
-
     // ============================================
-    // FUNCIONES DE PAGINACIÓN
+    // FUNCIONES DE PAGINACIÓN - SIN TRANSACCIÓN
     // ============================================
 
     // CONTAR ADMINISTRATIVOS (para paginación)

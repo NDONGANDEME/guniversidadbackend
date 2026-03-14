@@ -4,7 +4,7 @@ require_once __DIR__ . "/../modelo/m_semestre.php";
 
 class D_Semestre
 {
-    // OBTENER TODOS LOS SEMESTRES
+    // OBTENER TODOS LOS SEMESTRES (solo lectura, no necesita transacción)
     public static function obtenerSemestres()
     {
         try {
@@ -33,7 +33,7 @@ class D_Semestre
         }
     }
 
-    // OBTENER SEMESTRE POR ID
+    // OBTENER SEMESTRE POR ID (solo lectura, no necesita transacción)
     public static function obtenerSemestrePorId($id)
     {
         try {
@@ -58,55 +58,78 @@ class D_Semestre
         }
     }
 
-    // INSERTAR SEMESTRE
+    // INSERTAR SEMESTRE CON TRANSACCIÓN
     public static function insertarSemestre($datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "INSERT INTO semestre (numeroSemestre, tipoSemestre, idCurso) 
                     VALUES (:numeroSemestre, :tipoSemestre, :idCurso)";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':numeroSemestre', $datos['numeroSemestre']);
             $stmt->bindParam(':tipoSemestre', $datos['tipoSemestre']);
             $stmt->bindParam(':idCurso', $datos['idCurso']);
             
             if ($stmt->execute()) {
-                return $instanciaConexion->lastInsertId();
+                $id = $pdo->lastInsertId();
+                $pdo->commit();
+                return $id;
+            } else {
+                $pdo->rollBack();
+                return null;
             }
             
-            return null;
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en insertarSemestre: " . $e->getMessage());
             return null;
         }
     }
 
-    // ACTUALIZAR SEMESTRE
+    // ACTUALIZAR SEMESTRE CON TRANSACCIÓN
     public static function actualizarSemestre($datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "UPDATE semestre SET 
                         numeroSemestre = :numeroSemestre,
                         tipoSemestre = :tipoSemestre
                     WHERE idSemestre = :id";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $datos['id'], PDO::PARAM_INT);
             $stmt->bindParam(':numeroSemestre', $datos['numeroSemestre']);
             $stmt->bindParam(':tipoSemestre', $datos['tipoSemestre']);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en actualizarSemestre: " . $e->getMessage());
             return false;
         }
     }
 
-    // VERIFICAR SI EXISTE SEMESTRE
+    // VERIFICAR SI EXISTE SEMESTRE (solo lectura, no necesita transacción)
     public static function existeSemestre($numeroSemestre, $tipoSemestre, $excluirId = null)
     {
         try {

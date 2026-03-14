@@ -4,7 +4,7 @@ require_once __DIR__ . "/../modelo/m_usuario.php";
 
 class D_Usuario
 {
-    // OBTENER TODOS LOS USUARIOS
+    // OBTENER TODOS LOS USUARIOS (solo lectura, no necesita transacción)
     public static function obtenerUsuarios()
     {
         try {
@@ -33,7 +33,7 @@ class D_Usuario
         }
     }
 
-    // OBTENER USUARIO POR ID
+    // OBTENER USUARIO POR ID (solo lectura, no necesita transacción)
     public static function obtenerUsuarioPorId($id)
     {
         try {
@@ -58,7 +58,7 @@ class D_Usuario
         }
     }
 
-    // OBTENER USUARIO POR NOMBRE DE USUARIO
+    // OBTENER USUARIO POR NOMBRE DE USUARIO (solo lectura)
     public static function obtenerUsuarioPorNombreUsuario($nombreUsuario)
     {
         try {
@@ -83,7 +83,7 @@ class D_Usuario
         }
     }
 
-    // VERIFICAR SI EXISTE NOMBRE DE USUARIO
+    // VERIFICAR SI EXISTE NOMBRE DE USUARIO (solo lectura)
     public static function existeNombreUsuario($nombreUsuario, $excluirId = null)
     {
         try {
@@ -112,7 +112,7 @@ class D_Usuario
         }
     }
 
-    // VERIFICAR SI EXISTE CORREO
+    // VERIFICAR SI EXISTE CORREO (solo lectura)
     public static function existeCorreo($correo, $excluirId = null)
     {
         try {
@@ -141,11 +141,15 @@ class D_Usuario
         }
     }
 
-    // INSERTAR USUARIO
+    // INSERTAR USUARIO CON TRANSACCIÓN
     public static function insertarUsuario($datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            
+            // Iniciar transacción
+            $pdo->beginTransaction();
 
             $sql = "INSERT INTO usuarios (
                         nombreUsuario, 
@@ -163,7 +167,7 @@ class D_Usuario
                         :foto
                     )";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':nombreUsuario', $datos['nombreUsuario']);
             $stmt->bindParam(':contrasena', $datos['contrasena']);
             $stmt->bindParam(':correo', $datos['correo']);
@@ -172,21 +176,32 @@ class D_Usuario
             $stmt->bindParam(':foto', $datos['foto']);
             
             if ($stmt->execute()) {
-                return $instanciaConexion->lastInsertId();
+                $id = $pdo->lastInsertId();
+                $pdo->commit(); // Confirmar transacción
+                return $id;
+            } else {
+                $pdo->rollBack(); // Revertir si falla
+                return null;
             }
             
-            return null;
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack(); // Revertir en caso de error
+            }
             error_log("Error en insertarUsuario: " . $e->getMessage());
             return null;
         }
     }
 
-    // ACTUALIZAR USUARIO
+    // ACTUALIZAR USUARIO CON TRANSACCIÓN
     public static function actualizarUsuario($datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            
+            // Iniciar transacción
+            $pdo->beginTransaction();
 
             $sql = "UPDATE usuarios SET 
                         nombreUsuario = :nombreUsuario,
@@ -202,7 +217,7 @@ class D_Usuario
             
             $sql .= " WHERE idUsuario = :id";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $datos['id']);
             $stmt->bindParam(':nombreUsuario', $datos['nombreUsuario']);
             $stmt->bindParam(':correo', $datos['correo']);
@@ -214,33 +229,61 @@ class D_Usuario
                 $stmt->bindParam(':foto', $datos['foto']);
             }
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit(); // Confirmar transacción
+                return true;
+            } else {
+                $pdo->rollBack(); // Revertir si falla
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack(); // Revertir en caso de error
+            }
             error_log("Error en actualizarUsuario: " . $e->getMessage());
             return false;
         }
     }
 
-    // CAMBIAR ESTADO DEL USUARIO (habilitar/deshabilitar)
+    // CAMBIAR ESTADO DEL USUARIO CON TRANSACCIÓN
     public static function cambiarEstadoUsuario($id, $estado)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            
+            // Iniciar transacción
+            $pdo->beginTransaction();
 
             $sql = "UPDATE usuarios SET estado = :estado WHERE idUsuario = :id";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             $stmt->bindParam(':estado', $estado);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit(); // Confirmar transacción
+                return true;
+            } else {
+                $pdo->rollBack(); // Revertir si falla
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack(); // Revertir en caso de error
+            }
             error_log("Error en cambiarEstadoUsuario: " . $e->getMessage());
             return false;
         }
     }
 
-    // VERIFICAR CONTRASEÑA EXISTENTE
+    // VERIFICAR CONTRASEÑA EXISTENTE (solo lectura, no necesita transacción)
     public static function verificarContrasenaExistente($id, $contrasena)
     {
         try {

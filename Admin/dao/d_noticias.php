@@ -4,7 +4,7 @@ require_once __DIR__ . "/../modelo/m_noticia.php";
 
 class NoticiasDao
 {
-    // FUNCIÓN PARA OBTENER EL NÚMERO DE PÁGINAS (20 noticias por página)
+    // FUNCIÓN PARA OBTENER EL NÚMERO DE PÁGINAS (solo lectura)
     public static function contarNoticias()
     {
         try {
@@ -23,7 +23,7 @@ class NoticiasDao
         }
     }
 
-    // FUNCIÓN PARA OBTENER NOTICIAS A PAGINAR
+    // FUNCIÓN PARA OBTENER NOTICIAS A PAGINAR (solo lectura)
     public static function obtenerNoticiasAPaginar($pagina)
     {
         try {
@@ -42,12 +42,10 @@ class NoticiasDao
             $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $noticias = [];
             
-            // Crear modelos y obtener fotos para cada noticia
             foreach ($resultados as $fila) {
                 $model = new NoticiaModel();
                 $model->hidratarDesdeArray($fila);
                 
-                // Obtener fotos asociadas
                 $fotos = self::obtenerFotosNoticia($model->idNoticia);
                 $model->establecerFotos($fotos);
                 
@@ -61,7 +59,7 @@ class NoticiasDao
         }
     }
 
-    // FUNCIÓN PARA OBTENER TODAS LAS NOTICIAS
+    // FUNCIÓN PARA OBTENER TODAS LAS NOTICIAS (solo lectura)
     public static function listarNoticias()
     {
         try {
@@ -74,12 +72,10 @@ class NoticiasDao
             $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $noticias = [];
             
-            // Crear modelos y obtener fotos para cada noticia
             foreach ($resultados as $fila) {
                 $model = new NoticiaModel();
                 $model->hidratarDesdeArray($fila);
                 
-                // Obtener fotos asociadas
                 $fotos = self::obtenerFotosNoticia($model->idNoticia);
                 $model->establecerFotos($fotos);
                 
@@ -93,7 +89,7 @@ class NoticiasDao
         }
     }
 
-    // FUNCIÓN PARA OBTENER LAS 5 NOTICIAS MÁS RECIENTES
+    // FUNCIÓN PARA OBTENER LAS 5 NOTICIAS MÁS RECIENTES (solo lectura)
     public static function obtenerNoticiasRecientes()
     {
         try {
@@ -106,12 +102,10 @@ class NoticiasDao
             $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $noticias = [];
             
-            // Crear modelos y obtener fotos para cada noticia
             foreach ($resultados as $fila) {
                 $model = new NoticiaModel();
                 $model->hidratarDesdeArray($fila);
                 
-                // Obtener fotos asociadas
                 $fotos = self::obtenerFotosNoticia($model->idNoticia);
                 $model->establecerFotos($fotos);
                 
@@ -125,7 +119,7 @@ class NoticiasDao
         }
     }
 
-    // FUNCIÓN: Obtener noticia por ID (devuelve modelo)
+    // FUNCIÓN: Obtener noticia por ID (solo lectura)
     public static function obtenerNoticiaPorId($id)
     {
         try {
@@ -142,7 +136,6 @@ class NoticiasDao
                 $model = new NoticiaModel();
                 $model->hidratarDesdeArray($resultado);
                 
-                // Obtener fotos asociadas
                 $fotos = self::obtenerFotosNoticia($id);
                 $model->establecerFotos($fotos);
                 
@@ -156,39 +149,49 @@ class NoticiasDao
         }
     }
 
-    // FUNCIÓN: Crear noticia (devuelve ID)
+    // FUNCIÓN: Crear noticia CON TRANSACCIÓN
     public static function crearNoticia($datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "INSERT INTO noticias (asunto, descripcion, tipo, fechaPublicacion) 
                     VALUES (:asunto, :descripcion, :tipo, :fechaPublicacion)";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':asunto', $datos['asunto']);
             $stmt->bindParam(':descripcion', $datos['descripcion']);
             $stmt->bindParam(':tipo', $datos['tipo']);
             $stmt->bindParam(':fechaPublicacion', $datos['fechaPublicacion']);
             
             if ($stmt->execute()) {
-                $id = $instanciaConexion->lastInsertId();
+                $id = $pdo->lastInsertId();
+                $pdo->commit();
                 error_log("Noticia creada con ID: " . $id);
                 return $id;
+            } else {
+                $pdo->rollBack();
+                return null;
             }
             
-            return null;
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en crearNoticia: " . $e->getMessage());
             return null;
         }
     }
 
-    // FUNCIÓN: Actualizar noticia
+    // FUNCIÓN: Actualizar noticia CON TRANSACCIÓN
     public static function actualizarNoticia($id, $datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "UPDATE noticias 
                     SET asunto = :asunto, 
@@ -196,55 +199,78 @@ class NoticiasDao
                         tipo = :tipo
                     WHERE idNoticia = :id";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':asunto', $datos['asunto']);
             $stmt->bindParam(':descripcion', $datos['descripcion']);
             $stmt->bindParam(':tipo', $datos['tipo']);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             
             $resultado = $stmt->execute();
-            error_log("Noticia actualizada ID: " . $id . " - Resultado: " . ($resultado ? "éxito" : "fallo"));
-            return $resultado;
+            
+            if ($resultado) {
+                $pdo->commit();
+                error_log("Noticia actualizada ID: " . $id . " - Resultado: éxito");
+                return true;
+            } else {
+                $pdo->rollBack();
+                error_log("Noticia actualizada ID: " . $id . " - Resultado: fallo");
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en actualizarNoticia: " . $e->getMessage());
             return false;
         }
     }
 
-    // FUNCIÓN: Eliminar noticia
+    // FUNCIÓN: Eliminar noticia CON TRANSACCIÓN
     public static function eliminarNoticia($id)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             // Primero eliminar las fotos asociadas (los registros de la BD)
-            self::eliminarFotosNoticia($id);
+            self::eliminarFotosNoticiaConTransaccion($pdo, $id);
 
             // Luego eliminar la noticia
             $sql = "DELETE FROM noticias WHERE idNoticia = :id";
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             
             $resultado = $stmt->execute();
-            error_log("Noticia eliminada ID: " . $id . " - Resultado: " . ($resultado ? "éxito" : "fallo"));
-            return $resultado;
+            
+            if ($resultado) {
+                $pdo->commit();
+                error_log("Noticia eliminada ID: " . $id . " - Resultado: éxito");
+                return true;
+            } else {
+                $pdo->rollBack();
+                error_log("Noticia eliminada ID: " . $id . " - Resultado: fallo");
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en eliminarNoticia: " . $e->getMessage());
             return false;
         }
     }
 
-    // FUNCIÓN: Guardar fotos de una noticia
-    public static function guardarFotosNoticia($noticiaId, $fotos)
+    // FUNCIÓN: Guardar fotos de una noticia CON TRANSACCIÓN (usar dentro de otra transacción)
+    public static function guardarFotosNoticiaConTransaccion($pdo, $noticiaId, $fotos)
     {
         try {
-            $instanciaConexion = ConexionUtil::conectar();
-
-            // CORREGIDO: usar 'archivos' (con 's') que es el nombre correcto de la tabla
             $sql = "INSERT INTO archivos (url, tipoArchivo, idReferencia, tablaReferencia) 
                     VALUES (:url, :tipoArchivo, :idReferencia, 'noticia')";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $contador = 0;
             
             foreach ($fotos as $foto) {
@@ -262,12 +288,39 @@ class NoticiasDao
             error_log("Guardadas $contador fotos para noticia ID: " . $noticiaId);
             return $contador > 0;
         } catch (PDOException $e) {
+            error_log("Error en guardarFotosNoticiaConTransaccion: " . $e->getMessage());
+            throw $e; // Re-lanzar para que la transacción principal pueda hacer rollback
+        }
+    }
+
+    // FUNCIÓN: Guardar fotos de una noticia (versión sin transacción, para compatibilidad)
+    public static function guardarFotosNoticia($noticiaId, $fotos)
+    {
+        $pdo = null;
+        try {
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
+            
+            $resultado = self::guardarFotosNoticiaConTransaccion($pdo, $noticiaId, $fotos);
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
+        } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en guardarFotosNoticia: " . $e->getMessage());
             return false;
         }
     }
 
-    // FUNCIÓN: Obtener fotos de una noticia
+    // FUNCIÓN: Obtener fotos de una noticia (solo lectura)
     public static function obtenerFotosNoticia($noticiaId)
     {
         try {
@@ -291,7 +344,27 @@ class NoticiasDao
         }
     }
 
-    // FUNCIÓN: Eliminar fotos de una noticia
+    // FUNCIÓN: Eliminar fotos de una noticia (para usar dentro de transacción)
+    public static function eliminarFotosNoticiaConTransaccion($pdo, $noticiaId)
+    {
+        try {
+            $sql = "DELETE FROM archivos 
+                    WHERE tablaReferencia = 'noticia' 
+                    AND idReferencia = :noticiaId";
+            
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindParam(':noticiaId', $noticiaId, PDO::PARAM_INT);
+            
+            $resultado = $stmt->execute();
+            error_log("Eliminados registros de fotos para noticia ID: " . $noticiaId);
+            return $resultado;
+        } catch (PDOException $e) {
+            error_log("Error en eliminarFotosNoticiaConTransaccion: " . $e->getMessage());
+            throw $e; // Re-lanzar para que la transacción principal pueda hacer rollback
+        }
+    }
+
+    // FUNCIÓN: Eliminar fotos de una noticia (versión sin transacción)
     public static function eliminarFotosNoticia($noticiaId)
     {
         try {

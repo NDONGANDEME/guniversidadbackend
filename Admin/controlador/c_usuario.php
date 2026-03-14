@@ -182,9 +182,9 @@ class UsuarioController
         }
 
         // Encriptar contraseña
-        //$contrasenaHash = password_hash($contrasena, PASSWORD_DEFAULT);
+        $parametros['contrasena'] = password_hash($contrasena, PASSWORD_DEFAULT);
 
-        //==================NUEVO CAMBIO==================
+
         // Insertar usuario
         $usuarioId = D_Usuario::insertarUsuario($parametros);
 
@@ -193,7 +193,7 @@ class UsuarioController
                 'estado' => 500,
                 'exito' => false,
                 'mensaje' => 'Error al crear el usuario',
-                'resultado' => $parametros['foto'], $usuarioId
+                'resultado' => $usuarioId
             ]);
             return;
         }
