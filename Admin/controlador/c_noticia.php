@@ -26,12 +26,36 @@ class NoticiaController
                     self::obtenerNoticias();
                     break;
                     
+                case "obtenerNoticiasAPaginar":
+                    self::obtenerNoticiasPaginadas($parametros);
+                    break;
+                    
                 case "obtenerNoticiaPorId":
                     self::obtenerNoticiaPorId($parametros['id'] ?? null);
                     break;
                     
-                case "obtenerCantidadPaginacion":
-                    self::obtenerCantidadPaginacion();
+                case "obtenerTotalPaginasNoticia":
+                    self::obtenerCantidadPaginacion($parametros);
+                    break;
+                    
+                case "obtenerTotalPaginasNoticiaPorTipo":
+                    self::obtenerTotalPaginasPorTipo($parametros);
+                    break;
+                    
+                case "obtenerNoticiasPorTipo":
+                    self::obtenerNoticiasPorTipo($parametros);
+                    break;
+                    
+                case "obtenerNoticiasPorTipoAPaginar":
+                    self::obtenerNoticiasPorTipoPaginadas($parametros);
+                    break;
+                    
+                case "buscarNoticias":
+                    self::buscarNoticias($parametros);
+                    break;
+                    
+                case "obtenerNoticiasRecientes":
+                    self::obtenerNoticiasRecientes($parametros);
                     break;
                     
                 // Operaciones CRUD
@@ -86,6 +110,33 @@ class NoticiaController
         ]);
     }
 
+    // Obtener noticias paginadas
+    private static function obtenerNoticiasPaginadas($parametros)
+    {
+        $pagina = $parametros['pagina'] ?? 1;
+        $tipo = $parametros['tipo'] ?? null;
+        
+        $pagina = intval($pagina);
+        if ($pagina < 1) $pagina = 1;
+        
+        $noticias = NoticiasDao::obtenerNoticiasAPaginar($pagina, $tipo);
+        $resultado = [];
+        
+        foreach ($noticias as $noticia) {
+            $resultado[] = $noticia->convertirAArray();
+        }
+        
+        echo json_encode([
+            'estado' => 'exito',
+            'exito' => true,
+            'mensaje' => 'Noticias paginadas obtenidas correctamente',
+            'resultado' => [
+                'pagina_actual' => $pagina,
+                'noticias' => $resultado
+            ]
+        ]);
+    }
+
     // Obtener noticia por ID
     private static function obtenerNoticiaPorId($id)
     {
@@ -118,18 +169,190 @@ class NoticiaController
         }
     }
 
-    // Obtener cantidad de páginas para paginación
-    private static function obtenerCantidadPaginacion()
+    // Obtener cantidad de páginas para paginación general
+    private static function obtenerCantidadPaginacion($parametros)
     {
-        $totalPaginas = NoticiasDao::contarNoticias();
+        $tipo = $parametros['tipo'] ?? null;
+        $totalPaginas = NoticiasDao::contarNoticias($tipo);
         
         echo json_encode([
             'estado' => 'exito',
             'exito' => true,
             'mensaje' => 'Total de páginas obtenido correctamente',
+            'resultado' =>  $totalPaginas,
+        ]);
+    }
+
+    // Obtener cantidad de páginas para un tipo específico de noticia
+    private static function obtenerTotalPaginasPorTipo($parametros)
+    {
+        $tipo = $parametros['tipo'] ?? null;
+        
+        if (!$tipo) {
+            echo json_encode([
+                'estado' => 400,
+                'exito' => false,
+                'mensaje' => 'Tipo de noticia no proporcionado',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $totalPaginas = NoticiasDao::contarNoticiasPorTipo($tipo);
+        $totalNoticias = NoticiasDao::contarTotalNoticiasPorTipo($tipo);
+        
+        echo json_encode([
+            'estado' => 'exito',
+            'exito' => true,
+            'mensaje' => 'Total de páginas por tipo obtenido correctamente',
             'resultado' => [
-                'total_paginas' => $totalPaginas
+                'tipo' => $tipo,
+                'total_paginas' => $totalPaginas,
+                'total_noticias' => $totalNoticias,
+                'registros_por_pagina' => NoticiasDao::REGISTROS_POR_PAGINA
             ]
+        ]);
+    }
+
+    // Obtener noticias por tipo
+    private static function obtenerNoticiasPorTipo($parametros)
+    {
+        $tipo = $parametros['tipo'] ?? null;
+        $limite = $parametros['limite'] ?? null;
+        
+        if (!$tipo) {
+            echo json_encode([
+                'estado' => 400,
+                'exito' => false,
+                'mensaje' => 'Tipo de noticia no proporcionado',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $noticias = NoticiasDao::obtenerNoticiasPorTipo($tipo, $limite);
+        $resultado = [];
+        
+        foreach ($noticias as $noticia) {
+            $resultado[] = $noticia->convertirAArray();
+        }
+        
+        echo json_encode([
+            'estado' => 'exito',
+            'exito' => true,
+            'mensaje' => 'Noticias por tipo obtenidas correctamente',
+            'resultado' => $resultado
+        ]);
+    }
+
+    // Obtener noticias por tipo paginadas
+    private static function obtenerNoticiasPorTipoPaginadas($parametros)
+    {
+        $tipo = $parametros['tipo'] ?? null;
+        $pagina = $parametros['pagina'] ?? 1;
+        
+        if (!$tipo) {
+            echo json_encode([
+                'estado' => 400,
+                'exito' => false,
+                'mensaje' => 'Tipo de noticia no proporcionado',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $pagina = intval($pagina);
+        if ($pagina < 1) $pagina = 1;
+        
+        $noticias = NoticiasDao::obtenerNoticiasPorTipoPaginadas($tipo, $pagina);
+        $resultado = [];
+        
+        foreach ($noticias as $noticia) {
+            $resultado[] = $noticia->convertirAArray();
+        }
+        
+        echo json_encode([
+            'estado' => 'exito',
+            'exito' => true,
+            'mensaje' => 'Noticias por tipo paginadas obtenidas correctamente',
+            'resultado' => [
+                'pagina_actual' => $pagina,
+                'tipo' => $tipo,
+                'noticias' => $resultado
+            ]
+        ]);
+    }
+
+    // Buscar noticias
+    private static function buscarNoticias($parametros)
+    {
+        $termino = $parametros['termino'] ?? '';
+        $tipo = $parametros['tipo'] ?? null;
+        $pagina = $parametros['pagina'] ?? 1;
+
+        if (empty($termino)) {
+            echo json_encode([
+                'estado' => 400,
+                'exito' => false,
+                'mensaje' => 'Término de búsqueda no proporcionado',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $pagina = intval($pagina);
+        if ($pagina < 1) $pagina = 1;
+
+        // Determinar si es búsqueda paginada o no
+        if (isset($parametros['paginada']) && $parametros['paginada'] === 'true') {
+            $noticias = NoticiasDao::buscarNoticiasPaginadas($termino, $pagina, $tipo);
+            $totalPaginas = NoticiasDao::contarResultadosBusquedaNoticias($termino, $tipo);
+        } else {
+            $noticias = NoticiasDao::buscarNoticias($termino, $tipo);
+            $totalPaginas = 1;
+        }
+
+        $resultado = [];
+        foreach ($noticias as $noticia) {
+            $resultado[] = $noticia->convertirAArray();
+        }
+
+        $response = [
+            'estado' => 'exito',
+            'exito' => true,
+            'mensaje' => 'Búsqueda realizada correctamente',
+            'resultado' => $resultado
+        ];
+
+        // Si es búsqueda paginada, incluir información de paginación
+        if (isset($parametros['paginada']) && $parametros['paginada'] === 'true') {
+            $response['resultado'] = [
+                'pagina_actual' => $pagina,
+                'total_paginas' => $totalPaginas,
+                'noticias' => $resultado
+            ];
+        }
+
+        echo json_encode($response);
+    }
+
+    // Obtener noticias recientes
+    private static function obtenerNoticiasRecientes($parametros)
+    {
+        $tipo = $parametros['tipo'] ?? null;
+        
+        $noticias = NoticiasDao::obtenerNoticiasRecientes($tipo);
+        $resultado = [];
+        
+        foreach ($noticias as $noticia) {
+            $resultado[] = $noticia->convertirAArray();
+        }
+        
+        echo json_encode([
+            'estado' => 'exito',
+            'exito' => true,
+            'mensaje' => 'Noticias recientes obtenidas correctamente',
+            'resultado' => $resultado
         ]);
     }
 

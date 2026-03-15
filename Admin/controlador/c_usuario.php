@@ -20,6 +20,22 @@ class UsuarioController
         }
 
         switch ($accion) {
+            case "obtenerUsuarios":
+                self::obtenerUsuarios();
+                break;
+                
+            case "obtenerUsuariosAPaginar":
+                self::obtenerUsuariosPaginados($parametros);
+                break;
+                
+            case "obtenerTotalPaginasUsuario":
+                self::obtenerTotalPaginas();
+                break;
+                
+            case "buscarUsuarios":
+                self::buscarUsuarios($parametros);
+                break;
+                
             case "insertarUsuario":
                 self::insertarUsuario($parametros);
                 break;
@@ -38,10 +54,6 @@ class UsuarioController
                 
             case "verificarContraseñaExistente":
                 self::verificarContraseñaExistente($parametros);
-                break;
-                
-            case "obtenerUsuarios":
-                self::obtenerUsuarios();
                 break;
                 
             default:
@@ -90,6 +102,129 @@ class UsuarioController
             'mensaje' => 'Usuarios obtenidos correctamente',
             'resultado' => $resultado
         ]);
+    }
+
+    // Obtener usuarios paginados
+    private static function obtenerUsuariosPaginados($parametros)
+    {
+        if (!self::verificarSesionActiva()) {
+            echo json_encode([
+                'estado' => 401,
+                'exito' => false,
+                'mensaje' => 'No hay sesión activa',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $pagina = $parametros['pagina'] ?? 1;
+        $pagina = intval($pagina);
+        if ($pagina < 1) $pagina = 1;
+        
+        $usuarios = D_Usuario::obtenerUsuariosAPaginar($pagina);
+        $resultado = [];
+        
+        foreach ($usuarios as $usuario) {
+            $resultado[] = $usuario->convertirAArray();
+        }
+        
+        echo json_encode([
+            'estado' => 'exito',
+            'exito' => true,
+            'mensaje' => 'Usuarios paginados obtenidos correctamente',
+            'resultado' => [
+                'pagina_actual' => $pagina,
+                'usuarios' => $resultado
+            ]
+        ]);
+    }
+
+    // Obtener total de páginas
+    private static function obtenerTotalPaginas()
+    {
+        if (!self::verificarSesionActiva()) {
+            echo json_encode([
+                'estado' => 401,
+                'exito' => false,
+                'mensaje' => 'No hay sesión activa',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $totalPaginas = D_Usuario::contarUsuarios();
+        
+        echo json_encode([
+            'estado' => 'exito',
+            'exito' => true,
+            'mensaje' => 'Total de páginas obtenido correctamente',
+            'resultado' => [
+                'total_paginas' => $totalPaginas,
+                'registros_por_pagina' => D_Usuario::REGISTROS_POR_PAGINA
+            ]
+        ]);
+    }
+
+    // Buscar usuarios
+    private static function buscarUsuarios($parametros)
+    {
+        if (!self::verificarSesionActiva()) {
+            echo json_encode([
+                'estado' => 401,
+                'exito' => false,
+                'mensaje' => 'No hay sesión activa',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $termino = $parametros['termino'] ?? '';
+        $pagina = $parametros['pagina'] ?? 1;
+
+        if (empty($termino)) {
+            echo json_encode([
+                'estado' => 400,
+                'exito' => false,
+                'mensaje' => 'Término de búsqueda no proporcionado',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $pagina = intval($pagina);
+        if ($pagina < 1) $pagina = 1;
+
+        // Determinar si es búsqueda paginada o no
+        if (isset($parametros['paginada']) && $parametros['paginada'] === 'true') {
+            $usuarios = D_Usuario::buscarUsuariosPaginados($termino, $pagina);
+            $totalPaginas = D_Usuario::contarResultadosBusquedaUsuarios($termino);
+        } else {
+            $usuarios = D_Usuario::buscarUsuarios($termino);
+            $totalPaginas = 1;
+        }
+
+        $resultado = [];
+        foreach ($usuarios as $usuario) {
+            $resultado[] = $usuario->convertirAArray();
+        }
+
+        $response = [
+            'estado' => 'exito',
+            'exito' => true,
+            'mensaje' => 'Búsqueda realizada correctamente',
+            'resultado' => $resultado
+        ];
+
+        // Si es búsqueda paginada, incluir información de paginación
+        if (isset($parametros['paginada']) && $parametros['paginada'] === 'true') {
+            $response['resultado'] = [
+                'pagina_actual' => $pagina,
+                'total_paginas' => $totalPaginas,
+                'usuarios' => $resultado
+            ];
+        }
+
+        echo json_encode($response);
     }
 
     // Insertar nuevo usuario

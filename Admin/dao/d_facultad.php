@@ -4,7 +4,7 @@ require_once __DIR__ . "/../modelo/m_facultad.php";
 
 class D_Facultad
 {
-    // OBTENER TODAS LAS FACULTADES (solo lectura)
+    // OBTENER TODAS LAS FACULTADES
     public static function obtenerFacultades()
     {
         try {
@@ -30,7 +30,7 @@ class D_Facultad
         }
     }
 
-    // OBTENER FACULTAD POR ID (solo lectura)
+    // OBTENER FACULTAD POR ID
     public static function obtenerFacultadPorId($id)
     {
         try {
@@ -55,7 +55,7 @@ class D_Facultad
         }
     }
 
-    // OBTENER FACULTAD POR DEPARTAMENTO (solo lectura)
+    // OBTENER FACULTAD POR DEPARTAMENTO
     public static function obtenerFacultadPorDepartamento($idDepartamento)
     {
         try {
@@ -192,7 +192,7 @@ class D_Facultad
         }
     }
 
-    // VERIFICAR SI EXISTE NOMBRE DE FACULTAD (solo lectura)
+    // VERIFICAR SI EXISTE NOMBRE DE FACULTAD
     public static function existeNombreFacultad($nombreFacultad, $excluirId = null)
     {
         try {

@@ -23,16 +23,36 @@ class AulaController
                 self::obtenerAulas();
                 break;
                 
-            case "insertarAula":
-                self::insertarAula($parametros);
+            case "obtenerAulasAPaginar":
+                self::obtenerAulasPaginadas($parametros);
+                break;
+                
+            case "obtenerTotalPaginasAula":
+                self::obtenerTotalPaginas();
                 break;
                 
             case "obtenerAulasPorFacultad":
                 self::obtenerAulasPorFacultad($parametros);
                 break;
                 
+            case "obtenerAulasPorFacultadPaginadas":
+                self::obtenerAulasPorFacultadPaginadas($parametros);
+                break;
+                
+            case "buscarAulas":
+                self::buscarAulas($parametros);
+                break;
+                
+            case "insertarAula":
+                self::insertarAula($parametros);
+                break;
+                
             case "actualizarAula":
                 self::actualizarAula($parametros);
+                break;
+                
+            case "eliminarAula":
+                self::eliminarAula($parametros);
                 break;
                 
             default:
@@ -87,6 +107,71 @@ class AulaController
         ]);
     }
 
+    // Obtener aulas paginadas
+    private static function obtenerAulasPaginadas($parametros)
+    {
+        if (!self::verificarSesionActiva()) {
+            echo json_encode([
+                'estado' => 401,
+                'exito' => false,
+                'mensaje' => 'No hay sesión activa',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $pagina = $parametros['pagina'] ?? 1;
+        $pagina = intval($pagina);
+        if ($pagina < 1) $pagina = 1;
+        
+        $aulas = D_Aula::obtenerAulasAPaginar($pagina);
+        $resultado = [];
+        
+        foreach ($aulas as $aula) {
+            $arr = $aula->convertirAArray();
+            if (isset($aula->nombreFacultad)) {
+                $arr['nombreFacultad'] = $aula->nombreFacultad;
+            }
+            $resultado[] = $arr;
+        }
+        
+        echo json_encode([
+            'estado' => 'exito',
+            'exito' => true,
+            'mensaje' => 'Aulas paginadas obtenidas correctamente',
+            'resultado' => [
+                'pagina_actual' => $pagina,
+                'aulas' => $resultado
+            ]
+        ]);
+    }
+
+    // Obtener total de páginas
+    private static function obtenerTotalPaginas()
+    {
+        if (!self::verificarSesionActiva()) {
+            echo json_encode([
+                'estado' => 401,
+                'exito' => false,
+                'mensaje' => 'No hay sesión activa',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $totalPaginas = D_Aula::contarAulas();
+        
+        echo json_encode([
+            'estado' => 'exito',
+            'exito' => true,
+            'mensaje' => 'Total de páginas obtenido correctamente',
+            'resultado' => [
+                'total_paginas' => $totalPaginas,
+                'registros_por_pagina' => D_Aula::REGISTROS_POR_PAGINA
+            ]
+        ]);
+    }
+
     // Obtener aulas por facultad
     private static function obtenerAulasPorFacultad($parametros)
     {
@@ -125,6 +210,125 @@ class AulaController
             'mensaje' => 'Aulas por facultad obtenidas correctamente',
             'resultado' => $resultado
         ]);
+    }
+
+    // Obtener aulas por facultad paginadas
+    private static function obtenerAulasPorFacultadPaginadas($parametros)
+    {
+        if (!self::verificarSesionActiva()) {
+            echo json_encode([
+                'estado' => 401,
+                'exito' => false,
+                'mensaje' => 'No hay sesión activa',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $idFacultad = $parametros['idFacultad'] ?? null;
+        $pagina = $parametros['pagina'] ?? 1;
+        
+        if (!$idFacultad) {
+            echo json_encode([
+                'estado' => 400,
+                'exito' => false,
+                'mensaje' => 'ID de facultad no proporcionado',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $pagina = intval($pagina);
+        if ($pagina < 1) $pagina = 1;
+        
+        $aulas = D_Aula::obtenerAulasPorFacultadPaginadas($idFacultad, $pagina);
+        $resultado = [];
+        
+        foreach ($aulas as $aula) {
+            $resultado[] = $aula->convertirAArray();
+        }
+        
+        // Obtener total de páginas para esta facultad
+        $totalAulas = D_Aula::contarAulasPorFacultad($idFacultad);
+        $totalPaginas = ceil($totalAulas / D_Aula::REGISTROS_POR_PAGINA);
+        
+        echo json_encode([
+            'estado' => 'exito',
+            'exito' => true,
+            'mensaje' => 'Aulas por facultad paginadas obtenidas correctamente',
+            'resultado' => [
+                'pagina_actual' => $pagina,
+                'total_paginas' => $totalPaginas,
+                'total_aulas' => $totalAulas,
+                'aulas' => $resultado
+            ]
+        ]);
+    }
+
+    // Buscar aulas
+    private static function buscarAulas($parametros)
+    {
+        if (!self::verificarSesionActiva()) {
+            echo json_encode([
+                'estado' => 401,
+                'exito' => false,
+                'mensaje' => 'No hay sesión activa',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $termino = $parametros['termino'] ?? '';
+        $pagina = $parametros['pagina'] ?? 1;
+
+        if (empty($termino)) {
+            echo json_encode([
+                'estado' => 400,
+                'exito' => false,
+                'mensaje' => 'Término de búsqueda no proporcionado',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $pagina = intval($pagina);
+        if ($pagina < 1) $pagina = 1;
+
+        // Determinar si es búsqueda paginada o no
+        if (isset($parametros['paginada']) && $parametros['paginada'] === 'true') {
+            $aulas = D_Aula::buscarAulasPaginadas($termino, $pagina);
+            $totalPaginas = D_Aula::contarResultadosBusquedaAulas($termino);
+        } else {
+            $aulas = D_Aula::buscarAulas($termino);
+            $totalPaginas = 1;
+        }
+
+        $resultado = [];
+        foreach ($aulas as $aula) {
+            $arr = $aula->convertirAArray();
+            if (isset($aula->nombreFacultad)) {
+                $arr['nombreFacultad'] = $aula->nombreFacultad;
+            }
+            $resultado[] = $arr;
+        }
+
+        $response = [
+            'estado' => 'exito',
+            'exito' => true,
+            'mensaje' => 'Búsqueda realizada correctamente',
+            'resultado' => $resultado
+        ];
+
+        // Si es búsqueda paginada, incluir información de paginación
+        if (isset($parametros['paginada']) && $parametros['paginada'] === 'true') {
+            $response['resultado'] = [
+                'pagina_actual' => $pagina,
+                'total_paginas' => $totalPaginas,
+                'aulas' => $resultado
+            ];
+        }
+
+        echo json_encode($response);
     }
 
     // Insertar nueva aula
@@ -300,6 +504,75 @@ class AulaController
             'estado' => 'exito',
             'exito' => true,
             'mensaje' => 'Aula actualizada exitosamente',
+            'resultado' => ['id' => $id]
+        ]);
+    }
+
+    // Eliminar aula
+    private static function eliminarAula($parametros)
+    {
+        if (!self::verificarSesionActiva()) {
+            echo json_encode([
+                'estado' => 401,
+                'exito' => false,
+                'mensaje' => 'No hay sesión activa',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $id = $parametros['id'] ?? null;
+        
+        if (!$id) {
+            echo json_encode([
+                'estado' => 400,
+                'exito' => false,
+                'mensaje' => 'ID de aula no proporcionado',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        // Verificar que el aula existe
+        $aulaExistente = D_Aula::obtenerAulaPorId($id);
+        if (!$aulaExistente) {
+            echo json_encode([
+                'estado' => 404,
+                'exito' => false,
+                'mensaje' => 'Aula no encontrada',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        // Verificar si tiene horarios asociados
+        if (D_Aula::tieneHorariosAsociados($id)) {
+            echo json_encode([
+                'estado' => 400,
+                'exito' => false,
+                'mensaje' => 'No se puede eliminar el aula porque tiene horarios asociados',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        // Eliminar aula
+        $eliminado = D_Aula::eliminarAula($id);
+
+        if (!$eliminado) {
+            echo json_encode([
+                'estado' => 500,
+                'exito' => false,
+                'mensaje' => 'Error al eliminar el aula',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        echo json_encode([
+            'estado' => 'exito',
+            'exito' => true,
+            'mensaje' => 'Aula eliminada exitosamente',
             'resultado' => ['id' => $id]
         ]);
     }
