@@ -4,6 +4,9 @@ require_once __DIR__ . "/../modelo/m_carrera.php";
 
 class D_Carrera
 {
+    // CONSTANTE PARA EL NÚMERO DE REGISTROS POR PÁGINA
+    const REGISTROS_POR_PAGINA = 30;
+
     // OBTENER TODAS LAS CARRERAS (solo lectura)
     public static function obtenerCarreras()
     {
@@ -32,6 +35,64 @@ class D_Carrera
             return $carreras;
         } catch (PDOException $e) {
             error_log("Error en obtenerCarreras: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    // OBTENER EL NÚMERO DE PÁGINAS (30 carreras por página)
+    public static function contarCarreras()
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+
+            $sql = "SELECT COUNT(*) as total FROM carrera";
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->execute();
+
+            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            return (int) ceil($resultado['total'] / self::REGISTROS_POR_PAGINA);
+        } catch (PDOException $e) {
+            error_log("Error en contarCarreras: " . $e->getMessage());
+            return 0;
+        }
+    }
+
+    // OBTENER CARRERAS A PAGINAR
+    public static function obtenerCarrerasAPaginar($pagina)
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+
+            $saltos = ($pagina - 1) * self::REGISTROS_POR_PAGINA;
+            $lote = self::REGISTROS_POR_PAGINA;
+
+            $sql = "SELECT c.*, d.nombreDepartamento 
+                    FROM carrera c
+                    LEFT JOIN departamento d ON c.idDepartamento = d.idDepartamento
+                    ORDER BY c.nombreCarrera ASC 
+                    LIMIT :lote OFFSET :saltos";
+            
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->bindParam(':lote', $lote, PDO::PARAM_INT);
+            $stmt->bindParam(':saltos', $saltos, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $carreras = [];
+            
+            foreach ($resultados as $fila) {
+                $model = new CarreraModel();
+                $model->hidratarDesdeArray($fila);
+                if (isset($fila['nombreDepartamento'])) {
+                    $model->nombreDepartamento = $fila['nombreDepartamento'];
+                }
+                $carreras[] = $model;
+            }
+
+            return $carreras;
+        } catch (PDOException $e) {
+            error_log("Error en obtenerCarrerasAPaginar: " . $e->getMessage());
             return [];
         }
     }
@@ -85,6 +146,167 @@ class D_Carrera
         } catch (PDOException $e) {
             error_log("Error en obtenerCarrerasPorDepartamento: " . $e->getMessage());
             return [];
+        }
+    }
+
+    // CONTAR CARRERAS POR DEPARTAMENTO
+    public static function contarCarrerasPorDepartamento($idDepartamento)
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+
+            $sql = "SELECT COUNT(*) as total FROM carrera WHERE idDepartamento = :idDepartamento";
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->bindParam(':idDepartamento', $idDepartamento, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+            return (int) $resultado['total'];
+        } catch (PDOException $e) {
+            error_log("Error en contarCarrerasPorDepartamento: " . $e->getMessage());
+            return 0;
+        }
+    }
+
+    // OBTENER CARRERAS POR DEPARTAMENTO CON PAGINACIÓN
+    public static function obtenerCarrerasPorDepartamentoPaginadas($idDepartamento, $pagina)
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+
+            $saltos = ($pagina - 1) * self::REGISTROS_POR_PAGINA;
+            $lote = self::REGISTROS_POR_PAGINA;
+
+            $sql = "SELECT c.*, d.nombreDepartamento
+                    FROM carrera c
+                    LEFT JOIN departamento d ON c.idDepartamento = d.idDepartamento
+                    WHERE c.idDepartamento = :idDepartamento 
+                    ORDER BY c.nombreCarrera ASC 
+                    LIMIT :lote OFFSET :saltos";
+            
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->bindParam(':idDepartamento', $idDepartamento, PDO::PARAM_INT);
+            $stmt->bindParam(':lote', $lote, PDO::PARAM_INT);
+            $stmt->bindParam(':saltos', $saltos, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $carreras = [];
+            
+            foreach ($resultados as $fila) {
+                $model = new CarreraModel();
+                $model->hidratarDesdeArray($fila);
+                if (isset($fila['nombreDepartamento'])) {
+                    $model->nombreDepartamento = $fila['nombreDepartamento'];
+                }
+                $carreras[] = $model;
+            }
+
+            return $carreras;
+        } catch (PDOException $e) {
+            error_log("Error en obtenerCarrerasPorDepartamentoPaginadas: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    // BUSCAR CARRERAS POR TÉRMINO
+    public static function buscarCarreras($termino)
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+            $terminoBusqueda = "%$termino%";
+
+            $sql = "SELECT c.*, d.nombreDepartamento
+                    FROM carrera c
+                    LEFT JOIN departamento d ON c.idDepartamento = d.idDepartamento
+                    WHERE c.nombreCarrera LIKE :termino 
+                    ORDER BY c.nombreCarrera ASC";
+            
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->bindParam(':termino', $terminoBusqueda);
+            $stmt->execute();
+
+            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $carreras = [];
+            
+            foreach ($resultados as $fila) {
+                $model = new CarreraModel();
+                $model->hidratarDesdeArray($fila);
+                if (isset($fila['nombreDepartamento'])) {
+                    $model->nombreDepartamento = $fila['nombreDepartamento'];
+                }
+                $carreras[] = $model;
+            }
+
+            return $carreras;
+        } catch (PDOException $e) {
+            error_log("Error en buscarCarreras: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    // BUSCAR CARRERAS POR TÉRMINO CON PAGINACIÓN
+    public static function buscarCarrerasPaginadas($termino, $pagina)
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+            $terminoBusqueda = "%$termino%";
+            
+            $saltos = ($pagina - 1) * self::REGISTROS_POR_PAGINA;
+            $lote = self::REGISTROS_POR_PAGINA;
+
+            $sql = "SELECT c.*, d.nombreDepartamento
+                    FROM carrera c
+                    LEFT JOIN departamento d ON c.idDepartamento = d.idDepartamento
+                    WHERE c.nombreCarrera LIKE :termino 
+                    ORDER BY c.nombreCarrera ASC
+                    LIMIT :lote OFFSET :saltos";
+            
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->bindParam(':termino', $terminoBusqueda);
+            $stmt->bindParam(':lote', $lote, PDO::PARAM_INT);
+            $stmt->bindParam(':saltos', $saltos, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $carreras = [];
+            
+            foreach ($resultados as $fila) {
+                $model = new CarreraModel();
+                $model->hidratarDesdeArray($fila);
+                if (isset($fila['nombreDepartamento'])) {
+                    $model->nombreDepartamento = $fila['nombreDepartamento'];
+                }
+                $carreras[] = $model;
+            }
+
+            return $carreras;
+        } catch (PDOException $e) {
+            error_log("Error en buscarCarrerasPaginadas: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    // CONTAR RESULTADOS DE BÚSQUEDA
+    public static function contarResultadosBusquedaCarreras($termino)
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+            $terminoBusqueda = "%$termino%";
+
+            $sql = "SELECT COUNT(*) as total 
+                    FROM carrera 
+                    WHERE nombreCarrera LIKE :termino";
+            
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->bindParam(':termino', $terminoBusqueda);
+            $stmt->execute();
+
+            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+            return (int) ceil($resultado['total'] / self::REGISTROS_POR_PAGINA);
+        } catch (PDOException $e) {
+            error_log("Error en contarResultadosBusquedaCarreras: " . $e->getMessage());
+            return 0;
         }
     }
 

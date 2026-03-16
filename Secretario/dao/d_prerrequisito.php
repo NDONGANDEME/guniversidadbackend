@@ -4,7 +4,7 @@ require_once __DIR__ . "/../modelo/m_prerrequisito.php";
 
 class D_Prerrequisito
 {
-    // OBTENER TODOS LOS PRERREQUISITOS
+    // OBTENER TODOS LOS PRERREQUISITOS (solo lectura)
     public static function obtenerPrerrequisitos()
     {
         try {
@@ -43,7 +43,7 @@ class D_Prerrequisito
         }
     }
 
-    // OBTENER PRERREQUISITOS POR ASIGNATURA
+    // OBTENER PRERREQUISITOS POR ASIGNATURA (solo lectura)
     public static function obtenerPrerrequisitosPorAsignatura($idAsignatura)
     {
         try {
@@ -79,7 +79,7 @@ class D_Prerrequisito
         }
     }
 
-    // OBTENER PRERREQUISITOS QUE TIENEN UNA ASIGNATURA COMO REQUERIDA
+    // OBTENER PRERREQUISITOS QUE TIENEN UNA ASIGNATURA COMO REQUERIDA (solo lectura)
     public static function obtenerAsignaturasQueRequeridasPor($idAsignaturaRequerida)
     {
         try {
@@ -115,7 +115,7 @@ class D_Prerrequisito
         }
     }
 
-    // OBTENER PRERREQUISITO POR ID
+    // OBTENER PRERREQUISITO POR ID (solo lectura)
     public static function obtenerPrerrequisitoPorId($id)
     {
         try {
@@ -140,65 +140,102 @@ class D_Prerrequisito
         }
     }
 
-    // INSERTAR PRERREQUISITO
+    // INSERTAR PRERREQUISITO CON TRANSACCIÓN
     public static function insertarPrerrequisito($datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "INSERT INTO prerrequisitos (idAsignatura, idAsignaturaRequerida) 
                     VALUES (:idAsignatura, :idAsignaturaRequerida)";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':idAsignatura', $datos['idAsignatura'], PDO::PARAM_INT);
             $stmt->bindParam(':idAsignaturaRequerida', $datos['idAsignaturaRequerida'], PDO::PARAM_INT);
             
             if ($stmt->execute()) {
-                return $instanciaConexion->lastInsertId();
+                $id = $pdo->lastInsertId();
+                $pdo->commit();
+                return $id;
+            } else {
+                $pdo->rollBack();
+                return null;
             }
             
-            return null;
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en insertarPrerrequisito: " . $e->getMessage());
             return null;
         }
     }
 
-    // ELIMINAR PRERREQUISITO
+    // ELIMINAR PRERREQUISITO CON TRANSACCIÓN
     public static function eliminarPrerrequisito($id)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "DELETE FROM prerrequisitos WHERE idPrerrequisito = :id";
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en eliminarPrerrequisito: " . $e->getMessage());
             return false;
         }
     }
 
-    // ELIMINAR TODOS LOS PRERREQUISITOS DE UNA ASIGNATURA
+    // ELIMINAR TODOS LOS PRERREQUISITOS DE UNA ASIGNATURA CON TRANSACCIÓN
     public static function eliminarPrerrequisitosPorAsignatura($idAsignatura)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "DELETE FROM prerrequisitos WHERE idAsignatura = :idAsignatura";
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':idAsignatura', $idAsignatura, PDO::PARAM_INT);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en eliminarPrerrequisitosPorAsignatura: " . $e->getMessage());
             return false;
         }
     }
 
-    // VERIFICAR SI EXISTE PRERREQUISITO
+    // VERIFICAR SI EXISTE PRERREQUISITO (solo lectura)
     public static function existePrerrequisito($idAsignatura, $idAsignaturaRequerida)
     {
         try {
@@ -220,7 +257,7 @@ class D_Prerrequisito
         }
     }
 
-    // VERIFICAR SI HAY PRERREQUISITOS CIRCULARES
+    // VERIFICAR SI HAY PRERREQUISITOS CIRCULARES (solo lectura)
     public static function existePrerrequisitoCircular($idAsignatura, $idAsignaturaRequerida)
     {
         try {

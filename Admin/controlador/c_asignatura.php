@@ -24,26 +24,46 @@ class AsignaturaController
                 self::obtenerAsignaturas();
                 break;
                 
-            case "insertarAsignatura":
-                self::insertarAsignatura($parametros);
-                /*if (PermisosUtil::usuarioTienePermiso($parametros['idUsuario'],$parametros['accion'])){
-                     
-                    break;
-                }else{
-                    echo json_encode([
-                    'estado' => 403,
-                    'exito' => false,
-                    'mensaje' => 'Acceso denegado. No tienes los permisos necesrios.',
-                    'resultado' => null
-                    ]);
-                }*/
-               
-            case "actualizarAsignatura":
-                self::actualizarAsignatura($parametros);
+            case "obtenerAsignaturasAPaginar":
+                self::obtenerAsignaturasAPaginar($parametros);
+                break;
+                
+            case "obtenerTotalPaginasAsignatura":
+                self::obtenerTotalPaginas();
                 break;
                 
             case "obtenerAsignaturasPorFacultad":
                 self::obtenerAsignaturasPorFacultad($parametros);
+                break;
+                
+            case "obtenerAsignaturasPorFacultadPaginadas":
+                self::obtenerAsignaturasPorFacultadPaginadas($parametros);
+                break;
+                
+            case "buscarAsignaturas":
+                self::buscarAsignaturas($parametros);
+                break;
+                
+            case "insertarAsignatura":
+                if (PermisosUtil::usuarioTienePermiso($parametros['idUsuario'], $parametros['accion'])) {
+                    self::insertarAsignatura($parametros);
+                    break;
+                } else {
+                    echo json_encode([
+                        'estado' => 403,
+                        'exito' => false,
+                        'mensaje' => 'Acceso denegado. No tienes los permisos necesarios.',
+                        'resultado' => null
+                    ]);
+                    break;
+                }
+                
+            case "actualizarAsignatura":
+                self::actualizarAsignatura($parametros);
+                break;
+                
+            case "eliminarAsignatura":
+                self::eliminarAsignatura($parametros);
                 break;
                 
             default:
@@ -94,6 +114,67 @@ class AsignaturaController
         ]);
     }
 
+    // Obtener asignaturas paginadas
+    private static function obtenerAsignaturasAPaginar($parametros)
+    {
+        if (!self::verificarSesionActiva()) {
+            echo json_encode([
+                'estado' => 401,
+                'exito' => false,
+                'mensaje' => 'No hay sesión activa',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $pagina = $parametros['pagina'] ?? 1;
+        $pagina = intval($pagina);
+        if ($pagina < 1) $pagina = 1;
+        
+        $asignaturas = D_Asignatura::obtenerAsignaturasAPaginar($pagina);
+        $resultado = [];
+        
+        foreach ($asignaturas as $asignatura) {
+            $resultado[] = $asignatura->convertirAArray();
+        }
+        
+        echo json_encode([
+            'estado' => 'exito',
+            'exito' => true,
+            'mensaje' => 'Asignaturas paginadas obtenidas correctamente',
+            'resultado' => [
+                'pagina_actual' => $pagina,
+                'asignaturas' => $resultado
+            ]
+        ]);
+    }
+
+    // Obtener total de páginas
+    private static function obtenerTotalPaginas()
+    {
+        if (!self::verificarSesionActiva()) {
+            echo json_encode([
+                'estado' => 401,
+                'exito' => false,
+                'mensaje' => 'No hay sesión activa',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $totalPaginas = D_Asignatura::contarAsignaturas();
+        
+        echo json_encode([
+            'estado' => 'exito',
+            'exito' => true,
+            'mensaje' => 'Total de páginas obtenido correctamente',
+            'resultado' => [
+                'total_paginas' => $totalPaginas,
+                'registros_por_pagina' => D_Asignatura::REGISTROS_POR_PAGINA
+            ]
+        ]);
+    }
+
     // Obtener asignaturas por facultad
     private static function obtenerAsignaturasPorFacultad($parametros)
     {
@@ -132,6 +213,121 @@ class AsignaturaController
             'mensaje' => 'Asignaturas por facultad obtenidas correctamente',
             'resultado' => $resultado
         ]);
+    }
+
+    // Obtener asignaturas por facultad paginadas
+    private static function obtenerAsignaturasPorFacultadPaginadas($parametros)
+    {
+        if (!self::verificarSesionActiva()) {
+            echo json_encode([
+                'estado' => 401,
+                'exito' => false,
+                'mensaje' => 'No hay sesión activa',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $idFacultad = $parametros['idFacultad'] ?? null;
+        $pagina = $parametros['pagina'] ?? 1;
+        
+        if (!$idFacultad) {
+            echo json_encode([
+                'estado' => 400,
+                'exito' => false,
+                'mensaje' => 'ID de facultad no proporcionado',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $pagina = intval($pagina);
+        if ($pagina < 1) $pagina = 1;
+        
+        $asignaturas = D_Asignatura::obtenerAsignaturasPorFacultadPaginadas($idFacultad, $pagina);
+        $resultado = [];
+        
+        foreach ($asignaturas as $asignatura) {
+            $resultado[] = $asignatura->convertirAArray();
+        }
+        
+        // Obtener total de páginas para esta facultad
+        $totalAsignaturas = D_Asignatura::contarAsignaturasPorFacultad($idFacultad);
+        $totalPaginas = ceil($totalAsignaturas / D_Asignatura::REGISTROS_POR_PAGINA);
+        
+        echo json_encode([
+            'estado' => 'exito',
+            'exito' => true,
+            'mensaje' => 'Asignaturas por facultad paginadas obtenidas correctamente',
+            'resultado' => [
+                'pagina_actual' => $pagina,
+                'total_paginas' => $totalPaginas,
+                'total_asignaturas' => $totalAsignaturas,
+                'asignaturas' => $resultado
+            ]
+        ]);
+    }
+
+    // Buscar asignaturas
+    private static function buscarAsignaturas($parametros)
+    {
+        if (!self::verificarSesionActiva()) {
+            echo json_encode([
+                'estado' => 401,
+                'exito' => false,
+                'mensaje' => 'No hay sesión activa',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $termino = $parametros['termino'] ?? '';
+        $pagina = $parametros['pagina'] ?? 1;
+
+        if (empty($termino)) {
+            echo json_encode([
+                'estado' => 400,
+                'exito' => false,
+                'mensaje' => 'Término de búsqueda no proporcionado',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $pagina = intval($pagina);
+        if ($pagina < 1) $pagina = 1;
+
+        // Determinar si es búsqueda paginada o no
+        if (isset($parametros['paginada']) && $parametros['paginada'] === 'true') {
+            $asignaturas = D_Asignatura::buscarAsignaturasPaginadas($termino, $pagina);
+            $totalPaginas = D_Asignatura::contarResultadosBusqueda($termino);
+        } else {
+            $asignaturas = D_Asignatura::buscarAsignaturas($termino);
+            $totalPaginas = 1;
+        }
+
+        $resultado = [];
+        foreach ($asignaturas as $asignatura) {
+            $resultado[] = $asignatura->convertirAArray();
+        }
+
+        $response = [
+            'estado' => 'exito',
+            'exito' => true,
+            'mensaje' => 'Búsqueda realizada correctamente',
+            'resultado' => $resultado
+        ];
+
+        // Si es búsqueda paginada, incluir información de paginación
+        if (isset($parametros['paginada']) && $parametros['paginada'] === 'true') {
+            $response['resultado'] = [
+                'pagina_actual' => $pagina,
+                'total_paginas' => $totalPaginas,
+                'asignaturas' => $resultado
+            ];
+        }
+
+        echo json_encode($response);
     }
 
     // Insertar nueva asignatura
@@ -312,6 +508,75 @@ class AsignaturaController
             'estado' => 'exito',
             'exito' => true,
             'mensaje' => 'Asignatura actualizada exitosamente',
+            'resultado' => ['id' => $id]
+        ]);
+    }
+
+    // Eliminar asignatura
+    private static function eliminarAsignatura($parametros)
+    {
+        if (!self::verificarSesionActiva()) {
+            echo json_encode([
+                'estado' => 401,
+                'exito' => false,
+                'mensaje' => 'No hay sesión activa',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $id = $parametros['id'] ?? null;
+        
+        if (!$id) {
+            echo json_encode([
+                'estado' => 400,
+                'exito' => false,
+                'mensaje' => 'ID de asignatura no proporcionado',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        // Verificar que la asignatura existe
+        $asignaturaExistente = D_Asignatura::obtenerAsignaturaPorId($id);
+        if (!$asignaturaExistente) {
+            echo json_encode([
+                'estado' => 404,
+                'exito' => false,
+                'mensaje' => 'Asignatura no encontrada',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        // Verificar si tiene horarios asociados
+        if (D_Asignatura::tieneHorariosAsociados($id)) {
+            echo json_encode([
+                'estado' => 400,
+                'exito' => false,
+                'mensaje' => 'No se puede eliminar la asignatura porque tiene horarios asociados',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        // Eliminar asignatura
+        $eliminado = D_Asignatura::eliminarAsignatura($id);
+
+        if (!$eliminado) {
+            echo json_encode([
+                'estado' => 500,
+                'exito' => false,
+                'mensaje' => 'Error al eliminar la asignatura',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        echo json_encode([
+            'estado' => 'exito',
+            'exito' => true,
+            'mensaje' => 'Asignatura eliminada exitosamente',
             'resultado' => ['id' => $id]
         ]);
     }

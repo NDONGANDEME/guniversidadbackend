@@ -4,7 +4,7 @@ require_once __DIR__ . "/../modelo/m_planestudio.php";
 
 class D_PlanEstudio
 {
-    // OBTENER TODOS LOS PLANES DE ESTUDIO
+    // OBTENER TODOS LOS PLANES DE ESTUDIO (solo lectura)
     public static function obtenerPlanesEstudios()
     {
         try {
@@ -36,7 +36,7 @@ class D_PlanEstudio
         }
     }
 
-    // OBTENER PLANES DE ESTUDIO POR CARRERA
+    // OBTENER PLANES DE ESTUDIO POR CARRERA (solo lectura)
     public static function obtenerPlanesEstudioPorCarrera($idCarrera)
     {
         try {
@@ -65,7 +65,7 @@ class D_PlanEstudio
         }
     }
 
-    // OBTENER PLAN DE ESTUDIO POR ID
+    // OBTENER PLAN DE ESTUDIO POR ID (solo lectura)
     public static function obtenerPlanEstudioPorId($id)
     {
         try {
@@ -93,11 +93,13 @@ class D_PlanEstudio
         }
     }
 
-    // INSERTAR PLAN DE ESTUDIO
+    // INSERTAR PLAN DE ESTUDIO CON TRANSACCIÓN
     public static function insertarPlanEstudio($datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "INSERT INTO planestudio (
                         nombre, idCarrera, fechaElaboracion, periodoPlanEstudio, vigente
@@ -105,7 +107,7 @@ class D_PlanEstudio
                         :nombre, :idCarrera, :fechaElaboracion, :periodoPlanEstudio, :vigente
                     )";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':nombre', $datos['nombre']);
             $stmt->bindParam(':idCarrera', $datos['idCarrera'], PDO::PARAM_INT);
             $stmt->bindParam(':fechaElaboracion', $datos['fechaElaboracion']);
@@ -113,21 +115,30 @@ class D_PlanEstudio
             $stmt->bindParam(':vigente', $datos['vigente']);
             
             if ($stmt->execute()) {
-                return $instanciaConexion->lastInsertId();
+                $id = $pdo->lastInsertId();
+                $pdo->commit();
+                return $id;
+            } else {
+                $pdo->rollBack();
+                return null;
             }
             
-            return null;
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en insertarPlanEstudio: " . $e->getMessage());
             return null;
         }
     }
 
-    // ACTUALIZAR PLAN DE ESTUDIO
+    // ACTUALIZAR PLAN DE ESTUDIO CON TRANSACCIÓN
     public static function actualizarPlanEstudio($id, $datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "UPDATE planestudio SET 
                         nombre = :nombre,
@@ -136,40 +147,66 @@ class D_PlanEstudio
                         periodoPlanEstudio = :periodoPlanEstudio
                     WHERE idPlanEstudio = :id";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             $stmt->bindParam(':nombre', $datos['nombre']);
             $stmt->bindParam(':idCarrera', $datos['idCarrera'], PDO::PARAM_INT);
             $stmt->bindParam(':fechaElaboracion', $datos['fechaElaboracion']);
             $stmt->bindParam(':periodoPlanEstudio', $datos['periodoPlanEstudio']);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en actualizarPlanEstudio: " . $e->getMessage());
             return false;
         }
     }
 
-    // CAMBIAR VIGENCIA (habilitar/deshabilitar)
+    // CAMBIAR VIGENCIA CON TRANSACCIÓN
     public static function cambiarVigenciaPlanEstudio($id, $vigente)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "UPDATE planestudio SET vigente = :vigente WHERE idPlanEstudio = :id";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             $stmt->bindParam(':vigente', $vigente, PDO::PARAM_INT);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en cambiarVigenciaPlanEstudio: " . $e->getMessage());
             return false;
         }
     }
 
-    // VERIFICAR SI EXISTE PLAN DE ESTUDIO
+    // VERIFICAR SI EXISTE PLAN DE ESTUDIO (solo lectura)
     public static function existePlanEstudio($nombre, $idCarrera, $excluirId = null)
     {
         try {

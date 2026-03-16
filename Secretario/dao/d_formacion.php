@@ -4,7 +4,7 @@ require_once __DIR__ . "/../modelo/m_formacion.php";
 
 class D_Formacion
 {
-    // OBTENER TODAS LAS FORMACIONES
+    // OBTENER TODAS LAS FORMACIONES (solo lectura)
     public static function obtenerFormaciones()
     {
         try {
@@ -37,7 +37,7 @@ class D_Formacion
         }
     }
 
-    // OBTENER FORMACIONES POR PROFESOR
+    // OBTENER FORMACIONES POR PROFESOR (solo lectura)
     public static function obtenerFormacionesPorProfesor($idProfesor)
     {
         try {
@@ -66,7 +66,7 @@ class D_Formacion
         }
     }
 
-    // OBTENER FORMACIÓN POR ID
+    // OBTENER FORMACIÓN POR ID (solo lectura)
     public static function obtenerFormacionPorId($id)
     {
         try {
@@ -91,11 +91,13 @@ class D_Formacion
         }
     }
 
-    // INSERTAR FORMACIÓN
+    // INSERTAR FORMACIÓN CON TRANSACCIÓN
     public static function insertarFormacion($datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "INSERT INTO formacion (
                         institucion, tipoFormacion, titulo, nivel, idProfesor
@@ -103,7 +105,7 @@ class D_Formacion
                         :institucion, :tipoFormacion, :titulo, :nivel, :idProfesor
                     )";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':institucion', $datos['institucion']);
             $stmt->bindParam(':tipoFormacion', $datos['tipoFormacion']);
             $stmt->bindParam(':titulo', $datos['titulo']);
@@ -111,21 +113,30 @@ class D_Formacion
             $stmt->bindParam(':idProfesor', $datos['idProfesor'], PDO::PARAM_INT);
             
             if ($stmt->execute()) {
-                return $instanciaConexion->lastInsertId();
+                $id = $pdo->lastInsertId();
+                $pdo->commit();
+                return $id;
+            } else {
+                $pdo->rollBack();
+                return null;
             }
             
-            return null;
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en insertarFormacion: " . $e->getMessage());
             return null;
         }
     }
 
-    // ACTUALIZAR FORMACIÓN
+    // ACTUALIZAR FORMACIÓN CON TRANSACCIÓN
     public static function actualizarFormacion($id, $datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "UPDATE formacion SET 
                         institucion = :institucion,
@@ -134,32 +145,58 @@ class D_Formacion
                         nivel = :nivel
                     WHERE idFormacion = :id";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             $stmt->bindParam(':institucion', $datos['institucion']);
             $stmt->bindParam(':tipoFormacion', $datos['tipoFormacion']);
             $stmt->bindParam(':titulo', $datos['titulo']);
             $stmt->bindParam(':nivel', $datos['nivel']);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en actualizarFormacion: " . $e->getMessage());
             return false;
         }
     }
 
-    // ELIMINAR FORMACIÓN
+    // ELIMINAR FORMACIÓN CON TRANSACCIÓN
     public static function eliminarFormacion($id)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "DELETE FROM formacion WHERE idFormacion = :id";
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en eliminarFormacion: " . $e->getMessage());
             return false;
         }

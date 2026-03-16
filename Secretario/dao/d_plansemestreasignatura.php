@@ -4,7 +4,7 @@ require_once __DIR__ . "/../modelo/m_plansemestreasignatura.php";
 
 class D_PlanSemestreAsignatura
 {
-    // OBTENER TODOS LOS REGISTROS DE PLAN SEMESTRE ASIGNATURA
+    // OBTENER TODOS LOS REGISTROS DE PLAN SEMESTRE ASIGNATURA (solo lectura)
     public static function obtenerPlanSemestreAsignaturas()
     {
         try {
@@ -47,7 +47,7 @@ class D_PlanSemestreAsignatura
         }
     }
 
-    // OBTENER PLAN SEMESTRE ASIGNATURA POR ID
+    // OBTENER PLAN SEMESTRE ASIGNATURA POR ID (solo lectura)
     public static function obtenerPlanSemestreAsignaturaPorId($id)
     {
         try {
@@ -72,7 +72,7 @@ class D_PlanSemestreAsignatura
         }
     }
 
-    // OBTENER PLAN SEMESTRE ASIGNATURA POR PLAN ESTUDIO
+    // OBTENER PLAN SEMESTRE ASIGNATURA POR PLAN ESTUDIO (solo lectura)
     public static function obtenerPlanSemestreAsignaturaPorPlanEstudio($idPlanEstudio)
     {
         try {
@@ -112,11 +112,13 @@ class D_PlanSemestreAsignatura
         }
     }
 
-    // INSERTAR PLAN SEMESTRE ASIGNATURA
+    // INSERTAR PLAN SEMESTRE ASIGNATURA CON TRANSACCIÓN
     public static function insertarPlanSemestreAsignatura($datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "INSERT INTO plan_semestre_asignatura (
                         idPlanEstudio, idSemestre, idAsignatura, creditos, modalidad
@@ -124,7 +126,7 @@ class D_PlanSemestreAsignatura
                         :idPlanEstudio, :idSemestre, :idAsignatura, :creditos, :modalidad
                     )";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':idPlanEstudio', $datos['idPlanEstudio'], PDO::PARAM_INT);
             $stmt->bindParam(':idSemestre', $datos['idSemestre'], PDO::PARAM_INT);
             $stmt->bindParam(':idAsignatura', $datos['idAsignatura'], PDO::PARAM_INT);
@@ -132,21 +134,30 @@ class D_PlanSemestreAsignatura
             $stmt->bindParam(':modalidad', $datos['modalidad']);
             
             if ($stmt->execute()) {
-                return $instanciaConexion->lastInsertId();
+                $id = $pdo->lastInsertId();
+                $pdo->commit();
+                return $id;
+            } else {
+                $pdo->rollBack();
+                return null;
             }
             
-            return null;
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en insertarPlanSemestreAsignatura: " . $e->getMessage());
             return null;
         }
     }
 
-    // ACTUALIZAR PLAN SEMESTRE ASIGNATURA
+    // ACTUALIZAR PLAN SEMESTRE ASIGNATURA CON TRANSACCIÓN
     public static function actualizarPlanSemestreAsignatura($id, $datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "UPDATE plan_semestre_asignatura SET 
                         idSemestre = :idSemestre,
@@ -155,21 +166,64 @@ class D_PlanSemestreAsignatura
                         modalidad = :modalidad
                     WHERE idPlanCursoAsignatura = :id";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             $stmt->bindParam(':idSemestre', $datos['idSemestre'], PDO::PARAM_INT);
             $stmt->bindParam(':idAsignatura', $datos['idAsignatura'], PDO::PARAM_INT);
             $stmt->bindParam(':creditos', $datos['creditos'], PDO::PARAM_INT);
             $stmt->bindParam(':modalidad', $datos['modalidad']);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en actualizarPlanSemestreAsignatura: " . $e->getMessage());
             return false;
         }
     }
 
-    // VERIFICAR SI EXISTE ASIGNACIÓN
+    // ELIMINAR PLAN SEMESTRE ASIGNATURA CON TRANSACCIÓN
+    public static function eliminarPlanSemestreAsignatura($id)
+    {
+        $pdo = null;
+        try {
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
+
+            $sql = "DELETE FROM plan_semestre_asignatura WHERE idPlanCursoAsignatura = :id";
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+            
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
+        } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
+            error_log("Error en eliminarPlanSemestreAsignatura: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    // VERIFICAR SI EXISTE ASIGNACIÓN (solo lectura)
     public static function existeAsignacion($idPlanEstudio, $idSemestre, $idAsignatura, $excluirId = null)
     {
         try {
@@ -199,24 +253,6 @@ class D_PlanSemestreAsignatura
             return $resultado['total'] > 0;
         } catch (PDOException $e) {
             error_log("Error en existeAsignacion: " . $e->getMessage());
-            return false;
-        }
-    }
-
-
-    // Añadir al final de d_plansemestreasignatura.php
-    public static function eliminarPlanSemestreAsignatura($id)
-    {
-        try {
-            $instanciaConexion = ConexionUtil::conectar();
-
-            $sql = "DELETE FROM plan_semestre_asignatura WHERE idPlanCursoAsignatura = :id";
-            $stmt = $instanciaConexion->prepare($sql);
-            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-            
-            return $stmt->execute();
-        } catch (PDOException $e) {
-            error_log("Error en eliminarPlanSemestreAsignatura: " . $e->getMessage());
             return false;
         }
     }

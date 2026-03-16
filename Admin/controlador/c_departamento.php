@@ -23,6 +23,26 @@ class DepartamentoController
                 self::obtenerDepartamentos();
                 break;
                 
+            case "obtenerDepartamentosAPaginar":
+                self::obtenerDepartamentosPaginados($parametros);
+                break;
+                
+            case "obtenerTotalPaginasDepartamento":
+                self::obtenerTotalPaginas();
+                break;
+                
+            case "obtenerDepartamentosPorFacultad":
+                self::obtenerDepartamentosPorFacultad($parametros);
+                break;
+                
+            case "obtenerDepartamentosPorFacultadPaginados":
+                self::obtenerDepartamentosPorFacultadPaginados($parametros);
+                break;
+                
+            case "buscarDepartamentos":
+                self::buscarDepartamentos($parametros);
+                break;
+                
             case "insertarDepartamento":
                 self::insertarDepartamento($parametros);
                 break;
@@ -76,6 +96,222 @@ class DepartamentoController
             'mensaje' => 'Departamentos obtenidos correctamente',
             'resultado' => $departamentos
         ]);
+    }
+
+    // Obtener departamentos paginados
+    private static function obtenerDepartamentosPaginados($parametros)
+    {
+        if (!self::verificarSesionActiva()) {
+            echo json_encode([
+                'estado' => 401,
+                'exito' => false,
+                'mensaje' => 'No hay sesión activa',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $pagina = $parametros['pagina'] ?? 1;
+        $pagina = intval($pagina);
+        if ($pagina < 1) $pagina = 1;
+        
+        $departamentos = D_Departamento::obtenerDepartamentosAPaginar($pagina);
+        $resultado = [];
+        
+        foreach ($departamentos as $depto) {
+            $resultado[] = $depto->convertirAArray();
+        }
+        
+        echo json_encode([
+            'estado' => 'exito',
+            'exito' => true,
+            'mensaje' => 'Departamentos paginados obtenidos correctamente',
+            'resultado' => [
+                'pagina_actual' => $pagina,
+                'departamentos' => $resultado
+            ]
+        ]);
+    }
+
+    // Obtener total de páginas
+    private static function obtenerTotalPaginas()
+    {
+        if (!self::verificarSesionActiva()) {
+            echo json_encode([
+                'estado' => 401,
+                'exito' => false,
+                'mensaje' => 'No hay sesión activa',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $totalPaginas = D_Departamento::contarDepartamentos();
+        
+        echo json_encode([
+            'estado' => 'exito',
+            'exito' => true,
+            'mensaje' => 'Total de páginas obtenido correctamente',
+            'resultado' => [
+                'total_paginas' => $totalPaginas,
+                'registros_por_pagina' => D_Departamento::REGISTROS_POR_PAGINA
+            ]
+        ]);
+    }
+
+    // Obtener departamentos por facultad
+    private static function obtenerDepartamentosPorFacultad($parametros)
+    {
+        if (!self::verificarSesionActiva()) {
+            echo json_encode([
+                'estado' => 401,
+                'exito' => false,
+                'mensaje' => 'No hay sesión activa',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $idFacultad = $parametros['idFacultad'] ?? null;
+        
+        if (!$idFacultad) {
+            echo json_encode([
+                'estado' => 400,
+                'exito' => false,
+                'mensaje' => 'ID de facultad no proporcionado',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $departamentos = D_Departamento::obtenerDepartamentosPorFacultad($idFacultad);
+        $resultado = [];
+        
+        foreach ($departamentos as $depto) {
+            $resultado[] = $depto->convertirAArray();
+        }
+        
+        echo json_encode([
+            'estado' => 'exito',
+            'exito' => true,
+            'mensaje' => 'Departamentos por facultad obtenidos correctamente',
+            'resultado' => $resultado
+        ]);
+    }
+
+    // Obtener departamentos por facultad paginados
+    private static function obtenerDepartamentosPorFacultadPaginados($parametros)
+    {
+        if (!self::verificarSesionActiva()) {
+            echo json_encode([
+                'estado' => 401,
+                'exito' => false,
+                'mensaje' => 'No hay sesión activa',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $idFacultad = $parametros['idFacultad'] ?? null;
+        $pagina = $parametros['pagina'] ?? 1;
+        
+        if (!$idFacultad) {
+            echo json_encode([
+                'estado' => 400,
+                'exito' => false,
+                'mensaje' => 'ID de facultad no proporcionado',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $pagina = intval($pagina);
+        if ($pagina < 1) $pagina = 1;
+        
+        $departamentos = D_Departamento::obtenerDepartamentosPorFacultadPaginadas($idFacultad, $pagina);
+        $resultado = [];
+        
+        foreach ($departamentos as $depto) {
+            $resultado[] = $depto->convertirAArray();
+        }
+        
+        // Obtener total de páginas para esta facultad
+        $totalDeptos = D_Departamento::contarDepartamentosPorFacultad($idFacultad);
+        $totalPaginas = ceil($totalDeptos / D_Departamento::REGISTROS_POR_PAGINA);
+        
+        echo json_encode([
+            'estado' => 'exito',
+            'exito' => true,
+            'mensaje' => 'Departamentos por facultad paginados obtenidos correctamente',
+            'resultado' => [
+                'pagina_actual' => $pagina,
+                'total_paginas' => $totalPaginas,
+                'total_departamentos' => $totalDeptos,
+                'departamentos' => $resultado
+            ]
+        ]);
+    }
+
+    // Buscar departamentos
+    private static function buscarDepartamentos($parametros)
+    {
+        if (!self::verificarSesionActiva()) {
+            echo json_encode([
+                'estado' => 401,
+                'exito' => false,
+                'mensaje' => 'No hay sesión activa',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $termino = $parametros['termino'] ?? '';
+        $pagina = $parametros['pagina'] ?? 1;
+
+        if (empty($termino)) {
+            echo json_encode([
+                'estado' => 400,
+                'exito' => false,
+                'mensaje' => 'Término de búsqueda no proporcionado',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $pagina = intval($pagina);
+        if ($pagina < 1) $pagina = 1;
+
+        // Determinar si es búsqueda paginada o no
+        if (isset($parametros['paginada']) && $parametros['paginada'] === 'true') {
+            $departamentos = D_Departamento::buscarDepartamentosPaginados($termino, $pagina);
+            $totalPaginas = D_Departamento::contarResultadosBusquedaDepartamentos($termino);
+        } else {
+            $departamentos = D_Departamento::buscarDepartamentos($termino);
+            $totalPaginas = 1;
+        }
+
+        $resultado = [];
+        foreach ($departamentos as $depto) {
+            $resultado[] = $depto->convertirAArray();
+        }
+
+        $response = [
+            'estado' => 'exito',
+            'exito' => true,
+            'mensaje' => 'Búsqueda realizada correctamente',
+            'resultado' => $resultado
+        ];
+
+        // Si es búsqueda paginada, incluir información de paginación
+        if (isset($parametros['paginada']) && $parametros['paginada'] === 'true') {
+            $response['resultado'] = [
+                'pagina_actual' => $pagina,
+                'total_paginas' => $totalPaginas,
+                'departamentos' => $resultado
+            ];
+        }
+
+        echo json_encode($response);
     }
 
     // Insertar nuevo departamento

@@ -6,7 +6,7 @@ class D_Sesion
 {
     /**
      * OBTENER USUARIO COMPLETO CON SU ROL Y PERMISOS
-     * AHORA LOS PERMISOS SON DIRECTAMENTE POR USUARIO
+     * SEGÚN MODELO: usuario -> rol -> rol_permiso -> permiso
      */
     public static function obtenerUsuarioCompleto($identificador)
     {
@@ -21,9 +21,9 @@ class D_Sesion
             $campo = filter_var($identificador, FILTER_VALIDATE_EMAIL) ? 'correo' : 'nombreUsuario';
             
             // 1. OBTENER DATOS BÁSICOS DEL USUARIO CON SU ROL
-            $sqlUsuario = "SELECT u.*, r.nombreRol
+            $sqlUsuario = "SELECT u.*, r.nombreRol, r.idRol
                           FROM usuarios u
-                          LEFT JOIN rol r ON u.idRol = r.idRol
+                          INNER JOIN rol r ON u.idRol = r.idRol
                           WHERE u.$campo = :identificador
                           LIMIT 1";
             
@@ -42,14 +42,14 @@ class D_Sesion
             $model = new SesionModel();
             $model->hidratarDesdeArray($datosUsuario);
             
-            // 2. OBTENER PERMISOS DIRECTOS DEL USUARIO (tabla usuario_permiso)
+            // 2. OBTENER PERMISOS A TRAVÉS DEL ROL (tabla rol_permiso)
             $sqlPermisos = "SELECT p.idPermiso, p.nombrePermiso, p.tabla, p.accion
                            FROM permiso p
-                           INNER JOIN usuario_permiso up ON p.idPermiso = up.idPermiso
-                           WHERE up.idUsuario = :idUsuario";
+                           INNER JOIN rol_permiso rp ON p.idPermiso = rp.idPermiso
+                           WHERE rp.idRol = :idRol";
             
             $stmtPermisos = $pdo->prepare($sqlPermisos);
-            $stmtPermisos->bindParam(':idUsuario', $datosUsuario['idUsuario'], PDO::PARAM_INT);
+            $stmtPermisos->bindParam(':idRol', $datosUsuario['idRol'], PDO::PARAM_INT);
             $stmtPermisos->execute();
             
             $permisos = $stmtPermisos->fetchAll(PDO::FETCH_ASSOC);
@@ -78,9 +78,9 @@ class D_Sesion
         try {
             $pdo = ConexionUtil::conectar();
             
-            $sql = "SELECT u.*, r.nombreRol 
+            $sql = "SELECT u.*, r.nombreRol, r.idRol
                     FROM usuarios u
-                    LEFT JOIN rol r ON u.idRol = r.idRol
+                    INNER JOIN rol r ON u.idRol = r.idRol
                     WHERE u.correo = :correo
                     LIMIT 1";
             
@@ -111,9 +111,9 @@ class D_Sesion
         try {
             $pdo = ConexionUtil::conectar();
 
-            $sql = "SELECT u.*, r.nombreRol
+            $sql = "SELECT u.*, r.nombreRol, r.idRol
                     FROM usuarios u
-                    LEFT JOIN rol r ON u.idRol = r.idRol
+                    INNER JOIN rol r ON u.idRol = r.idRol
                     WHERE u.idUsuario = :id
                     LIMIT 1";
             
@@ -144,9 +144,9 @@ class D_Sesion
         try {
             $pdo = ConexionUtil::conectar();
 
-            $sql = "SELECT u.*, r.nombreRol 
+            $sql = "SELECT u.*, r.nombreRol, r.idRol
                     FROM usuarios u
-                    LEFT JOIN rol r ON u.idRol = r.idRol
+                    INNER JOIN rol r ON u.idRol = r.idRol
                     WHERE u.nombreUsuario = :nombreUsuario
                     LIMIT 1";
             
@@ -170,52 +170,77 @@ class D_Sesion
     }
 
     /**
-     * OBTENER PERMISOS DE UN USUARIO (desde usuario_permiso)
+     * OBTENER PERMISOS DE UN ROL
      */
-    public static function obtenerPermisosUsuario($idUsuario)
+    public static function obtenerPermisosPorRol($idRol)
     {
         try {
             $pdo = ConexionUtil::conectar();
 
             $sql = "SELECT p.nombrePermiso 
                     FROM permiso p
-                    INNER JOIN usuario_permiso up ON p.idPermiso = up.idPermiso
-                    WHERE up.idUsuario = :idUsuario";
+                    INNER JOIN rol_permiso rp ON p.idPermiso = rp.idPermiso
+                    WHERE rp.idRol = :idRol";
             
             $stmt = $pdo->prepare($sql);
-            $stmt->bindParam(':idUsuario', $idUsuario, PDO::PARAM_INT);
+            $stmt->bindParam(':idRol', $idRol, PDO::PARAM_INT);
             $stmt->execute();
 
             return $stmt->fetchAll(PDO::FETCH_COLUMN);
             
         } catch (PDOException $e) {
-            error_log("Error en obtenerPermisosUsuario: " . $e->getMessage());
+            error_log("Error en obtenerPermisosPorRol: " . $e->getMessage());
             return [];
         }
     }
 
     /**
-     * OBTENER PERMISOS DETALLADOS DE UN USUARIO
+     * OBTENER PERMISOS DETALLADOS DE UN ROL
      */
-    public static function obtenerPermisosDetalladosUsuario($idUsuario)
+    public static function obtenerPermisosDetalladosPorRol($idRol)
     {
         try {
             $pdo = ConexionUtil::conectar();
 
             $sql = "SELECT p.idPermiso, p.nombrePermiso, p.tabla, p.accion
                     FROM permiso p
-                    INNER JOIN usuario_permiso up ON p.idPermiso = up.idPermiso
-                    WHERE up.idUsuario = :idUsuario";
+                    INNER JOIN rol_permiso rp ON p.idPermiso = rp.idPermiso
+                    WHERE rp.idRol = :idRol";
             
             $stmt = $pdo->prepare($sql);
-            $stmt->bindParam(':idUsuario', $idUsuario, PDO::PARAM_INT);
+            $stmt->bindParam(':idRol', $idRol, PDO::PARAM_INT);
             $stmt->execute();
 
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
             
         } catch (PDOException $e) {
-            error_log("Error en obtenerPermisosDetalladosUsuario: " . $e->getMessage());
+            error_log("Error en obtenerPermisosDetalladosPorRol: " . $e->getMessage());
             return [];
+        }
+    }
+
+    /**
+     * VERIFICAR SI UN ROL TIENE UN PERMISO ESPECÍFICO
+     */
+    public static function rolTienePermiso($idRol, $idPermiso)
+    {
+        try {
+            $pdo = ConexionUtil::conectar();
+
+            $sql = "SELECT COUNT(*) as total FROM rol_permiso 
+                    WHERE idRol = :idRol AND idPermiso = :idPermiso";
+            
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindParam(':idRol', $idRol, PDO::PARAM_INT);
+            $stmt->bindParam(':idPermiso', $idPermiso, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $resultado['total'] > 0;
+            
+        } catch (PDOException $e) {
+            error_log("Error en rolTienePermiso: " . $e->getMessage());
+            return false;
         }
     }
 
@@ -227,8 +252,10 @@ class D_Sesion
         try {
             $pdo = ConexionUtil::conectar();
 
-            $sql = "SELECT COUNT(*) as total FROM usuario_permiso 
-                    WHERE idUsuario = :idUsuario AND idPermiso = :idPermiso";
+            $sql = "SELECT COUNT(*) as total 
+                    FROM usuarios u
+                    INNER JOIN rol_permiso rp ON u.idRol = rp.idRol
+                    WHERE u.idUsuario = :idUsuario AND rp.idPermiso = :idPermiso";
             
             $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':idUsuario', $idUsuario, PDO::PARAM_INT);
@@ -245,9 +272,9 @@ class D_Sesion
     }
 
     /**
-     * ASIGNAR PERMISO A USUARIO
+     * ASIGNAR PERMISO A ROL
      */
-    public static function asignarPermisoAUsuario($idUsuario, $idPermiso)
+    public static function asignarPermisoARol($idRol, $idPermiso)
     {
         $pdo = null;
         try {
@@ -255,16 +282,16 @@ class D_Sesion
             $pdo->beginTransaction();
 
             // Verificar si ya tiene el permiso
-            if (self::usuarioTienePermiso($idUsuario, $idPermiso)) {
+            if (self::rolTienePermiso($idRol, $idPermiso)) {
                 $pdo->rollBack();
                 return false;
             }
 
-            $sql = "INSERT INTO usuario_permiso (idUsuario, idPermiso) 
-                    VALUES (:idUsuario, :idPermiso)";
+            $sql = "INSERT INTO rol_permiso (idRol, idPermiso) 
+                    VALUES (:idRol, :idPermiso)";
             
             $stmt = $pdo->prepare($sql);
-            $stmt->bindParam(':idUsuario', $idUsuario, PDO::PARAM_INT);
+            $stmt->bindParam(':idRol', $idRol, PDO::PARAM_INT);
             $stmt->bindParam(':idPermiso', $idPermiso, PDO::PARAM_INT);
             
             $resultado = $stmt->execute();
@@ -281,26 +308,26 @@ class D_Sesion
             if ($pdo) {
                 $pdo->rollBack();
             }
-            error_log("Error en asignarPermisoAUsuario: " . $e->getMessage());
+            error_log("Error en asignarPermisoARol: " . $e->getMessage());
             return false;
         }
     }
 
     /**
-     * QUITAR PERMISO A USUARIO
+     * QUITAR PERMISO A ROL
      */
-    public static function quitarPermisoAUsuario($idUsuario, $idPermiso)
+    public static function quitarPermisoARol($idRol, $idPermiso)
     {
         $pdo = null;
         try {
             $pdo = ConexionUtil::conectar();
             $pdo->beginTransaction();
 
-            $sql = "DELETE FROM usuario_permiso 
-                    WHERE idUsuario = :idUsuario AND idPermiso = :idPermiso";
+            $sql = "DELETE FROM rol_permiso 
+                    WHERE idRol = :idRol AND idPermiso = :idPermiso";
             
             $stmt = $pdo->prepare($sql);
-            $stmt->bindParam(':idUsuario', $idUsuario, PDO::PARAM_INT);
+            $stmt->bindParam(':idRol', $idRol, PDO::PARAM_INT);
             $stmt->bindParam(':idPermiso', $idPermiso, PDO::PARAM_INT);
             
             $resultado = $stmt->execute();
@@ -317,7 +344,7 @@ class D_Sesion
             if ($pdo) {
                 $pdo->rollBack();
             }
-            error_log("Error en quitarPermisoAUsuario: " . $e->getMessage());
+            error_log("Error en quitarPermisoARol: " . $e->getMessage());
             return false;
         }
     }

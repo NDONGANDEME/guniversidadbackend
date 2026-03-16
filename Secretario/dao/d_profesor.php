@@ -4,7 +4,7 @@ require_once __DIR__ . "/../modelo/m_profesor.php";
 
 class D_Profesor
 {
-    // OBTENER TODOS LOS PROFESORES
+    // OBTENER TODOS LOS PROFESORES (solo lectura)
     public static function obtenerProfesores()
     {
         try {
@@ -37,7 +37,7 @@ class D_Profesor
         }
     }
 
-    // OBTENER PROFESORES POR FACULTAD
+    // OBTENER PROFESORES POR FACULTAD (solo lectura)
     public static function obtenerProfesoresPorFacultad($idFacultad)
     {
         try {
@@ -71,7 +71,7 @@ class D_Profesor
         }
     }
 
-    // OBTENER PROFESORES POR DEPARTAMENTO
+    // OBTENER PROFESORES POR DEPARTAMENTO (solo lectura)
     public static function obtenerProfesoresPorDepartamento($idDepartamento)
     {
         try {
@@ -100,7 +100,7 @@ class D_Profesor
         }
     }
 
-    // OBTENER PROFESOR POR ID
+    // OBTENER PROFESOR POR ID (solo lectura)
     public static function obtenerProfesorPorId($id)
     {
         try {
@@ -129,11 +129,41 @@ class D_Profesor
         }
     }
 
-    // INSERTAR PROFESOR
-    public static function insertarProfesor($datos)
+    // OBTENER PROFESOR POR ID DE USUARIO (solo lectura)
+    public static function obtenerProfesorPorIdUsuario($idUsuario)
     {
         try {
             $instanciaConexion = ConexionUtil::conectar();
+
+            $sql = "SELECT p.*, d.nombreDepartamento 
+                    FROM profesor p
+                    LEFT JOIN departamento d ON p.idDepartamento = d.idDepartamento
+                    WHERE p.idUsuario = :idUsuario";
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->bindParam(':idUsuario', $idUsuario, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($resultado) {
+                $model = new ProfesorModel();
+                return $model->hidratarDesdeArray($resultado);
+            }
+            
+            return null;
+        } catch (PDOException $e) {
+            error_log("Error en obtenerProfesorPorIdUsuario: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    // INSERTAR PROFESOR CON TRANSACCIÓN
+    public static function insertarProfesor($datos)
+    {
+        $pdo = null;
+        try {
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "INSERT INTO profesor (
                         nombreProfesor, apellidosProfesor, dipProfesor, especialidad,
@@ -145,7 +175,7 @@ class D_Profesor
                         :responsabilidad, :correoProfesor, :contactoProfesor
                     )";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':nombreProfesor', $datos['nombreProfesor']);
             $stmt->bindParam(':apellidosProfesor', $datos['apellidosProfesor']);
             $stmt->bindParam(':dipProfesor', $datos['dipProfesor']);
@@ -160,21 +190,30 @@ class D_Profesor
             $stmt->bindParam(':contactoProfesor', $datos['contactoProfesor']);
             
             if ($stmt->execute()) {
-                return $instanciaConexion->lastInsertId();
+                $id = $pdo->lastInsertId();
+                $pdo->commit();
+                return $id;
+            } else {
+                $pdo->rollBack();
+                return null;
             }
             
-            return null;
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en insertarProfesor: " . $e->getMessage());
             return null;
         }
     }
 
-    // ACTUALIZAR PROFESOR
+    // ACTUALIZAR PROFESOR CON TRANSACCIÓN
     public static function actualizarProfesor($id, $datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "UPDATE profesor SET 
                         nombreProfesor = :nombreProfesor,
@@ -190,7 +229,7 @@ class D_Profesor
                         contactoProfesor = :contactoProfesor
                     WHERE idProfesor = :id";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             $stmt->bindParam(':nombreProfesor', $datos['nombreProfesor']);
             $stmt->bindParam(':apellidosProfesor', $datos['apellidosProfesor']);
@@ -204,14 +243,26 @@ class D_Profesor
             $stmt->bindParam(':correoProfesor', $datos['correoProfesor']);
             $stmt->bindParam(':contactoProfesor', $datos['contactoProfesor']);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en actualizarProfesor: " . $e->getMessage());
             return false;
         }
     }
 
-    // VERIFICAR SI EXISTE PROFESOR POR DIP
+    // VERIFICAR SI EXISTE PROFESOR POR DIP (solo lectura)
     public static function existeProfesorPorDip($dipProfesor, $excluirId = null)
     {
         try {
@@ -240,7 +291,7 @@ class D_Profesor
         }
     }
 
-    // VERIFICAR SI EXISTE PROFESOR POR CORREO
+    // VERIFICAR SI EXISTE PROFESOR POR CORREO (solo lectura)
     public static function existeProfesorPorCorreo($correoProfesor, $excluirId = null)
     {
         try {
@@ -268,36 +319,5 @@ class D_Profesor
             return false;
         }
     }
-    
-    // Añadir este método al final de la clase D_Profesor en d_profesor.php
-
-    // OBTENER PROFESOR POR ID DE USUARIO
-    public static function obtenerProfesorPorIdUsuario($idUsuario)
-    {
-        try {
-            $instanciaConexion = ConexionUtil::conectar();
-
-            $sql = "SELECT p.*, d.nombreDepartamento 
-                    FROM profesor p
-                    LEFT JOIN departamento d ON p.idDepartamento = d.idDepartamento
-                    WHERE p.idUsuario = :idUsuario";
-            $stmt = $instanciaConexion->prepare($sql);
-            $stmt->bindParam(':idUsuario', $idUsuario, PDO::PARAM_INT);
-            $stmt->execute();
-
-            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if ($resultado) {
-                $model = new ProfesorModel();
-                return $model->hidratarDesdeArray($resultado);
-            }
-            
-            return null;
-        } catch (PDOException $e) {
-            error_log("Error en obtenerProfesorPorIdUsuario: " . $e->getMessage());
-            return null;
-        }
-    }
-
 }
 ?>

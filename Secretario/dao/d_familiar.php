@@ -4,7 +4,7 @@ require_once __DIR__ . "/../modelo/m_familiar.php";
 
 class D_Familiar
 {
-    // OBTENER TODOS LOS FAMILIARES DE TODOS LOS ESTUDIANTES
+    // OBTENER TODOS LOS FAMILIARES (solo lectura)
     public static function obtenerFamiliares()
     {
         try {
@@ -36,7 +36,7 @@ class D_Familiar
         }
     }
 
-    // OBTENER FAMILIARES POR ESTUDIANTE
+    // OBTENER FAMILIARES POR ESTUDIANTE (solo lectura)
     public static function obtenerFamiliaresPorEstudiante($idEstudiante)
     {
         try {
@@ -63,7 +63,7 @@ class D_Familiar
         }
     }
 
-    // OBTENER FAMILIAR RESPONSABLE POR ESTUDIANTE
+    // OBTENER FAMILIAR RESPONSABLE POR ESTUDIANTE (solo lectura)
     public static function obtenerFamiliarResponsablePorEstudiante($idEstudiante)
     {
         try {
@@ -90,7 +90,7 @@ class D_Familiar
         }
     }
 
-    // OBTENER FAMILIAR POR ID
+    // OBTENER FAMILIAR POR ID (solo lectura)
     public static function obtenerFamiliarPorId($id)
     {
         try {
@@ -115,11 +115,13 @@ class D_Familiar
         }
     }
 
-    // INSERTAR FAMILIAR
+    // INSERTAR FAMILIAR CON TRANSACCIÓN
     public static function insertarFamiliar($datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "INSERT INTO familiares (
                         nombre, apellidos, dipFamiliar, telefono, correoFamiliar, 
@@ -129,7 +131,7 @@ class D_Familiar
                         :direccion, :parentesco, :esContactoIncidentes, :esResponsablePago, :idEstudiante
                     )";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':nombre', $datos['nombre']);
             $stmt->bindParam(':apellidos', $datos['apellidos']);
             $stmt->bindParam(':dipFamiliar', $datos['dipFamiliar']);
@@ -142,21 +144,30 @@ class D_Familiar
             $stmt->bindParam(':idEstudiante', $datos['idEstudiante'], PDO::PARAM_INT);
             
             if ($stmt->execute()) {
-                return $instanciaConexion->lastInsertId();
+                $id = $pdo->lastInsertId();
+                $pdo->commit();
+                return $id;
+            } else {
+                $pdo->rollBack();
+                return null;
             }
             
-            return null;
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en insertarFamiliar: " . $e->getMessage());
             return null;
         }
     }
 
-    // ACTUALIZAR FAMILIAR
+    // ACTUALIZAR FAMILIAR CON TRANSACCIÓN
     public static function actualizarFamiliar($id, $datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "UPDATE familiares SET 
                         nombre = :nombre,
@@ -171,7 +182,7 @@ class D_Familiar
                         idEstudiante = :idEstudiante
                     WHERE idFamiliar = :id";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             $stmt->bindParam(':nombre', $datos['nombre']);
             $stmt->bindParam(':apellidos', $datos['apellidos']);
@@ -184,31 +195,57 @@ class D_Familiar
             $stmt->bindParam(':esResponsablePago', $datos['esResponsablePago']);
             $stmt->bindParam(':idEstudiante', $datos['idEstudiante'], PDO::PARAM_INT);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en actualizarFamiliar: " . $e->getMessage());
             return false;
         }
     }
 
-    // ELIMINAR FAMILIAR
+    // ELIMINAR FAMILIAR CON TRANSACCIÓN
     public static function eliminarFamiliar($id)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "DELETE FROM familiares WHERE idFamiliar = :id";
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en eliminarFamiliar: " . $e->getMessage());
             return false;
         }
     }
 
-    // VERIFICAR SI EXISTE FAMILIAR POR DIP
+    // VERIFICAR SI EXISTE FAMILIAR POR DIP (solo lectura)
     public static function existeFamiliarPorDip($dipFamiliar, $excluirId = null)
     {
         try {

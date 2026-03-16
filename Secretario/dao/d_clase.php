@@ -5,7 +5,7 @@ require_once __DIR__ . "/d_clasehorario.php";
 
 class D_Clase
 {
-    // OBTENER TODAS LAS CLASES
+    // OBTENER TODAS LAS CLASES (solo lectura)
     public static function obtenerClases()
     {
         try {
@@ -64,7 +64,7 @@ class D_Clase
         }
     }
 
-    // OBTENER CLASE POR ID
+    // OBTENER CLASE POR ID (solo lectura)
     public static function obtenerClasePorId($id)
     {
         try {
@@ -121,11 +121,13 @@ class D_Clase
         }
     }
 
-    // INSERTAR CLASE
+    // INSERTAR CLASE CON TRANSACCIÓN
     public static function insertarClase($datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "INSERT INTO clase (
                         idPlanCursoAsignatura, idAula, idProfesor, diaSemanal, 
@@ -135,7 +137,7 @@ class D_Clase
                         :horaInicio, :horaFinal, :tipoSesion, :observaciones
                     )";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':idPlanCursoAsignatura', $datos['idPlanCursoAsignatura'], PDO::PARAM_INT);
             $stmt->bindParam(':idAula', $datos['idAula'], PDO::PARAM_INT);
             $stmt->bindParam(':idProfesor', $datos['idProfesor'], PDO::PARAM_INT);
@@ -146,21 +148,30 @@ class D_Clase
             $stmt->bindParam(':observaciones', $datos['observaciones']);
             
             if ($stmt->execute()) {
-                return $instanciaConexion->lastInsertId();
+                $id = $pdo->lastInsertId();
+                $pdo->commit();
+                return $id;
+            } else {
+                $pdo->rollBack();
+                return null;
             }
             
-            return null;
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en insertarClase: " . $e->getMessage());
             return null;
         }
     }
 
-    // ACTUALIZAR CLASE
+    // ACTUALIZAR CLASE CON TRANSACCIÓN
     public static function actualizarClase($id, $datos)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             $sql = "UPDATE clase SET 
                         idPlanCursoAsignatura = :idPlanCursoAsignatura,
@@ -173,7 +184,7 @@ class D_Clase
                         observaciones = :observaciones
                     WHERE idClase = :id";
             
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             $stmt->bindParam(':idPlanCursoAsignatura', $datos['idPlanCursoAsignatura'], PDO::PARAM_INT);
             $stmt->bindParam(':idAula', $datos['idAula'], PDO::PARAM_INT);
@@ -184,35 +195,61 @@ class D_Clase
             $stmt->bindParam(':tipoSesion', $datos['tipoSesion']);
             $stmt->bindParam(':observaciones', $datos['observaciones']);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en actualizarClase: " . $e->getMessage());
             return false;
         }
     }
 
-    // ELIMINAR CLASE
+    // ELIMINAR CLASE CON TRANSACCIÓN
     public static function eliminarClase($id)
     {
+        $pdo = null;
         try {
-            $instanciaConexion = ConexionUtil::conectar();
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
 
             // Primero eliminar los horarios asociados
             D_ClaseHorario::eliminarHorariosPorClase($id);
 
             // Luego eliminar la clase
             $sql = "DELETE FROM clase WHERE idClase = :id";
-            $stmt = $instanciaConexion->prepare($sql);
+            $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
             
-            return $stmt->execute();
+            $resultado = $stmt->execute();
+            
+            if ($resultado) {
+                $pdo->commit();
+                return true;
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
         } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
             error_log("Error en eliminarClase: " . $e->getMessage());
             return false;
         }
     }
 
-    // VERIFICAR DISPONIBILIDAD DE AULA Y PROFESOR
+    // VERIFICAR DISPONIBILIDAD DE AULA Y PROFESOR (solo lectura)
     public static function verificarDisponibilidad($idAula, $idProfesor, $diaSemanal, $horaInicio, $horaFinal, $excluirId = null)
     {
         try {
