@@ -5,7 +5,8 @@ class UsuarioModel
     public $nombreUsuario;
     public $contrasena;
     public $correo;
-    public $rol;
+    public $idRol;
+    public $nombreRol;
     public $foto;
     public $estado;
     public $ultimoAcceso;
@@ -26,7 +27,8 @@ class UsuarioModel
         if (isset($data['nombreUsuario'])) $this->nombreUsuario = $data['nombreUsuario'];
         if (isset($data['contrasena'])) $this->contrasena = $data['contrasena'];
         if (isset($data['correo'])) $this->correo = $data['correo'];
-        if (isset($data['rol'])) $this->rol = $data['rol'];
+        if (isset($data['idRol'])) $this->idRol = $data['idRol'];
+        if (isset($data['nombreRol'])) $this->nombreRol = $data['nombreRol'];
         if (isset($data['foto'])) $this->foto = $data['foto'];
         if (isset($data['estado'])) $this->estado = $data['estado'];
         if (isset($data['ultimoAcceso'])) $this->ultimoAcceso = $data['ultimoAcceso'];
@@ -43,7 +45,8 @@ class UsuarioModel
             'idUsuario' => $this->idUsuario,
             'nombreUsuario' => $this->nombreUsuario,
             'correo' => $this->correo,
-            'rol' => $this->rol,
+            'idRol' => $this->idRol,
+            'nombreRol' => $this->nombreRol,
             'foto' => $this->foto,
             'estado' => $this->estado,
             'ultimoAcceso' => $this->ultimoAcceso

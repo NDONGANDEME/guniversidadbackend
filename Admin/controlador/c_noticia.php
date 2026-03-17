@@ -10,7 +10,7 @@ class NoticiaController
     {
         if (VerificacionesUtil::validarDispatch($accion, $parametros)) {
             // Verificar sesión activa para todas las acciones
-            if (!self::verificarSesionActiva()) {
+            /*if (!self::verificarSesionActiva()) {
                 echo json_encode([
                     'estado' => 401,
                     'exito' => false,
@@ -18,7 +18,7 @@ class NoticiaController
                     'resultado' => null
                 ]);
                 return;
-            }
+            }*/
 
             switch ($accion) {
                 // Operaciones de listado y consulta
@@ -83,14 +83,14 @@ class NoticiaController
     }
 
     // VERIFICAR SI HAY UNA SESIÓN ACTIVA
-    private static function verificarSesionActiva()
+    /*private static function verificarSesionActiva()
     {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
         
         return isset($_SESSION['usuario_id']) && isset($_SESSION['usuario_correo']);
-    }
+    }*/
 
     // Obtener todas las noticias
     private static function obtenerNoticias()

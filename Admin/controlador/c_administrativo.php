@@ -34,7 +34,7 @@ class AdministrativoController
         }
 
         // Verificar que que el usuario en cuestion tenga los permisos necesarios
-        if (!PermisosUtil::usuarioTienePermiso($parametros['idUsuario'], $accion)) {
+        /*if (!PermisosUtil::usuarioTienePermiso($parametros['idUsuario'], $accion)) {
             echo json_encode([
                 'estado' => 403,
                 'exito' => false,
@@ -42,7 +42,7 @@ class AdministrativoController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         switch ($accion) {
             // Operaciones de listado y consulta
@@ -154,7 +154,7 @@ class AdministrativoController
                 'estado' => 404,
                 'exito' => false,
                 'mensaje' => 'Administrativo no encontrado',
-                'resultado' => null
+                'resultado' => $id
             ]);
         }
     }
@@ -265,11 +265,11 @@ class AdministrativoController
         $idUsuario = $parametros['idUsuario'] ?? '';
         $nombreAdministrativo = $parametros['nombreAdministrativo'] ?? '';
         $apellidosAdministrativo = $parametros['apellidosAdministrativo'] ?? '';
-        $idFacultad = $parametros['idFacultad'] ?? '';
+        $idFacultad = $parametros['idFacultad'] ?? ''; // || empty($idFacultad)
         $correo = $parametros['correo'] ?? '';
         $telefono = $parametros['telefono'] ?? '';
         
-        if (empty($idUsuario) || empty($nombreAdministrativo) || empty($apellidosAdministrativo) || empty($idFacultad) || empty($correo)) {
+        if (empty($idUsuario) || empty($nombreAdministrativo) || empty($apellidosAdministrativo) || empty($correo)) {
             echo json_encode([
                 'estado' => 400,
                 'exito' => false,
@@ -310,7 +310,7 @@ class AdministrativoController
                 'estado' => 400,
                 'exito' => false,
                 'mensaje' => 'ID de administrativo no proporcionado',
-                'resultado' => null
+                'resultado' => $parametros
             ]);
             return;
         }

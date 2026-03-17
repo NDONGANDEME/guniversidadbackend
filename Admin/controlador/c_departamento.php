@@ -66,19 +66,19 @@ class DepartamentoController
     }
 
     // Verificar si hay sesión activa
-    private static function verificarSesionActiva()
+    /*private static function verificarSesionActiva()
     {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
         
         return isset($_SESSION['usuario_id']) && isset($_SESSION['usuario_correo']);
-    }
+    }*/
 
     // Obtener todos los departamentos
     private static function obtenerDepartamentos()
     {
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -86,7 +86,7 @@ class DepartamentoController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         $departamentos = D_Departamento::obtenerDepartamentos();
         
@@ -101,7 +101,7 @@ class DepartamentoController
     // Obtener departamentos paginados
     private static function obtenerDepartamentosPaginados($parametros)
     {
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -109,7 +109,7 @@ class DepartamentoController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         $pagina = $parametros['pagina'] ?? 1;
         $pagina = intval($pagina);
@@ -136,7 +136,7 @@ class DepartamentoController
     // Obtener total de páginas
     private static function obtenerTotalPaginas()
     {
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -144,7 +144,7 @@ class DepartamentoController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         $totalPaginas = D_Departamento::contarDepartamentos();
         
@@ -162,7 +162,7 @@ class DepartamentoController
     // Obtener departamentos por facultad
     private static function obtenerDepartamentosPorFacultad($parametros)
     {
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -170,7 +170,7 @@ class DepartamentoController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         $idFacultad = $parametros['idFacultad'] ?? null;
         
@@ -202,7 +202,7 @@ class DepartamentoController
     // Obtener departamentos por facultad paginados
     private static function obtenerDepartamentosPorFacultadPaginados($parametros)
     {
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -210,7 +210,7 @@ class DepartamentoController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         $idFacultad = $parametros['idFacultad'] ?? null;
         $pagina = $parametros['pagina'] ?? 1;
@@ -255,7 +255,7 @@ class DepartamentoController
     // Buscar departamentos
     private static function buscarDepartamentos($parametros)
     {
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -263,7 +263,7 @@ class DepartamentoController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         $termino = $parametros['termino'] ?? '';
         $pagina = $parametros['pagina'] ?? 1;
@@ -317,7 +317,7 @@ class DepartamentoController
     // Insertar nuevo departamento
     private static function insertarDepartamento($parametros)
     {
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -325,7 +325,7 @@ class DepartamentoController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         // Validar campos obligatorios
         $nombreDepartamento = $parametros['nombreDepartamento'] ?? '';
@@ -389,7 +389,7 @@ class DepartamentoController
     // Actualizar departamento existente
     private static function actualizarDepartamento($parametros)
     {
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -397,7 +397,7 @@ class DepartamentoController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         $id = $parametros['idDepartamento'] ?? null;
         
@@ -478,7 +478,7 @@ class DepartamentoController
     // Eliminar departamento
     private static function eliminarDepartamento($parametros)
     {
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -486,7 +486,7 @@ class DepartamentoController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         $id = $parametros['idDepartamento'] ?? null;
         

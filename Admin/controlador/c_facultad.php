@@ -19,7 +19,7 @@ class FacultadController
         }
 
         // Verificar sesión activa
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -27,7 +27,7 @@ class FacultadController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         switch ($accion) {
             case "obtenerFacultades":

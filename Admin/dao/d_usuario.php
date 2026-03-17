@@ -5,7 +5,7 @@ require_once __DIR__ . "/../modelo/m_usuario.php";
 class D_Usuario
 {
     // CONSTANTE PARA EL NÚMERO DE REGISTROS POR PÁGINA
-    const REGISTROS_POR_PAGINA = 30;
+    const REGISTROS_POR_PAGINA = 8;
 
     // OBTENER TODOS LOS USUARIOS (solo lectura, no necesita transacción)
     public static function obtenerUsuarios()
@@ -64,8 +64,8 @@ class D_Usuario
             $saltos = ($pagina - 1) * self::REGISTROS_POR_PAGINA;
             $lote = self::REGISTROS_POR_PAGINA;
 
-            $sql = "SELECT idUsuario, nombreUsuario, correo, foto, rol, estado, ultimoAcceso 
-                    FROM usuarios 
+            $sql = "SELECT u.*, r.idRol, r.nombreRol
+                    FROM usuarios u LEFT JOIN rol r ON u.idRol = r.idRol
                     ORDER BY idUsuario DESC 
                     LIMIT :lote OFFSET :saltos";
             
@@ -359,7 +359,7 @@ class D_Usuario
             $sql = "UPDATE usuarios SET 
                         nombreUsuario = :nombreUsuario,
                         correo = :correo,
-                        rol = :rol,
+                        idRol = :idRol,
                         preguntaRecuperacion = :preguntaRecuperacion,
                         respuestaRecuperacion = :respuestaRecuperacion";
             
@@ -374,7 +374,7 @@ class D_Usuario
             $stmt->bindParam(':id', $datos['id']);
             $stmt->bindParam(':nombreUsuario', $datos['nombreUsuario']);
             $stmt->bindParam(':correo', $datos['correo']);
-            $stmt->bindParam(':rol', $datos['rol']);
+            $stmt->bindParam(':idRol', $datos['idRol']);
             $stmt->bindParam(':preguntaRecuperacion', $datos['preguntaRecuperacion']);
             $stmt->bindParam(':respuestaRecuperacion', $datos['respuestaRecuperacion']);
             
@@ -456,6 +456,39 @@ class D_Usuario
             return false;
         } catch (PDOException $e) {
             error_log("Error en verificarContrasenaExistente: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    public static function eliminarUsuario($id)
+    {
+        $pdo = null;
+        try {
+            $pdo = ConexionUtil::conectar();
+            $pdo->beginTransaction();
+
+            $sql = "DELETE FROM usuarios WHERE idUsuario = :id";
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
+            
+            if ($stmt->execute()) {
+                if ($stmt->rowCount() > 0) {
+                    $pdo->commit();
+                    return true;
+                } else {
+                    $pdo->rollBack();
+                    return false;
+                }
+            } else {
+                $pdo->rollBack();
+                return false;
+            }
+            
+        } catch (PDOException $e) {
+            if ($pdo) {
+                $pdo->rollBack();
+            }
+            error_log("Error en eliminarUsuario: " . $e->getMessage());
             return false;
         }
     }

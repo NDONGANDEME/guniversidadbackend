@@ -117,7 +117,7 @@ class AsignaturaController
     // Obtener asignaturas paginadas
     private static function obtenerAsignaturasAPaginar($parametros)
     {
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -125,7 +125,7 @@ class AsignaturaController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         $pagina = $parametros['pagina'] ?? 1;
         $pagina = intval($pagina);
@@ -152,7 +152,7 @@ class AsignaturaController
     // Obtener total de páginas
     private static function obtenerTotalPaginas()
     {
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -160,7 +160,7 @@ class AsignaturaController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         $totalPaginas = D_Asignatura::contarAsignaturas();
         
@@ -218,7 +218,7 @@ class AsignaturaController
     // Obtener asignaturas por facultad paginadas
     private static function obtenerAsignaturasPorFacultadPaginadas($parametros)
     {
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -226,7 +226,7 @@ class AsignaturaController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         $idFacultad = $parametros['idFacultad'] ?? null;
         $pagina = $parametros['pagina'] ?? 1;
@@ -271,7 +271,7 @@ class AsignaturaController
     // Buscar asignaturas
     private static function buscarAsignaturas($parametros)
     {
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -279,7 +279,7 @@ class AsignaturaController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         $termino = $parametros['termino'] ?? '';
         $pagina = $parametros['pagina'] ?? 1;
@@ -515,7 +515,7 @@ class AsignaturaController
     // Eliminar asignatura
     private static function eliminarAsignatura($parametros)
     {
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -523,7 +523,7 @@ class AsignaturaController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         $id = $parametros['id'] ?? null;
         

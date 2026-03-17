@@ -70,19 +70,19 @@ class CarreraController
     }
 
     // Verificar si hay sesión activa
-    private static function verificarSesionActiva()
+    /*private static function verificarSesionActiva()
     {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
         
         return isset($_SESSION['usuario_id']) && isset($_SESSION['usuario_correo']);
-    }
+    }*/
 
     // Obtener todas las carreras
     private static function obtenerCarreras()
     {
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -90,7 +90,7 @@ class CarreraController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         $carreras = D_Carrera::obtenerCarreras();
         $resultado = [];
@@ -114,7 +114,7 @@ class CarreraController
     // Obtener carreras paginadas
     private static function obtenerCarrerasPaginadas($parametros)
     {
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -122,7 +122,7 @@ class CarreraController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         $pagina = $parametros['pagina'] ?? 1;
         $pagina = intval($pagina);
@@ -153,7 +153,7 @@ class CarreraController
     // Obtener total de páginas
     private static function obtenerTotalPaginas()
     {
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -161,7 +161,7 @@ class CarreraController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         $totalPaginas = D_Carrera::contarCarreras();
         
@@ -179,7 +179,7 @@ class CarreraController
     // Obtener carreras por departamento
     private static function obtenerCarrerasPorDepartamento($parametros)
     {
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -187,7 +187,7 @@ class CarreraController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         $idDepartamento = $parametros['idDepartamento'] ?? null;
         
@@ -219,7 +219,7 @@ class CarreraController
     // Obtener carreras por departamento paginadas
     private static function obtenerCarrerasPorDepartamentoPaginadas($parametros)
     {
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -227,7 +227,7 @@ class CarreraController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         $idDepartamento = $parametros['idDepartamento'] ?? null;
         $pagina = $parametros['pagina'] ?? 1;
@@ -276,7 +276,7 @@ class CarreraController
     // Buscar carreras
     private static function buscarCarreras($parametros)
     {
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -284,7 +284,7 @@ class CarreraController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         $termino = $parametros['termino'] ?? '';
         $pagina = $parametros['pagina'] ?? 1;
@@ -342,7 +342,7 @@ class CarreraController
     // Insertar nueva carrera
     private static function insertarCarrera($parametros)
     {
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -350,7 +350,7 @@ class CarreraController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         // Validar campos obligatorios
         $nombreCarrera = $parametros['nombreCarrera'] ?? '';
@@ -411,7 +411,7 @@ class CarreraController
     // Actualizar carrera existente
     private static function actualizarCarrera($parametros)
     {
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -419,7 +419,7 @@ class CarreraController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         $id = $parametros['idCarrera'] ?? null;
         
@@ -496,7 +496,7 @@ class CarreraController
     // Cambiar estado de carrera
     private static function cambiarEstadoCarrera($parametros)
     {
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -504,7 +504,7 @@ class CarreraController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         $id = $parametros['id'] ?? null;
         $nuevoEstado = $parametros['nuevoEstado'] ?? null;
@@ -577,7 +577,7 @@ class CarreraController
     // Eliminar carrera
     private static function eliminarCarrera($parametros)
     {
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -585,7 +585,7 @@ class CarreraController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         $id = $parametros['id'] ?? null;
         

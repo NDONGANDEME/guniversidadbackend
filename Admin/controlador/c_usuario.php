@@ -51,7 +51,11 @@ class UsuarioController
             case "habilitarUsuario":
                 self::cambiarEstadoUsuario($parametros['valor'] ?? null, 'activo');
                 break;
-                
+
+            case "eliminarUsuario":
+                self::eliminarUsuario($parametros);
+                break;
+
             case "verificarContraseñaExistente":
                 self::verificarContraseñaExistente($parametros);
                 break;
@@ -107,7 +111,7 @@ class UsuarioController
     // Obtener usuarios paginados
     private static function obtenerUsuariosPaginados($parametros)
     {
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -115,7 +119,7 @@ class UsuarioController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         $pagina = $parametros['pagina'] ?? 1;
         $pagina = intval($pagina);
@@ -142,7 +146,7 @@ class UsuarioController
     // Obtener total de páginas
     private static function obtenerTotalPaginas()
     {
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -150,7 +154,7 @@ class UsuarioController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         $totalPaginas = D_Usuario::contarUsuarios();
         
@@ -168,7 +172,7 @@ class UsuarioController
     // Buscar usuarios
     private static function buscarUsuarios($parametros)
     {
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -176,7 +180,7 @@ class UsuarioController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         $termino = $parametros['termino'] ?? '';
         $pagina = $parametros['pagina'] ?? 1;
@@ -340,14 +344,14 @@ class UsuarioController
             'estado' => 'exito',
             'exito' => true,
             'mensaje' => 'Usuario creado exitosamente',
-            'resultado' => $usuarioCreado ? $usuarioCreado->convertirAArray() : ['id' => $usuarioId]
+            'resultado' => $usuarioCreado ? $usuarioCreado->convertirAArray() : ['id' => $parametros['foto']]
         ]);
     }
 
     // Actualizar usuario existente
     private static function actualizarUsuario($parametros)
     {
-       if (!self::verificarSesionActiva()) {
+       /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -355,7 +359,7 @@ class UsuarioController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         $id = $parametros['idUsuario'] ?? null;
         
@@ -384,7 +388,7 @@ class UsuarioController
         // Datos a actualizar
         $nombreUsuario = $parametros['nombreUsuario'] ?? $usuarioExistente->nombreUsuario;
         $correo = $parametros['correo'] ?? $usuarioExistente->correo;
-        $rol = $parametros['rol'] ?? $usuarioExistente->rol;
+        $idRol = $parametros['idRol'] ?? $usuarioExistente->idRol;
         $preguntaRecuperacion = $parametros['preguntaRecuperacion'] ?? $usuarioExistente->preguntaRecuperacion;
         $respuestaRecuperacion = $parametros['respuestaRecuperacion'] ?? $usuarioExistente->respuestaRecuperacion;
 
@@ -443,7 +447,7 @@ class UsuarioController
             'id' => $id,
             'nombreUsuario' => $nombreUsuario,
             'correo' => $correo,
-            'rol' => $rol,
+            'idRol' => $idRol,
             'preguntaRecuperacion' => $preguntaRecuperacion,
             'respuestaRecuperacion' => $respuestaRecuperacion
         ];
@@ -479,7 +483,7 @@ class UsuarioController
     // Cambiar estado del usuario (habilitar/deshabilitar)
     private static function cambiarEstadoUsuario($id, $estado)
     {
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -487,7 +491,7 @@ class UsuarioController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         if (!$id) {
             echo json_encode([
@@ -535,7 +539,7 @@ class UsuarioController
     // Verificar contraseña existente
     private static function verificarContraseñaExistente($parametros)
     {
-        if (!self::verificarSesionActiva()) {
+        /*if (!self::verificarSesionActiva()) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
@@ -543,7 +547,7 @@ class UsuarioController
                 'resultado' => null
             ]);
             return;
-        }
+        }*/
 
         $id = $parametros['id'] ?? null;
         $contrasena = $parametros['contrasena'] ?? '';
@@ -575,6 +579,63 @@ class UsuarioController
             'exito' => true,
             'mensaje' => $esValida ? 'Contraseña válida' : 'Contraseña incorrecta',
             'resultado' => ['valida' => $esValida]
+        ]);
+    }
+
+    private static function eliminarUsuario($parametros)
+    {
+        /*if (!self::verificarSesionActiva()) {
+            echo json_encode([
+                'estado' => 401,
+                'exito' => false,
+                'mensaje' => 'No hay sesión activa',
+                'resultado' => null
+            ]);
+            return;
+        }*/
+
+        $id = $parametros['idUsuario'] ?? null;
+        
+        if (!$id) {
+            echo json_encode([
+                'estado' => 400,
+                'exito' => false,
+                'mensaje' => 'ID de usuario no proporcionado',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        // Verificar que el usuario existe
+        $usuarioExistente = D_Usuario::obtenerUsuarioPorId($id);
+        if (!$usuarioExistente) {
+            echo json_encode([
+                'estado' => 404,
+                'exito' => false,
+                'mensaje' => 'usuario no encontrado',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        // Eliminar departamento
+        $eliminado = D_Usuario::eliminarUsuario($id);
+
+        if (!$eliminado) {
+            echo json_encode([
+                'estado' => 500,
+                'exito' => false,
+                'mensaje' => 'Error al eliminar el usuario',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        echo json_encode([
+            'estado' => 'exito',
+            'exito' => true,
+            'mensaje' => 'Usuario eliminado exitosamente',
+            'resultado' => ['id' => $id]
         ]);
     }
 }
