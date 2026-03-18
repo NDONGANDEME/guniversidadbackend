@@ -45,7 +45,9 @@ class AsignaturaController
                 break;
                 
             case "insertarAsignatura":
-                if (PermisosUtil::usuarioTienePermiso($parametros['idUsuario'], $parametros['accion'])) {
+                self::insertarAsignatura($parametros);
+                break;
+                /*if (PermisosUtil::usuarioTienePermiso($parametros['idUsuario'], $parametros['accion'])) {
                     self::insertarAsignatura($parametros);
                     break;
                 } else {
@@ -56,7 +58,7 @@ class AsignaturaController
                         'resultado' => null
                     ]);
                     break;
-                }
+                }*/
                 
             case "actualizarAsignatura":
                 self::actualizarAsignatura($parametros);

@@ -385,7 +385,7 @@ class D_Asignatura
             $pdo->beginTransaction();
 
             // Verificar si la asignatura tiene horarios asociados
-            $sqlVerificar = "SELECT COUNT(*) as total FROM horarios WHERE idAsignatura = :id";
+            $sqlVerificar = "SELECT COUNT(*) as total FROM horario WHERE idAsignatura = :id";
             $stmtVerificar = $pdo->prepare($sqlVerificar);
             $stmtVerificar->bindParam(':id', $id, PDO::PARAM_INT);
             $stmtVerificar->execute();

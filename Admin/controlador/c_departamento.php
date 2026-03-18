@@ -488,7 +488,7 @@ class DepartamentoController
             return;
         }*/
 
-        $id = $parametros['idDepartamento'] ?? null;
+        $id = $parametros['id'] ?? null;
         
         if (!$id) {
             echo json_encode([

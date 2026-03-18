@@ -18,7 +18,7 @@ class DepartamentoModel
         if (isset($data['idDepartamento'])) $this->idDepartamento = $data['idDepartamento'];
         if (isset($data['nombreDepartamento'])) $this->nombreDepartamento = $data['nombreDepartamento'];
         if (isset($data['idFacultad'])) $this->idFacultad = $data['idFacultad'];
-        if (isset($data['nombreFacultad'])) $this->nombreDepartamento = $data['nombreFacultad'];
+        if (isset($data['nombreFacultad'])) $this->nombreFacultad = $data['nombreFacultad'];
         
         return $this;
     }

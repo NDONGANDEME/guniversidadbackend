@@ -425,7 +425,7 @@ class D_Carrera
             $pdo->beginTransaction();
 
             // Verificar si la carrera tiene asignaturas asociadas
-            $sqlVerificar = "SELECT COUNT(*) as total FROM asignatura WHERE idCarrera = :id";
+            $sqlVerificar = "SELECT COUNT(*) as total FROM asignaturas WHERE idCarrera = :id";
             $stmtVerificar = $pdo->prepare($sqlVerificar);
             $stmtVerificar->bindParam(':id', $id, PDO::PARAM_INT);
             $stmtVerificar->execute();
