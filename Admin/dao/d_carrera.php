@@ -5,7 +5,7 @@ require_once __DIR__ . "/../modelo/m_carrera.php";
 class D_Carrera
 {
     // CONSTANTE PARA EL NÚMERO DE REGISTROS POR PÁGINA
-    const REGISTROS_POR_PAGINA = 30;
+    const REGISTROS_POR_PAGINA = 8;
 
     // OBTENER TODAS LAS CARRERAS (solo lectura)
     public static function obtenerCarreras()
@@ -424,8 +424,9 @@ class D_Carrera
             $pdo = ConexionUtil::conectar();
             $pdo->beginTransaction();
 
-            // Verificar si la carrera tiene asignaturas asociadas
-            $sqlVerificar = "SELECT COUNT(*) as total FROM asignaturas WHERE idCarrera = :id";
+            // Verificar si la carrera tiene matriculas asociadas
+            $sqlVerificar = "SELECT COUNT(*) as total FROM matriculas m  LEFT JOIN 
+                            planestudio pe ON m.idPlanEstudio = pe.idPlanEstudio WHERE idCarrera = :id";
             $stmtVerificar = $pdo->prepare($sqlVerificar);
             $stmtVerificar->bindParam(':id', $id, PDO::PARAM_INT);
             $stmtVerificar->execute();
@@ -433,10 +434,10 @@ class D_Carrera
             
             if ($resultado['total'] > 0) {
                 $pdo->rollBack();
-                return false; // No se puede eliminar porque tiene asignaturas asociadas
+                return false; // No se puede eliminar porque tiene matriculas asociadas
             }
 
-            // Si no tiene asignaturas, proceder a eliminar
+            // Si no tiene matriculas, proceder a eliminar
             $sql = "DELETE FROM carrera WHERE idCarrera = :id";
             $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);

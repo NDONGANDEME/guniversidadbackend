@@ -5,7 +5,7 @@ require_once __DIR__ . "/../modelo/m_asignatura.php";
 class D_Asignatura
 {
     // CONSTANTE PARA EL NÚMERO DE REGISTROS POR PÁGINA
-    const REGISTROS_POR_PAGINA = 30;
+    const REGISTROS_POR_PAGINA = 8;
 
     // OBTENER TODAS LAS ASIGNATURAS (solo lectura)
     public static function obtenerAsignaturas()

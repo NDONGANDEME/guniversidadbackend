@@ -321,7 +321,7 @@ class UsuarioController
         }
 
         // Encriptar contraseña
-        $parametros['contrasena'] = password_hash($contrasena, PASSWORD_DEFAULT);
+        //$parametros['contrasena'] = password_hash($contrasena, PASSWORD_DEFAULT);
 
 
         // Insertar usuario

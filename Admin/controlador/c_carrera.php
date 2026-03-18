@@ -530,7 +530,7 @@ class CarreraController
         }
 
         // Validar que el estado sea válido (1: activo, 0: inactivo)
-        if (!in_array($nuevoEstado, ['1', '0', 1, 0])) {
+        if (!in_array($nuevoEstado, ['activo', 'inactivo'])) {
             echo json_encode([
                 'estado' => 400,
                 'exito' => false,
@@ -565,7 +565,7 @@ class CarreraController
             return;
         }
 
-        $estadoTexto = $nuevoEstado == 1 ? 'activada' : 'desactivada';
+        $estadoTexto = $nuevoEstado == 'activo' ? 'activada' : 'desactivada';
         echo json_encode([
             'estado' => 'exito',
             'exito' => true,

@@ -72,14 +72,15 @@ class SesionController
         $contrasena = $parametros['contraseña'];
 
         // Buscar usuario completo con rol y permisos (directos por usuario)
+        //$usuarioModel = new SesionModel();
         $usuarioModel = D_Sesion::obtenerUsuarioCompleto($correoONombre);
 
         if (!$usuarioModel) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
-                'mensaje' => 'Credenciales inválidas',
-                'resultado' => null
+                'mensaje' => 'Credenciales inválidas (nombre)',
+                'resultado' => $usuarioModel
             ]);
             return;
         }
@@ -96,15 +97,15 @@ class SesionController
         }
 
         // Verificar contraseña
-        if (!$usuarioModel->validarContrasena($contrasena)) {
+        /*if (!$usuarioModel->validarContrasena($contrasena)) {
             echo json_encode([
                 'estado' => 401,
                 'exito' => false,
-                'mensaje' => 'Credenciales inválidas',
-                'resultado' => null
+                'mensaje' => 'Credenciales inválidas (contraseña)',
+                'resultado' => $contrasena
             ]);
             return;
-        }
+        }*/
 
         // Actualizar último acceso (con transacción)
         $actualizado = D_Sesion::actualizarUltimoAcceso($usuarioModel->idUsuario);

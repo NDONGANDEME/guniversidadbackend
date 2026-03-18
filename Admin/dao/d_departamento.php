@@ -5,7 +5,7 @@ require_once __DIR__ . "/../modelo/m_departamento.php";
 class D_Departamento
 {
     // CONSTANTE PARA EL NÚMERO DE REGISTROS POR PÁGINA
-    const REGISTROS_POR_PAGINA = 30;
+    const REGISTROS_POR_PAGINA = 8;
 
     // OBTENER TODOS LOS DEPARTAMENTOS (solo lectura)
     public static function obtenerDepartamentos()
