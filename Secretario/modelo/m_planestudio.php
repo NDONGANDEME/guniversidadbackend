@@ -8,6 +8,7 @@ class PlanEstudioModel
     public $periodoPlanEstudio;
     public $vigente;
     public $nombreCarrera;
+    public $nombreFacultad; // Nueva propiedad para filtrar por facultad
 
     public function __construct($nombre = null, $idCarrera = null, $vigente = 1)
     {
@@ -25,6 +26,8 @@ class PlanEstudioModel
         if (isset($data['fechaElaboracion'])) $this->fechaElaboracion = $data['fechaElaboracion'];
         if (isset($data['periodoPlanEstudio'])) $this->periodoPlanEstudio = $data['periodoPlanEstudio'];
         if (isset($data['vigente'])) $this->vigente = $data['vigente'];
+        if (isset($data['nombreCarrera'])) $this->nombreCarrera = $data['nombreCarrera'];
+        if (isset($data['nombreFacultad'])) $this->nombreFacultad = $data['nombreFacultad'];
         
         return $this;
     }
@@ -32,7 +35,7 @@ class PlanEstudioModel
     // Convertir modelo a array
     public function convertirAArray()
     {
-        return [
+        $data = [
             'idPlanEstudio' => $this->idPlanEstudio,
             'nombre' => $this->nombre,
             'idCarrera' => $this->idCarrera,
@@ -40,6 +43,15 @@ class PlanEstudioModel
             'periodoPlanEstudio' => $this->periodoPlanEstudio,
             'vigente' => $this->vigente
         ];
+
+        if (isset($this->nombreCarrera)) {
+            $data['nombreCarrera'] = $this->nombreCarrera;
+        }
+        if (isset($this->nombreFacultad)) {
+            $data['nombreFacultad'] = $this->nombreFacultad;
+        }
+
+        return $data;
     }
 
     // Verificar si está vigente

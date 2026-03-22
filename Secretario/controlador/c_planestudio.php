@@ -7,12 +7,12 @@ class PlanEstudioController
 {
     public static function dispatch($accion, $parametros)
     {
-        // Verificar que el actor sea admin
+        // Verificar que el actor sea secretario
         if (!isset($parametros['actor']) || $parametros['actor'] !== 'secretario') {
             echo json_encode([
                 'estado' => 403,
                 'exito' => false,
-                'mensaje' => 'Acceso denegado. Se requiere rol de administrador.',
+                'mensaje' => 'Acceso denegado. Se requiere rol de secretario.',
                 'resultado' => null
             ]);
             return;
@@ -34,8 +34,16 @@ class PlanEstudioController
                 self::obtenerPlanesEstudios();
                 break;
                 
-            case "obtenerPlanesEstudioPorCarrera":
+            case "obtenerPlanesEstudiosPorCarrera":
                 self::obtenerPlanesEstudioPorCarrera($parametros['idCarrera'] ?? null);
+                break;
+                
+            case "obtenerPlanesEstudiosPorFacultad":
+                self::obtenerPlanesEstudiosPorFacultad($parametros['id'] ?? null);
+                break;
+                
+            case "obtenerPlanesEstudiosAPaginarPorFacultad":
+                self::obtenerPlanesEstudiosPaginadosPorFacultad($parametros);
                 break;
                 
             case "insertarPlanEstudio":
@@ -80,11 +88,7 @@ class PlanEstudioController
         $resultado = [];
         
         foreach ($planes as $plan) {
-            $arr = $plan->convertirAArray();
-            if (isset($plan->nombreCarrera)) {
-                $arr['nombreCarrera'] = $plan->nombreCarrera;
-            }
-            $resultado[] = $arr;
+            $resultado[] = $plan->convertirAArray();
         }
         
         echo json_encode([
@@ -123,6 +127,77 @@ class PlanEstudioController
         ]);
     }
 
+    // Obtener planes de estudio por facultad (NUEVA FUNCIÓN)
+    private static function obtenerPlanesEstudiosPorFacultad($idFacultad)
+    {
+        if (!$idFacultad) {
+            echo json_encode([
+                'estado' => 400,
+                'exito' => false,
+                'mensaje' => 'ID de facultad no proporcionado',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $planes = D_PlanEstudio::obtenerPlanesEstudiosPorFacultad($idFacultad);
+        $resultado = [];
+        
+        foreach ($planes as $plan) {
+            $resultado[] = $plan->convertirAArray();
+        }
+        
+        echo json_encode([
+            'estado' => 'exito',
+            'exito' => true,
+            'mensaje' => 'Planes de estudio por facultad obtenidos correctamente',
+            'resultado' => $resultado
+        ]);
+    }
+
+    // Obtener planes de estudio paginados por facultad (NUEVA FUNCIÓN)
+    private static function obtenerPlanesEstudiosPaginadosPorFacultad($parametros)
+    {
+        $idFacultad = $parametros['id'] ?? null;
+        $pagina = $parametros['pagina'] ?? 1;
+
+        if (!$idFacultad) {
+            echo json_encode([
+                'estado' => 400,
+                'exito' => false,
+                'mensaje' => 'ID de facultad no proporcionado',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $pagina = intval($pagina);
+        if ($pagina < 1) $pagina = 1;
+
+        // Obtener total de páginas
+        $totalPaginas = D_PlanEstudio::contarPlanesEstudiosPorFacultad($idFacultad);
+        
+        // Obtener planes de estudio para la página solicitada
+        $planes = D_PlanEstudio::obtenerPlanesEstudiosPaginadosPorFacultad($pagina, $idFacultad);
+        $resultado = [];
+        
+        foreach ($planes as $plan) {
+            $resultado[] = $plan->convertirAArray();
+        }
+        
+        echo json_encode([
+            'estado' => 'exito',
+            'exito' => true,
+            'mensaje' => 'Planes de estudio paginados por facultad obtenidos correctamente',
+            'resultado' => [
+                'pagina_actual' => $pagina,
+                'total_paginas' => $totalPaginas,
+                'registros_por_pagina' => D_PlanEstudio::REGISTROS_POR_PAGINA,
+                'planes' => $resultado
+            ]
+        ]);
+    }
+
     // Insertar plan de estudio
     private static function insertarPlanEstudio($parametros)
     {
@@ -158,7 +233,7 @@ class PlanEstudioController
             'idCarrera' => $idCarrera,
             'fechaElaboracion' => $parametros['fechaElaboracion'] ?? date('Y-m-d'),
             'periodoPlanEstudio' => $periodoPlanEstudio,
-            'vigente' => $parametros['vigente']
+            'vigente' => $parametros['vigente'] ?? 1
         ];
 
         // Insertar

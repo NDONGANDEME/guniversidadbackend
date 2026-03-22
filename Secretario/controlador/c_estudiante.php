@@ -9,12 +9,12 @@ class EstudianteController
 {
     public static function dispatch($accion, $parametros)
     {
-        // Verificar que el actor sea admin
+        // Verificar que el actor sea secretario
         if (!isset($parametros['actor']) || $parametros['actor'] !== 'secretario') {
             echo json_encode([
                 'estado' => 403,
                 'exito' => false,
-                'mensaje' => 'Acceso denegado. Se requiere rol de administrador.',
+                'mensaje' => 'Acceso denegado. Se requiere rol de secretario.',
                 'resultado' => null
             ]);
             return;
@@ -42,6 +42,10 @@ class EstudianteController
                 
             case "obtenerEstudiantesPorFacultad":
                 self::obtenerEstudiantesPorFacultad($parametros['idFacultad'] ?? null);
+                break;
+                
+            case "obtenerEstudiantesAPaginarPorFacultad":
+                self::obtenerEstudiantesPaginadosPorFacultad($parametros);
                 break;
                 
             case "obtenerDatosEspecificosEstudiantes":
@@ -161,6 +165,49 @@ class EstudianteController
         ]);
     }
 
+    // Obtener estudiantes paginados por facultad (NUEVA FUNCIÓN)
+    private static function obtenerEstudiantesPaginadosPorFacultad($parametros)
+    {
+        $idFacultad = $parametros['id'] ?? null;
+        $pagina = $parametros['pagina'] ?? 1;
+
+        if (!$idFacultad) {
+            echo json_encode([
+                'estado' => 400,
+                'exito' => false,
+                'mensaje' => 'ID de facultad no proporcionado',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $pagina = intval($pagina);
+        if ($pagina < 1) $pagina = 1;
+
+        // Obtener total de páginas
+        $totalPaginas = D_Estudiante::contarEstudiantesPorFacultad($idFacultad);
+        
+        // Obtener estudiantes para la página solicitada
+        $estudiantes = D_Estudiante::obtenerEstudiantesPaginadosPorFacultad($pagina, $idFacultad);
+        $resultado = [];
+        
+        foreach ($estudiantes as $estudiante) {
+            $resultado[] = $estudiante->convertirAArray();
+        }
+        
+        echo json_encode([
+            'estado' => 'exito',
+            'exito' => true,
+            'mensaje' => 'Estudiantes paginados por facultad obtenidos correctamente',
+            'resultado' => [
+                'pagina_actual' => $pagina,
+                'total_paginas' => $totalPaginas,
+                'registros_por_pagina' => D_Estudiante::REGISTROS_POR_PAGINA,
+                'estudiantes' => $resultado
+            ]
+        ]);
+    }
+
     // Obtener datos específicos de estudiantes matriculados
     private static function obtenerDatosEspecificosEstudiantes($anioAcademico)
     {
@@ -216,38 +263,9 @@ class EstudianteController
             return;
         }
 
-        // Primero crear usuario asociado si se proporcionan datos de usuario
-        /*$idUsuario = null;
-        if (!empty($parametros['nombreUsuario']) && !empty($parametros['contrasena'])) {
-            // Verificar si el usuario ya existe
-            if (D_Usuario::existeNombreUsuario($parametros['nombreUsuario'])) {
-                echo json_encode([
-                    'estado' => 400,
-                    'exito' => false,
-                    'mensaje' => 'El nombre de usuario ya está en uso',
-                    'resultado' => null
-                ]);
-                return;
-            }
-
-            // Crear usuario
-            $contrasenaHash = password_hash($parametros['contrasena'], PASSWORD_DEFAULT);
-            $idUsuario = D_Usuario::insertarUsuario($parametros);
-
-            if (!$idUsuario) {
-                echo json_encode([
-                    'estado' => 500,
-                    'exito' => false,
-                    'mensaje' => 'Error al crear el usuario asociado',
-                    'resultado' => null
-                ]);
-                return;
-            }
-        }*/
-
         // Preparar datos del estudiante
         $datos = [
-            'idUsuario' => $parametros['idUsuario'],
+            'idUsuario' => $parametros['idUsuario'] ?? null,
             'codigoEstudiante' => $codigoEstudiante,
             'nombre' => $nombre,
             'apellidos' => $apellidos,
@@ -263,7 +281,7 @@ class EstudianteController
             'correoEstudiante' => $correoEstudiante,
             'centroProcedencia' => $parametros['centroProcedencia'] ?? '',
             'universidadProcedencia' => $parametros['universidadProcedencia'] ?? '',
-            'esBecado' => $parametros['esBecado']
+            'esBecado' => $parametros['esBecado'] ?? 0
         ];
 
         // Insertar estudiante

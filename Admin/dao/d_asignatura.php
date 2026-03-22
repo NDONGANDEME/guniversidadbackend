@@ -89,6 +89,195 @@ class D_Asignatura
         }
     }
 
+    /**
+     * OBTENER ASIGNATURAS DEL ÚLTIMO SEMESTRE EN EL QUE SE MATRICULÓ EL ESTUDIANTE
+     * @param int $idEstudiante ID del estudiante
+     * @param int $numeroSemestre Número del semestre (opcional)
+     * @return array Lista de asignaturas
+     */
+    public static function obtenerAsignaturasPorSemestre($idEstudiante, $numeroSemestre = null)
+    {
+        try {
+            $pdo = ConexionUtil::conectar();
+
+            // Si no se especifica número de semestre, obtener el último semestre matriculado
+            if ($numeroSemestre === null) {
+                $sqlUltimoSemestre = "SELECT s.numeroSemestre 
+                                    FROM matriculas m
+                                    INNER JOIN semestre s ON m.idSemestre = s.idSemestre
+                                    WHERE m.idEstudiante = :idEstudiante 
+                                    ORDER BY m.cursoAcademico DESC, s.numeroSemestre DESC
+                                    LIMIT 1";
+                $stmt = $pdo->prepare($sqlUltimoSemestre);
+                $stmt->bindParam(':idEstudiante', $idEstudiante, PDO::PARAM_INT);
+                $stmt->execute();
+                $ultimoSemestre = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if (!$ultimoSemestre) {
+                    return [];
+                }
+                $numeroSemestre = $ultimoSemestre['numeroSemestre'];
+            }
+
+            // Obtener las asignaturas del semestre
+            $sql = "SELECT DISTINCT a.idAsignatura, a.codigoAsignatura, a.nombreAsignatura, a.descripcion, a.idFacultad, f.nombreFacultad
+                    FROM plan_semestre_asignatura psa
+                    INNER JOIN asignaturas a ON psa.idAsignatura = a.idAsignatura
+                    LEFT JOIN facultad f ON a.idFacultad = f.idFacultad
+                    INNER JOIN semestre s ON psa.idSemestre = s.idSemestre
+                    INNER JOIN planestudio pe ON psa.idPlanEstudio = pe.idPlanEstudio
+                    INNER JOIN matriculas m ON pe.idPlanEstudio = m.idPlanEstudio
+                    WHERE m.idEstudiante = :idEstudiante 
+                    AND s.numeroSemestre = :numeroSemestre
+                    ORDER BY a.nombreAsignatura ASC";
+            
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindParam(':idEstudiante', $idEstudiante, PDO::PARAM_INT);
+            $stmt->bindParam(':numeroSemestre', $numeroSemestre, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $asignaturas = [];
+            
+            foreach ($resultados as $fila) {
+                $model = new AsignaturaModel();
+                $model->hidratarDesdeArray($fila);
+                $asignaturas[] = $model;
+            }
+
+            return $asignaturas;
+        } catch (PDOException $e) {
+            error_log("Error en obtenerAsignaturasPorSemestre: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * OBTENER ASIGNATURAS PENDIENTES Y BLOQUEADAS DEL ESTUDIANTE
+     * Teniendo en cuenta las prerrequisitos con nombres completos
+     * @param int $idEstudiante ID del estudiante
+     * @param int $numeroSemestre Número del semestre actual
+     * @return array Lista con asignaturas pendientes y bloqueadas
+     */
+    public static function obtenerAsignaturasPendientesYBloqueadas($idEstudiante, $numeroSemestre)
+    {
+        try {
+            $pdo = ConexionUtil::conectar();
+
+            // 1. Obtener todas las asignaturas que el estudiante ha aprobado (nota >= 5)
+            $sqlAprobadas = "SELECT DISTINCT psa.idAsignatura
+                            FROM matricula_asignatura ma
+                            INNER JOIN plan_semestre_asignatura psa ON ma.idPlanCursoAsignatura = psa.idPlanCursoAsignatura
+                            INNER JOIN matriculas m ON ma.idMatricula = m.idMatricula
+                            WHERE m.idEstudiante = :idEstudiante 
+                            AND ma.notaFinal >= 5";
+            
+            $stmt = $pdo->prepare($sqlAprobadas);
+            $stmt->bindParam(':idEstudiante', $idEstudiante, PDO::PARAM_INT);
+            $stmt->execute();
+            $asignaturasAprobadas = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+            // 2. Obtener todas las asignaturas del plan de estudio del estudiante (para los semestres anteriores)
+            $sqlAsignaturasPlan = "SELECT DISTINCT a.idAsignatura, a.codigoAsignatura, a.nombreAsignatura, a.descripcion, a.idFacultad, f.nombreFacultad, s.numeroSemestre
+                                FROM plan_semestre_asignatura psa
+                                INNER JOIN asignaturas a ON psa.idAsignatura = a.idAsignatura
+                                LEFT JOIN facultad f ON a.idFacultad = f.idFacultad
+                                INNER JOIN semestre s ON psa.idSemestre = s.idSemestre
+                                INNER JOIN planestudio pe ON psa.idPlanEstudio = pe.idPlanEstudio
+                                INNER JOIN matriculas m ON pe.idPlanEstudio = m.idPlanEstudio
+                                WHERE m.idEstudiante = :idEstudiante 
+                                    AND s.numeroSemestre < :numeroSemestre
+                                ORDER BY s.numeroSemestre ASC, a.nombreAsignatura ASC";
+            
+            $stmt = $pdo->prepare($sqlAsignaturasPlan);
+            $stmt->bindParam(':idEstudiante', $idEstudiante, PDO::PARAM_INT);
+            $stmt->bindParam(':numeroSemestre', $numeroSemestre, PDO::PARAM_INT);
+            $stmt->execute();
+            $asignaturasPlan = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // 3. Obtener todos los prerrequisitos con nombres completos
+            $sqlPrerrequisitos = "SELECT p.idAsignatura, p.idAsignaturaRequerida,
+                                        a1.codigoAsignatura as codigoAsignatura, a1.nombreAsignatura as nombreAsignatura,
+                                        a2.codigoAsignatura as codigoAsignaturaRequerida, a2.nombreAsignatura as nombreAsignaturaRequerida
+                                FROM prerrequisitos p
+                                INNER JOIN asignaturas a1 ON p.idAsignatura = a1.idAsignatura
+                                INNER JOIN asignaturas a2 ON p.idAsignaturaRequerida = a2.idAsignatura";
+            $stmt = $pdo->prepare($sqlPrerrequisitos);
+            $stmt->execute();
+            $prerrequisitos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Crear mapa de prerrequisitos con información completa
+            $mapaPrerrequisitos = [];
+            foreach ($prerrequisitos as $prerreq) {
+                if (!isset($mapaPrerrequisitos[$prerreq['idAsignatura']])) {
+                    $mapaPrerrequisitos[$prerreq['idAsignatura']] = [];
+                }
+                $mapaPrerrequisitos[$prerreq['idAsignatura']][] = [
+                    'id' => $prerreq['idAsignaturaRequerida'],
+                    'codigo' => $prerreq['codigoAsignaturaRequerida'],
+                    'nombre' => $prerreq['nombreAsignaturaRequerida']
+                ];
+            }
+
+            // 4. Clasificar asignaturas
+            $pendientes = [];
+            $bloqueadas = [];
+
+            foreach ($asignaturasPlan as $asignatura) {
+                $idAsig = $asignatura['idAsignatura'];
+                
+                // Crear modelo de asignatura
+                $model = new AsignaturaModel();
+                $model->hidratarDesdeArray($asignatura);
+                
+                // Si ya está aprobada, saltar
+                if (in_array($idAsig, $asignaturasAprobadas)) {
+                    continue;
+                }
+
+                // Verificar si tiene prerrequisitos
+                $prerreqs = $mapaPrerrequisitos[$idAsig] ?? [];
+                
+                if (empty($prerreqs)) {
+                    // No tiene prerrequisitos, es pendiente
+                    $model->establecerPrerrequisitos([]);
+                    $pendientes[] = $model;
+                } else {
+                    // Tiene prerrequisitos, verificar si están aprobados
+                    $todosAprobados = true;
+                    $prerreqsFaltantes = [];
+                    
+                    foreach ($prerreqs as $prerreq) {
+                        if (!in_array($prerreq['id'], $asignaturasAprobadas)) {
+                            $todosAprobados = false;
+                            $prerreqsFaltantes[] = $prerreq;
+                        }
+                    }
+                    
+                    $model->establecerPrerrequisitos($prerreqs);
+                    
+                    if ($todosAprobados) {
+                        $pendientes[] = $model;
+                    } else {
+                        $bloqueadas[] = [
+                            'asignatura' => $model,
+                            'prerrequisitos_faltantes' => $prerreqsFaltantes
+                        ];
+                    }
+                }
+            }
+
+            return [
+                'pendientes' => $pendientes,
+                'bloqueadas' => $bloqueadas
+            ];
+        } catch (PDOException $e) {
+            error_log("Error en obtenerAsignaturasPendientesYBloqueadas: " . $e->getMessage());
+            return ['pendientes' => [], 'bloqueadas' => []];
+        }
+    }
+
+
     // OBTENER EL NÚMERO DE PÁGINAS (30 asignaturas por página)
     public static function contarAsignaturas()
     {
@@ -384,8 +573,8 @@ class D_Asignatura
             $pdo = ConexionUtil::conectar();
             $pdo->beginTransaction();
 
-            // Verificar si la asignatura tiene horarios asociados
-            $sqlVerificar = "SELECT COUNT(*) as total FROM horario WHERE idAsignatura = :id";
+            // Verificar si la asignatura tiene relaciones en plan_semestre_asignatura
+            $sqlVerificar = "SELECT COUNT(*) as total FROM plan_semestre_asignatura WHERE idAsignatura = :id";
             $stmtVerificar = $pdo->prepare($sqlVerificar);
             $stmtVerificar->bindParam(':id', $id, PDO::PARAM_INT);
             $stmtVerificar->execute();
@@ -393,10 +582,10 @@ class D_Asignatura
             
             if ($resultado['total'] > 0) {
                 $pdo->rollBack();
-                return false; // No se puede eliminar porque tiene horarios asociados
+                return false; // No se puede eliminar porque tiene relaciones
             }
 
-            // Si no tiene horarios, proceder a eliminar
+            // Si no tiene relaciones, proceder a eliminar
             $sql = "DELETE FROM asignaturas WHERE idAsignatura = :id";
             $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
@@ -477,25 +666,6 @@ class D_Asignatura
             return $resultado['total'] > 0;
         } catch (PDOException $e) {
             error_log("Error en existeAsignaturaPorNombre: " . $e->getMessage());
-            return false;
-        }
-    }
-
-    // VERIFICAR SI LA ASIGNATURA TIENE HORARIOS ASOCIADOS
-    public static function tieneHorariosAsociados($id)
-    {
-        try {
-            $instanciaConexion = ConexionUtil::conectar();
-
-            $sql = "SELECT COUNT(*) as total FROM horarios WHERE idAsignatura = :id";
-            $stmt = $instanciaConexion->prepare($sql);
-            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-            $stmt->execute();
-
-            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $resultado['total'] > 0;
-        } catch (PDOException $e) {
-            error_log("Error en tieneHorariosAsociados: " . $e->getMessage());
             return false;
         }
     }

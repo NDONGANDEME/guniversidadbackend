@@ -39,7 +39,108 @@ class D_Carrera
         }
     }
 
-    // OBTENER EL NÚMERO DE PÁGINAS (30 carreras por página)
+    // OBTENER CARRERAS POR FACULTAD (solo lectura)
+    public static function obtenerCarrerasPorFacultad($idFacultad)
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+
+            $sql = "SELECT c.*, d.nombreDepartamento, f.idFacultad, f.nombreFacultad
+                    FROM carrera c
+                    LEFT JOIN departamento d ON c.idDepartamento = d.idDepartamento
+                    LEFT JOIN facultad f ON d.idFacultad = f.idFacultad
+                    WHERE f.idFacultad = :idFacultad
+                    ORDER BY c.nombreCarrera ASC";
+            
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->bindParam(':idFacultad', $idFacultad, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $carreras = [];
+            
+            foreach ($resultados as $fila) {
+                $model = new CarreraModel();
+                $model->hidratarDesdeArray($fila);
+                if (isset($fila['nombreDepartamento'])) {
+                    $model->nombreDepartamento = $fila['nombreDepartamento'];
+                }
+                $carreras[] = $model;
+            }
+
+            return $carreras;
+        } catch (PDOException $e) {
+            error_log("Error en obtenerCarrerasPorFacultad: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    // CONTAR CARRERAS POR FACULTAD
+    public static function contarCarrerasPorFacultad($idFacultad)
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+
+            $sql = "SELECT COUNT(*) as total 
+                    FROM carrera c
+                    LEFT JOIN departamento d ON c.idDepartamento = d.idDepartamento
+                    WHERE d.idFacultad = :idFacultad";
+            
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->bindParam(':idFacultad', $idFacultad, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+            return (int) $resultado['total'];
+        } catch (PDOException $e) {
+            error_log("Error en contarCarrerasPorFacultad: " . $e->getMessage());
+            return 0;
+        }
+    }
+
+    // OBTENER CARRERAS POR FACULTAD CON PAGINACIÓN
+    public static function obtenerCarrerasPorFacultadPaginadas($idFacultad, $pagina)
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+
+            $saltos = ($pagina - 1) * self::REGISTROS_POR_PAGINA;
+            $lote = self::REGISTROS_POR_PAGINA;
+
+            $sql = "SELECT c.*, d.nombreDepartamento, f.idFacultad, f.nombreFacultad
+                    FROM carrera c
+                    LEFT JOIN departamento d ON c.idDepartamento = d.idDepartamento
+                    LEFT JOIN facultad f ON d.idFacultad = f.idFacultad
+                    WHERE f.idFacultad = :idFacultad
+                    ORDER BY c.nombreCarrera ASC
+                    LIMIT :lote OFFSET :saltos";
+            
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->bindParam(':idFacultad', $idFacultad, PDO::PARAM_INT);
+            $stmt->bindParam(':lote', $lote, PDO::PARAM_INT);
+            $stmt->bindParam(':saltos', $saltos, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $carreras = [];
+            
+            foreach ($resultados as $fila) {
+                $model = new CarreraModel();
+                $model->hidratarDesdeArray($fila);
+                if (isset($fila['nombreDepartamento'])) {
+                    $model->nombreDepartamento = $fila['nombreDepartamento'];
+                }
+                $carreras[] = $model;
+            }
+
+            return $carreras;
+        } catch (PDOException $e) {
+            error_log("Error en obtenerCarrerasPorFacultadPaginadas: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    // OBTENER EL NÚMERO DE PÁGINAS (8 carreras por página)
     public static function contarCarreras()
     {
         try {
@@ -424,9 +525,8 @@ class D_Carrera
             $pdo = ConexionUtil::conectar();
             $pdo->beginTransaction();
 
-            // Verificar si la carrera tiene matriculas asociadas
-            $sqlVerificar = "SELECT COUNT(*) as total FROM matriculas m  LEFT JOIN 
-                            planestudio pe ON m.idPlanEstudio = pe.idPlanEstudio WHERE idCarrera = :id";
+            // Verificar si la carrera tiene planes de estudio asociados
+            $sqlVerificar = "SELECT COUNT(*) as total FROM planestudio WHERE idCarrera = :id";
             $stmtVerificar = $pdo->prepare($sqlVerificar);
             $stmtVerificar->bindParam(':id', $id, PDO::PARAM_INT);
             $stmtVerificar->execute();
@@ -434,10 +534,10 @@ class D_Carrera
             
             if ($resultado['total'] > 0) {
                 $pdo->rollBack();
-                return false; // No se puede eliminar porque tiene matriculas asociadas
+                return false; // No se puede eliminar porque tiene planes de estudio asociados
             }
 
-            // Si no tiene matriculas, proceder a eliminar
+            // Si no tiene planes de estudio, proceder a eliminar
             $sql = "DELETE FROM carrera WHERE idCarrera = :id";
             $stmt = $pdo->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
@@ -489,25 +589,6 @@ class D_Carrera
             return $resultado['total'] > 0;
         } catch (PDOException $e) {
             error_log("Error en existeCarrera: " . $e->getMessage());
-            return false;
-        }
-    }
-
-    // VERIFICAR SI LA CARRERA TIENE ASIGNATURAS ASOCIADAS
-    public static function tieneAsignaturasAsociadas($id)
-    {
-        try {
-            $instanciaConexion = ConexionUtil::conectar();
-
-            $sql = "SELECT COUNT(*) as total FROM asignatura WHERE idCarrera = :id";
-            $stmt = $instanciaConexion->prepare($sql);
-            $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-            $stmt->execute();
-
-            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $resultado['total'] > 0;
-        } catch (PDOException $e) {
-            error_log("Error en tieneAsignaturasAsociadas: " . $e->getMessage());
             return false;
         }
     }

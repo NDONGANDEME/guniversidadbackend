@@ -20,6 +20,7 @@ class EstudianteModel
     public $universidadProcedencia;
     public $esBecado;
     public $nombreUsuario;
+    public $nombreFacultad; // Nueva propiedad para filtrar por facultad
 
     public function __construct($nombre = null, $apellidos = null, $codigoEstudiante = null)
     {
@@ -49,6 +50,8 @@ class EstudianteModel
         if (isset($data['centroProcedencia'])) $this->centroProcedencia = $data['centroProcedencia'];
         if (isset($data['universidadProcedencia'])) $this->universidadProcedencia = $data['universidadProcedencia'];
         if (isset($data['esBecado'])) $this->esBecado = $data['esBecado'];
+        if (isset($data['nombreUsuario'])) $this->nombreUsuario = $data['nombreUsuario'];
+        if (isset($data['nombreFacultad'])) $this->nombreFacultad = $data['nombreFacultad'];
         
         return $this;
     }
@@ -56,7 +59,7 @@ class EstudianteModel
     // Convertir modelo a array
     public function convertirAArray()
     {
-        return [
+        $data = [
             'idEstudiante' => $this->idEstudiante,
             'idUsuario' => $this->idUsuario,
             'codigoEstudiante' => $this->codigoEstudiante,
@@ -76,6 +79,15 @@ class EstudianteModel
             'universidadProcedencia' => $this->universidadProcedencia,
             'esBecado' => $this->esBecado
         ];
+
+        if (isset($this->nombreUsuario)) {
+            $data['nombreUsuario'] = $this->nombreUsuario;
+        }
+        if (isset($this->nombreFacultad)) {
+            $data['nombreFacultad'] = $this->nombreFacultad;
+        }
+
+        return $data;
     }
 
     // Obtener nombre completo

@@ -6,6 +6,8 @@ class CarreraModel
     public $idDepartamento;
     public $nombreDepartamento;
     public $estado;
+    public $nombreFacultad; // Nueva propiedad para el nombre de la facultad
+    public $idFacultad; // Nueva propiedad para el ID de la facultad
 
     public function __construct($nombreCarrera = null, $idDepartamento = null, $estado = null)
     {
@@ -22,6 +24,8 @@ class CarreraModel
         if (isset($data['idDepartamento'])) $this->idDepartamento = $data['idDepartamento'];
         if (isset($data['nombreDepartamento'])) $this->nombreDepartamento = $data['nombreDepartamento'];
         if (isset($data['estado'])) $this->estado = $data['estado'];
+        if (isset($data['nombreFacultad'])) $this->nombreFacultad = $data['nombreFacultad'];
+        if (isset($data['idFacultad'])) $this->idFacultad = $data['idFacultad'];
         
         return $this;
     }
@@ -29,13 +33,22 @@ class CarreraModel
     // Convertir modelo a array
     public function convertirAArray()
     {
-        return [
+        $data = [
             'idCarrera' => $this->idCarrera,
             'nombreCarrera' => $this->nombreCarrera,
             'idDepartamento' => $this->idDepartamento,
             'nombreDepartamento' => $this->nombreDepartamento,
             'estado' => $this->estado
         ];
+
+        if (isset($this->nombreFacultad)) {
+            $data['nombreFacultad'] = $this->nombreFacultad;
+        }
+        if (isset($this->idFacultad)) {
+            $data['idFacultad'] = $this->idFacultad;
+        }
+
+        return $data;
     }
 }
 ?>

@@ -7,6 +7,7 @@ class AsignaturaModel
     public $descripcion;
     public $idFacultad;
     public $nombreFacultad;
+    public $prerrequisitos = []; // Para almacenar los prerrequisitos con sus datos
 
     public function __construct($codigoAsignatura = null, $nombreAsignatura = null, $descripcion = null, $idFacultad = null)
     {
@@ -30,9 +31,9 @@ class AsignaturaModel
     }
 
     // Convertir modelo a array
-    public function convertirAArray()
+    public function convertirAArray($incluirPrerrequisitos = true)
     {
-        return [
+        $data = [
             'idAsignatura' => $this->idAsignatura,
             'codigoAsignatura' => $this->codigoAsignatura,
             'nombreAsignatura' => $this->nombreAsignatura,
@@ -40,6 +41,35 @@ class AsignaturaModel
             'idFacultad' => $this->idFacultad,
             'nombreFacultad' => $this->nombreFacultad
         ];
+
+        if ($incluirPrerrequisitos && !empty($this->prerrequisitos)) {
+            $data['prerrequisitos'] = $this->prerrequisitos;
+        }
+
+        return $data;
+    }
+
+    // Establecer prerrequisitos
+    public function establecerPrerrequisitos($prerrequisitos)
+    {
+        $this->prerrequisitos = $prerrequisitos;
+        return $this;
+    }
+
+    // Verificar si tiene prerrequisitos
+    public function tienePrerrequisitos()
+    {
+        return !empty($this->prerrequisitos);
+    }
+
+    // Obtener nombres de los prerrequisitos
+    public function obtenerNombresPrerrequisitos()
+    {
+        $nombres = [];
+        foreach ($this->prerrequisitos as $prerreq) {
+            $nombres[] = $prerreq['nombreAsignatura'] ?? $prerreq['nombreAsignaturaRequerida'] ?? '';
+        }
+        return $nombres;
     }
 }
 ?>

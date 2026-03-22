@@ -39,6 +39,14 @@ class CarreraController
                 self::obtenerCarrerasPorDepartamentoPaginadas($parametros);
                 break;
                 
+            case "obtenerCarrerasPorFacultad":
+                self::obtenerCarrerasPorFacultad($parametros);
+                break;
+                
+            case "obtenerCarrerasPorFacultadPaginadas":
+                self::obtenerCarrerasPorFacultadPaginadas($parametros);
+                break;
+                
             case "buscarCarreras":
                 self::buscarCarreras($parametros);
                 break;
@@ -69,29 +77,9 @@ class CarreraController
         }
     }
 
-    // Verificar si hay sesión activa
-    /*private static function verificarSesionActiva()
-    {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-        
-        return isset($_SESSION['usuario_id']) && isset($_SESSION['usuario_correo']);
-    }*/
-
     // Obtener todas las carreras
     private static function obtenerCarreras()
     {
-        /*if (!self::verificarSesionActiva()) {
-            echo json_encode([
-                'estado' => 401,
-                'exito' => false,
-                'mensaje' => 'No hay sesión activa',
-                'resultado' => null
-            ]);
-            return;
-        }*/
-
         $carreras = D_Carrera::obtenerCarreras();
         $resultado = [];
         
@@ -114,16 +102,6 @@ class CarreraController
     // Obtener carreras paginadas
     private static function obtenerCarrerasPaginadas($parametros)
     {
-        /*if (!self::verificarSesionActiva()) {
-            echo json_encode([
-                'estado' => 401,
-                'exito' => false,
-                'mensaje' => 'No hay sesión activa',
-                'resultado' => null
-            ]);
-            return;
-        }*/
-
         $pagina = $parametros['pagina'] ?? 1;
         $pagina = intval($pagina);
         if ($pagina < 1) $pagina = 1;
@@ -153,16 +131,6 @@ class CarreraController
     // Obtener total de páginas
     private static function obtenerTotalPaginas()
     {
-        /*if (!self::verificarSesionActiva()) {
-            echo json_encode([
-                'estado' => 401,
-                'exito' => false,
-                'mensaje' => 'No hay sesión activa',
-                'resultado' => null
-            ]);
-            return;
-        }*/
-
         $totalPaginas = D_Carrera::contarCarreras();
         
         echo json_encode([
@@ -179,16 +147,6 @@ class CarreraController
     // Obtener carreras por departamento
     private static function obtenerCarrerasPorDepartamento($parametros)
     {
-        /*if (!self::verificarSesionActiva()) {
-            echo json_encode([
-                'estado' => 401,
-                'exito' => false,
-                'mensaje' => 'No hay sesión activa',
-                'resultado' => null
-            ]);
-            return;
-        }*/
-
         $idDepartamento = $parametros['idDepartamento'] ?? null;
         
         if (!$idDepartamento) {
@@ -219,16 +177,6 @@ class CarreraController
     // Obtener carreras por departamento paginadas
     private static function obtenerCarrerasPorDepartamentoPaginadas($parametros)
     {
-        /*if (!self::verificarSesionActiva()) {
-            echo json_encode([
-                'estado' => 401,
-                'exito' => false,
-                'mensaje' => 'No hay sesión activa',
-                'resultado' => null
-            ]);
-            return;
-        }*/
-
         $idDepartamento = $parametros['idDepartamento'] ?? null;
         $pagina = $parametros['pagina'] ?? 1;
         
@@ -273,19 +221,90 @@ class CarreraController
         ]);
     }
 
-    // Buscar carreras
-    private static function buscarCarreras($parametros)
+    // Obtener carreras por facultad (NUEVA FUNCIÓN)
+    private static function obtenerCarrerasPorFacultad($parametros)
     {
-        /*if (!self::verificarSesionActiva()) {
+        $idFacultad = $parametros['idFacultad'] ?? null;
+        
+        if (!$idFacultad) {
             echo json_encode([
-                'estado' => 401,
+                'estado' => 400,
                 'exito' => false,
-                'mensaje' => 'No hay sesión activa',
+                'mensaje' => 'ID de facultad no proporcionado',
                 'resultado' => null
             ]);
             return;
-        }*/
+        }
 
+        $carreras = D_Carrera::obtenerCarrerasPorFacultad($idFacultad);
+        $resultado = [];
+        
+        foreach ($carreras as $carrera) {
+            $arr = $carrera->convertirAArray();
+            if (isset($carrera->nombreDepartamento)) {
+                $arr['nombreDepartamento'] = $carrera->nombreDepartamento;
+            }
+            $resultado[] = $arr;
+        }
+        
+        echo json_encode([
+            'estado' => 'exito',
+            'exito' => true,
+            'mensaje' => 'Carreras por facultad obtenidas correctamente',
+            'resultado' => $resultado
+        ]);
+    }
+
+    // Obtener carreras por facultad paginadas (NUEVA FUNCIÓN)
+    private static function obtenerCarrerasPorFacultadPaginadas($parametros)
+    {
+        $idFacultad = $parametros['idFacultad'] ?? null;
+        $pagina = $parametros['pagina'] ?? 1;
+        
+        if (!$idFacultad) {
+            echo json_encode([
+                'estado' => 400,
+                'exito' => false,
+                'mensaje' => 'ID de facultad no proporcionado',
+                'resultado' => null
+            ]);
+            return;
+        }
+
+        $pagina = intval($pagina);
+        if ($pagina < 1) $pagina = 1;
+        
+        $carreras = D_Carrera::obtenerCarrerasPorFacultadPaginadas($idFacultad, $pagina);
+        $resultado = [];
+        
+        foreach ($carreras as $carrera) {
+            $arr = $carrera->convertirAArray();
+            if (isset($carrera->nombreDepartamento)) {
+                $arr['nombreDepartamento'] = $carrera->nombreDepartamento;
+            }
+            $resultado[] = $arr;
+        }
+        
+        // Obtener total de páginas para esta facultad
+        $totalCarreras = D_Carrera::contarCarrerasPorFacultad($idFacultad);
+        $totalPaginas = ceil($totalCarreras / D_Carrera::REGISTROS_POR_PAGINA);
+        
+        echo json_encode([
+            'estado' => 'exito',
+            'exito' => true,
+            'mensaje' => 'Carreras por facultad paginadas obtenidas correctamente',
+            'resultado' => [
+                'pagina_actual' => $pagina,
+                'total_paginas' => $totalPaginas,
+                'total_carreras' => $totalCarreras,
+                'carreras' => $resultado
+            ]
+        ]);
+    }
+
+    // Buscar carreras
+    private static function buscarCarreras($parametros)
+    {
         $termino = $parametros['termino'] ?? '';
         $pagina = $parametros['pagina'] ?? 1;
 
@@ -342,19 +361,10 @@ class CarreraController
     // Insertar nueva carrera
     private static function insertarCarrera($parametros)
     {
-        /*if (!self::verificarSesionActiva()) {
-            echo json_encode([
-                'estado' => 401,
-                'exito' => false,
-                'mensaje' => 'No hay sesión activa',
-                'resultado' => null
-            ]);
-            return;
-        }*/
-
         // Validar campos obligatorios
         $nombreCarrera = $parametros['nombreCarrera'] ?? '';
         $idDepartamento = $parametros['idDepartamento'] ?? '';
+        $estado = $parametros['estado'] ?? 'activo';
 
         $errores = [];
         
@@ -388,7 +398,13 @@ class CarreraController
         }
 
         // Insertar carrera
-        $carreraId = D_Carrera::insertarCarrera($parametros);
+        $datos = [
+            'nombreCarrera' => $nombreCarrera,
+            'idDepartamento' => $idDepartamento,
+            'estado' => $estado
+        ];
+        
+        $carreraId = D_Carrera::insertarCarrera($datos);
 
         if (!$carreraId) {
             echo json_encode([
@@ -411,16 +427,6 @@ class CarreraController
     // Actualizar carrera existente
     private static function actualizarCarrera($parametros)
     {
-        /*if (!self::verificarSesionActiva()) {
-            echo json_encode([
-                'estado' => 401,
-                'exito' => false,
-                'mensaje' => 'No hay sesión activa',
-                'resultado' => null
-            ]);
-            return;
-        }*/
-
         $id = $parametros['idCarrera'] ?? null;
         
         if (!$id) {
@@ -448,6 +454,7 @@ class CarreraController
         // Datos a actualizar
         $nombreCarrera = $parametros['nombreCarrera'] ?? $carreraExistente->nombreCarrera;
         $idDepartamento = $parametros['idDepartamento'] ?? $carreraExistente->idDepartamento;
+        $estado = $parametros['estado'] ?? $carreraExistente->estado;
 
         // Validaciones
         $errores = [];
@@ -473,7 +480,14 @@ class CarreraController
         }
 
         // Actualizar carrera
-        $actualizado = D_Carrera::actualizarCarrera($parametros);
+        $datos = [
+            'idCarrera' => $id,
+            'nombreCarrera' => $nombreCarrera,
+            'idDepartamento' => $idDepartamento,
+            'estado' => $estado
+        ];
+        
+        $actualizado = D_Carrera::actualizarCarrera($datos);
 
         if (!$actualizado) {
             echo json_encode([
@@ -496,16 +510,6 @@ class CarreraController
     // Cambiar estado de carrera
     private static function cambiarEstadoCarrera($parametros)
     {
-        /*if (!self::verificarSesionActiva()) {
-            echo json_encode([
-                'estado' => 401,
-                'exito' => false,
-                'mensaje' => 'No hay sesión activa',
-                'resultado' => null
-            ]);
-            return;
-        }*/
-
         $id = $parametros['id'] ?? null;
         $nuevoEstado = $parametros['nuevoEstado'] ?? null;
         
@@ -529,12 +533,12 @@ class CarreraController
             return;
         }
 
-        // Validar que el estado sea válido (1: activo, 0: inactivo)
+        // Validar que el estado sea válido
         if (!in_array($nuevoEstado, ['activo', 'inactivo'])) {
             echo json_encode([
                 'estado' => 400,
                 'exito' => false,
-                'mensaje' => 'Estado no válido. Debe ser 1 (activo) o 0 (inactivo)',
+                'mensaje' => 'Estado no válido. Debe ser "activo" o "inactivo"',
                 'resultado' => null
             ]);
             return;
@@ -577,16 +581,6 @@ class CarreraController
     // Eliminar carrera
     private static function eliminarCarrera($parametros)
     {
-        /*if (!self::verificarSesionActiva()) {
-            echo json_encode([
-                'estado' => 401,
-                'exito' => false,
-                'mensaje' => 'No hay sesión activa',
-                'resultado' => null
-            ]);
-            return;
-        }*/
-
         $id = $parametros['id'] ?? null;
         
         if (!$id) {
@@ -606,17 +600,6 @@ class CarreraController
                 'estado' => 404,
                 'exito' => false,
                 'mensaje' => 'Carrera no encontrada',
-                'resultado' => null
-            ]);
-            return;
-        }
-
-        // Verificar si tiene asignaturas asociadas
-        if (D_Carrera::tieneAsignaturasAsociadas($id)) {
-            echo json_encode([
-                'estado' => 400,
-                'exito' => false,
-                'mensaje' => 'No se puede eliminar la carrera porque tiene asignaturas asociadas',
                 'resultado' => null
             ]);
             return;

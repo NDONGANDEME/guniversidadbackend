@@ -4,15 +4,20 @@ require_once __DIR__ . "/../modelo/m_planestudio.php";
 
 class D_PlanEstudio
 {
+    // CONSTANTE PARA EL NÚMERO DE REGISTROS POR PÁGINA
+    const REGISTROS_POR_PAGINA = 8;
+
     // OBTENER TODOS LOS PLANES DE ESTUDIO (solo lectura)
     public static function obtenerPlanesEstudios()
     {
         try {
             $instanciaConexion = ConexionUtil::conectar();
 
-            $sql = "SELECT pe.*, c.nombreCarrera 
+            $sql = "SELECT pe.*, c.nombreCarrera, f.nombreFacultad
                     FROM planestudio pe
                     LEFT JOIN carrera c ON pe.idCarrera = c.idCarrera
+                    LEFT JOIN departamento d ON c.idDepartamento = d.idDepartamento
+                    LEFT JOIN facultad f ON d.idFacultad = f.idFacultad
                     ORDER BY pe.fechaElaboracion DESC, pe.nombre ASC";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->execute();
@@ -23,9 +28,6 @@ class D_PlanEstudio
             foreach ($resultados as $fila) {
                 $model = new PlanEstudioModel();
                 $model->hidratarDesdeArray($fila);
-                if (isset($fila['nombreCarrera'])) {
-                    $model->nombreCarrera = $fila['nombreCarrera'];
-                }
                 $planes[] = $model;
             }
 
@@ -36,7 +38,41 @@ class D_PlanEstudio
         }
     }
 
-    // OBTENER PLANES DE ESTUDIO POR CARRERA (solo lectura)
+    // OBTENER PLANES DE ESTUDIO POR FACULTAD
+    public static function obtenerPlanesEstudiosPorFacultad($idFacultad)
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+
+            $sql = "SELECT pe.*, c.nombreCarrera, f.nombreFacultad
+                    FROM planestudio pe
+                    LEFT JOIN carrera c ON pe.idCarrera = c.idCarrera
+                    LEFT JOIN departamento d ON c.idDepartamento = d.idDepartamento
+                    LEFT JOIN facultad f ON d.idFacultad = f.idFacultad
+                    WHERE f.idFacultad = :idFacultad
+                    ORDER BY pe.fechaElaboracion DESC, pe.nombre ASC";
+            
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->bindParam(':idFacultad', $idFacultad, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $planes = [];
+            
+            foreach ($resultados as $fila) {
+                $model = new PlanEstudioModel();
+                $model->hidratarDesdeArray($fila);
+                $planes[] = $model;
+            }
+
+            return $planes;
+        } catch (PDOException $e) {
+            error_log("Error en obtenerPlanesEstudiosPorFacultad: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    // OBTENER PLANES DE ESTUDIO POR CARRERA
     public static function obtenerPlanesEstudioPorCarrera($idCarrera)
     {
         try {
@@ -65,15 +101,17 @@ class D_PlanEstudio
         }
     }
 
-    // OBTENER PLAN DE ESTUDIO POR ID (solo lectura)
+    // OBTENER PLAN DE ESTUDIO POR ID
     public static function obtenerPlanEstudioPorId($id)
     {
         try {
             $instanciaConexion = ConexionUtil::conectar();
 
-            $sql = "SELECT pe.*, c.nombreCarrera 
+            $sql = "SELECT pe.*, c.nombreCarrera, f.nombreFacultad
                     FROM planestudio pe
                     LEFT JOIN carrera c ON pe.idCarrera = c.idCarrera
+                    LEFT JOIN departamento d ON c.idDepartamento = d.idDepartamento
+                    LEFT JOIN facultad f ON d.idFacultad = f.idFacultad
                     WHERE pe.idPlanEstudio = :id";
             $stmt = $instanciaConexion->prepare($sql);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
@@ -90,6 +128,70 @@ class D_PlanEstudio
         } catch (PDOException $e) {
             error_log("Error en obtenerPlanEstudioPorId: " . $e->getMessage());
             return null;
+        }
+    }
+
+    // CONTAR PLANES DE ESTUDIO POR FACULTAD (para paginación)
+    public static function contarPlanesEstudiosPorFacultad($idFacultad)
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+
+            $sql = "SELECT COUNT(*) as total 
+                    FROM planestudio pe
+                    LEFT JOIN carrera c ON pe.idCarrera = c.idCarrera
+                    LEFT JOIN departamento d ON c.idDepartamento = d.idDepartamento
+                    WHERE d.idFacultad = :idFacultad";
+            
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->bindParam(':idFacultad', $idFacultad, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+            return (int) ceil($resultado['total'] / self::REGISTROS_POR_PAGINA);
+        } catch (PDOException $e) {
+            error_log("Error en contarPlanesEstudiosPorFacultad: " . $e->getMessage());
+            return 0;
+        }
+    }
+
+    // OBTENER PLANES DE ESTUDIO PAGINADOS POR FACULTAD
+    public static function obtenerPlanesEstudiosPaginadosPorFacultad($pagina, $idFacultad)
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+
+            $saltos = ($pagina - 1) * self::REGISTROS_POR_PAGINA;
+            $lote = self::REGISTROS_POR_PAGINA;
+
+            $sql = "SELECT pe.*, c.nombreCarrera, f.nombreFacultad
+                    FROM planestudio pe
+                    LEFT JOIN carrera c ON pe.idCarrera = c.idCarrera
+                    LEFT JOIN departamento d ON c.idDepartamento = d.idDepartamento
+                    LEFT JOIN facultad f ON d.idFacultad = f.idFacultad
+                    WHERE f.idFacultad = :idFacultad
+                    ORDER BY pe.fechaElaboracion DESC, pe.nombre ASC
+                    LIMIT :lote OFFSET :saltos";
+            
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->bindParam(':idFacultad', $idFacultad, PDO::PARAM_INT);
+            $stmt->bindParam(':lote', $lote, PDO::PARAM_INT);
+            $stmt->bindParam(':saltos', $saltos, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $planes = [];
+            
+            foreach ($resultados as $fila) {
+                $model = new PlanEstudioModel();
+                $model->hidratarDesdeArray($fila);
+                $planes[] = $model;
+            }
+
+            return $planes;
+        } catch (PDOException $e) {
+            error_log("Error en obtenerPlanesEstudiosPaginadosPorFacultad: " . $e->getMessage());
+            return [];
         }
     }
 

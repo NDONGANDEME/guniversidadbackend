@@ -4,6 +4,9 @@ require_once __DIR__ . "/../modelo/m_estudiante.php";
 
 class D_Estudiante
 {
+    // CONSTANTE PARA EL NÚMERO DE REGISTROS POR PÁGINA
+    const REGISTROS_POR_PAGINA = 8;
+
     // OBTENER TODOS LOS ESTUDIANTES (solo lectura)
     public static function obtenerEstudiantes()
     {
@@ -23,15 +26,117 @@ class D_Estudiante
             foreach ($resultados as $fila) {
                 $model = new EstudianteModel();
                 $model->hidratarDesdeArray($fila);
-                if (isset($fila['nombreUsuario'])) {
-                    $model->nombreUsuario = $fila['nombreUsuario'];
-                }
                 $estudiantes[] = $model;
             }
 
             return $estudiantes;
         } catch (PDOException $e) {
             error_log("Error en obtenerEstudiantes: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    // OBTENER ESTUDIANTES POR FACULTAD (solo lectura)
+    public static function obtenerEstudiantesPorFacultad($idFacultad)
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+
+            $sql = "SELECT DISTINCT e.*, f.nombreFacultad
+                    FROM estudiantes e
+                    INNER JOIN matriculas m ON e.idEstudiante = m.idEstudiante
+                    INNER JOIN planestudio pe ON m.idPlanEstudio = pe.idPlanEstudio
+                    INNER JOIN carrera c ON pe.idCarrera = c.idCarrera
+                    INNER JOIN departamento d ON c.idDepartamento = d.idDepartamento
+                    INNER JOIN facultad f ON d.idFacultad = f.idFacultad
+                    WHERE f.idFacultad = :idFacultad
+                    ORDER BY e.apellidos ASC, e.nombre ASC";
+            
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->bindParam(':idFacultad', $idFacultad, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $estudiantes = [];
+            
+            foreach ($resultados as $fila) {
+                $model = new EstudianteModel();
+                $model->hidratarDesdeArray($fila);
+                $estudiantes[] = $model;
+            }
+
+            return $estudiantes;
+        } catch (PDOException $e) {
+            error_log("Error en obtenerEstudiantesPorFacultad: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    // CONTAR ESTUDIANTES POR FACULTAD (para paginación)
+    public static function contarEstudiantesPorFacultad($idFacultad)
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+
+            $sql = "SELECT COUNT(DISTINCT e.idEstudiante) as total 
+                    FROM estudiantes e
+                    INNER JOIN matriculas m ON e.idEstudiante = m.idEstudiante
+                    INNER JOIN planestudio pe ON m.idPlanEstudio = pe.idPlanEstudio
+                    INNER JOIN carrera c ON pe.idCarrera = c.idCarrera
+                    INNER JOIN departamento d ON c.idDepartamento = d.idDepartamento
+                    INNER JOIN facultad f ON d.idFacultad = f.idFacultad
+                    WHERE f.idFacultad = :idFacultad";
+            
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->bindParam(':idFacultad', $idFacultad, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $resultado = $stmt->fetch(PDO::FETCH_ASSOC);
+            return (int) ceil($resultado['total'] / self::REGISTROS_POR_PAGINA);
+        } catch (PDOException $e) {
+            error_log("Error en contarEstudiantesPorFacultad: " . $e->getMessage());
+            return 0;
+        }
+    }
+
+    // OBTENER ESTUDIANTES PAGINADOS POR FACULTAD
+    public static function obtenerEstudiantesPaginadosPorFacultad($pagina, $idFacultad)
+    {
+        try {
+            $instanciaConexion = ConexionUtil::conectar();
+
+            $saltos = ($pagina - 1) * self::REGISTROS_POR_PAGINA;
+            $lote = self::REGISTROS_POR_PAGINA;
+
+            $sql = "SELECT DISTINCT e.*, f.nombreFacultad
+                    FROM estudiantes e
+                    INNER JOIN matriculas m ON e.idEstudiante = m.idEstudiante
+                    INNER JOIN planestudio pe ON m.idPlanEstudio = pe.idPlanEstudio
+                    INNER JOIN carrera c ON pe.idCarrera = c.idCarrera
+                    INNER JOIN departamento d ON c.idDepartamento = d.idDepartamento
+                    INNER JOIN facultad f ON d.idFacultad = f.idFacultad
+                    WHERE f.idFacultad = :idFacultad
+                    ORDER BY e.apellidos ASC, e.nombre ASC
+                    LIMIT :lote OFFSET :saltos";
+            
+            $stmt = $instanciaConexion->prepare($sql);
+            $stmt->bindParam(':idFacultad', $idFacultad, PDO::PARAM_INT);
+            $stmt->bindParam(':lote', $lote, PDO::PARAM_INT);
+            $stmt->bindParam(':saltos', $saltos, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $estudiantes = [];
+            
+            foreach ($resultados as $fila) {
+                $model = new EstudianteModel();
+                $model->hidratarDesdeArray($fila);
+                $estudiantes[] = $model;
+            }
+
+            return $estudiantes;
+        } catch (PDOException $e) {
+            error_log("Error en obtenerEstudiantesPaginadosPorFacultad: " . $e->getMessage());
             return [];
         }
     }
@@ -66,41 +171,6 @@ class D_Estudiante
             return $estudiantes;
         } catch (PDOException $e) {
             error_log("Error en obtenerEstudiantesPorAsignatura: " . $e->getMessage());
-            return [];
-        }
-    }
-
-    // OBTENER ESTUDIANTES POR FACULTAD (solo lectura)
-    public static function obtenerEstudiantesPorFacultad($idFacultad)
-    {
-        try {
-            $instanciaConexion = ConexionUtil::conectar();
-
-            $sql = "SELECT DISTINCT e.* 
-                    FROM estudiantes e
-                    INNER JOIN matriculas m ON e.idEstudiante = m.idEstudiante
-                    INNER JOIN planestudio pe ON m.idPlanEstudio = pe.idPlanEstudio
-                    INNER JOIN carrera c ON pe.idCarrera = c.idCarrera
-                    INNER JOIN departamento d ON c.idDepartamento = d.idDepartamento
-                    WHERE d.idFacultad = :idFacultad
-                    ORDER BY e.apellidos ASC, e.nombre ASC";
-            
-            $stmt = $instanciaConexion->prepare($sql);
-            $stmt->bindParam(':idFacultad', $idFacultad, PDO::PARAM_INT);
-            $stmt->execute();
-
-            $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            $estudiantes = [];
-            
-            foreach ($resultados as $fila) {
-                $model = new EstudianteModel();
-                $model->hidratarDesdeArray($fila);
-                $estudiantes[] = $model;
-            }
-
-            return $estudiantes;
-        } catch (PDOException $e) {
-            error_log("Error en obtenerEstudiantesPorFacultad: " . $e->getMessage());
             return [];
         }
     }
