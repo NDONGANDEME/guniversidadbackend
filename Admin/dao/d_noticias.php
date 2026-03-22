@@ -5,7 +5,7 @@ require_once __DIR__ . "/../modelo/m_noticia.php";
 class NoticiasDao
 {
     // CONSTANTE PARA EL NÚMERO DE REGISTROS POR PÁGINA
-    const REGISTROS_POR_PAGINA = 20;
+    const REGISTROS_POR_PAGINA = 1;
 
     // FUNCIÓN PARA OBTENER EL NÚMERO DE PÁGINAS (solo lectura)
     public static function contarNoticias($tipo = null)
