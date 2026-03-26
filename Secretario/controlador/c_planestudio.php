@@ -39,7 +39,7 @@ class PlanEstudioController
                 break;
                 
             case "obtenerPlanesEstudiosPorFacultad":
-                self::obtenerPlanesEstudiosPorFacultad($parametros['id'] ?? null);
+                self::obtenerPlanesEstudiosPorFacultad($parametros['idFacultad'] ?? null);
                 break;
                 
             case "obtenerPlanesEstudiosAPaginarPorFacultad":
@@ -134,7 +134,7 @@ class PlanEstudioController
             echo json_encode([
                 'estado' => 400,
                 'exito' => false,
-                'mensaje' => 'ID de facultad no proporcionado',
+                'mensaje' => 'ID de facultad no proporcionado. PlanesEstudios',
                 'resultado' => null
             ]);
             return;
@@ -158,14 +158,14 @@ class PlanEstudioController
     // Obtener planes de estudio paginados por facultad (NUEVA FUNCIÓN)
     private static function obtenerPlanesEstudiosPaginadosPorFacultad($parametros)
     {
-        $idFacultad = $parametros['id'] ?? null;
+        $idFacultad = $parametros['idFacultad'] ?? null;
         $pagina = $parametros['pagina'] ?? 1;
 
         if (!$idFacultad) {
             echo json_encode([
                 'estado' => 400,
                 'exito' => false,
-                'mensaje' => 'ID de facultad no proporcionado',
+                'mensaje' => 'ID de facultad no proporcionado. PlanesEstudiosPaginados',
                 'resultado' => null
             ]);
             return;
@@ -244,7 +244,7 @@ class PlanEstudioController
                 'estado' => 500,
                 'exito' => false,
                 'mensaje' => 'Error al crear el plan de estudio',
-                'resultado' => null
+                'resultado' => $planId
             ]);
             return;
         }
